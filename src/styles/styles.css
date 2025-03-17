@@ -1,0 +1,137 @@
+* {
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+/*    background-color: rgb(3, 100, 185);*/
+    background-color: aliceblue;
+}
+
+.game {
+    padding: 10px;   
+}
+
+.battle {
+    display: flex;
+}
+
+.left {
+    min-width: 572px;
+}
+
+.battle--field {
+    min-width: 762px;
+    width: 762px;
+    height: 562px;
+    background-color: rgb(244, 232, 96);
+    padding: 5px;
+    border: 1px black solid;
+}
+
+.battle--field--square {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: 28px;
+    width: 28px;
+    margin: 0px 0px -4px 0px;
+    border: 1px gray solid;
+    cursor: pointer;
+    user-select: none;
+}
+
+.highlight {
+    background-color: lightgreen !important;
+}
+
+.btMapCreature {
+    width: 28px;
+    height: 28px;
+    position: absolute;
+}
+
+.battle--menu {
+    width: 450px;
+    background-color: rgb(212, 250, 255);
+    padding: 5px;
+    margin-left: 10px;
+    border: 1px black solid;
+    float: left;
+}
+
+.battle--button {
+    height: 50px;
+    width: 140px;
+    font-size: 20px;
+    background-color: rgb(232, 217, 145);
+    margin-bottom: 10px;
+    margin-right: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.battle--button:hover {
+    background-color: rgb(209, 196, 131);
+}
+
+.battle--creature-info {
+    display: flex;
+    flex-direction: column;
+    border: 1px black solid;
+}
+
+table {
+    width: 400px;
+    padding-bottom: 5px;
+}
+
+tr {
+	text-align: center;  
+}
+
+th {
+	font-weight: normal;
+    background-color: rgb(239, 228, 218);
+}
+
+td {
+    background-color: rgb(197, 227, 227);
+}
+
+.battle--creature-info--img {
+    width: 64px;
+    height: 64px;
+}
+
+.battle--creature-info--logo {
+    width: 20px;
+    height: 20px;
+}
+
+.battle--queue {
+    background-color: rgb(217, 233, 248);
+    padding: 5px 3px 3px 5px;
+    margin-top: 5px;
+    border: 1px black solid;
+}
+
+.battle--queue--img {
+    width: 48px;
+    height: 48px;
+    background-color: rgb(165, 207, 207);
+    margin: 0 2px 2px 0;
+    border: 2px rgb(165, 207, 207) solid;
+    cursor: pointer;
+}
+.battle--queue--img:hover {
+    background-color: rgb(108, 248, 113);
+    border: 2px green solid;
+}
+
+
+
+/*РИСОВАНИЕ ПОВЕРХНОСТЕЙ И ПРЕГРАД*/
+.container {
+    background-color: rgb(98, 227, 166);
+}

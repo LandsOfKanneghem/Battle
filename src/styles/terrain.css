@@ -1,0 +1,31 @@
+/*OBSTACLES*/
+
+.obstacle--tree {
+    background-color: green;
+}
+
+.obstacle--river {
+    background-color: aquamarine;
+}
+
+.obstacle--box {
+    background-color: burlywood;
+}
+
+.obstacle--campfire {
+    background-color: orangered;
+}
+
+/*TERRAIN*/
+
+.terrain--grass {
+    background-color: rgb(177, 230, 147);
+}
+
+.terrain--bridge {
+    background-color: rgb(139,69,19);
+}
+
+.terrain--sandy-road {
+    background-color: rgb(244, 232, 96);
+}

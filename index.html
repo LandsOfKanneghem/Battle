@@ -178,63 +178,120 @@
     let highlightedCells = [];
     let previewKey = null;
 
-    const spell = {
+    const spells = [{
       id: 'fire-shot', name: 'Огненный выстрел', damage: 3,
       range: 6, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,
+      cooldown: 0, maxCooldown: 0, isAOE: false, aoeSize: 1,
       svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`
-    };
+    }, {
+      id: 'fire-cube', name: 'Огненный куб', damage: 6,
+      range: 5, apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0,
+      cooldown: 0, maxCooldown: 2, isAOE: true, aoeSize: 3,
+      svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24 Q0 14 8 3 L12 12 L20 1 L25 12 L34 4 Q42 19 35 31" fill="#f65a25"/><path d="M8 17 L20 10 L33 17 L33 31 L20 38 L8 31 Z" fill="#ff9d28" stroke="#ffdc36" stroke-width="2"/><path d="M8 17 L20 24 L33 17 M20 24 V38" fill="none" stroke="#ffe995" stroke-width="2"/></svg>`
+    }];
     let preparedSpellId = null;
-    const spellSlot = document.createElement('button');
-    spellSlot.type = 'button';
-    spellSlot.className = 'spell-slot';
-    spellSlot.innerHTML = spell.svg;
-    spellSlot.setAttribute('aria-label', 'Огненный выстрел: урон 3, дальность 1–6, стоимость 3 AP, два раза за ход');
-    document.getElementById('spells').appendChild(spellSlot);
-    for (let i = 1; i < 16; i++) {
+    const spellSlots = new Map();
+    for (const spell of spells) {
+      const slot = document.createElement('button');
+      slot.type = 'button';
+      slot.className = 'spell-slot';
+      slot.innerHTML = spell.svg;
+      slot.setAttribute('aria-label', spell.name);
+      slot.addEventListener('click', () => {
+        if (!canPrepareSpell(spell)) return;
+        preparedSpellId = spell.id;
+        highlightSpellRange();
+        updatePanel();
+      });
+      spellSlots.set(spell.id, slot);
+      document.getElementById('spells').appendChild(slot);
+    }
+    for (let i = spells.length; i < 16; i++) {
       const slot = document.createElement('div');
       slot.className = 'spell-slot';
       document.getElementById('spells').appendChild(slot);
     }
 
-    function canPrepareSpell() {
-      return activeEntityId === character.id && !isMoving
-        && character.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn;
+    function canPrepareSpell(spell) {
+      return !!spell && activeEntityId === character.id && !isMoving
+        && character.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
+        && spell.cooldown === 0;
     }
 
-    // Классический Брезенхем: проверяем только посещённые клетки,
-    // не соседей по углам — диагональная щель остаётся проходимой.
+    // Supercover от центра до центра с исключением для углов при 45°. Сравниваем моменты
+    // пересечения границ целыми числами, без погрешностей float.
     function checkLOS(from, to) {
+      const dx = Math.abs(to.x - from.x), dy = Math.abs(to.y - from.y);
+      const sx = Math.sign(to.x - from.x), sy = Math.sign(to.y - from.y);
       let x = from.x, y = from.y;
-      const dx = Math.abs(to.x - x), dy = -Math.abs(to.y - y);
-      const sx = x < to.x ? 1 : -1, sy = y < to.y ? 1 : -1;
-      let error = dx + dy;
-      while (true) {
-        if (obstacles.get(`${x},${y}`) === 'crate') return false;
-        const endpoint = x === to.x && y === to.y;
-        if (!endpoint && !(x === from.x && y === from.y)
-          && entities.some(e => e.position.x === x && e.position.y === y)) return false;
-        if (endpoint) return true;
-        const twiceError = 2 * error;
-        if (twiceError >= dy) { error += dy; x += sx; }
-        if (twiceError <= dx) { error += dx; y += sy; }
+      let crossedX = 0, crossedY = 0;
+
+      function blocked(cx, cy) {
+        if (obstacles.get(`${cx},${cy}`) === 'crate') return true;
+        // Существо в исходной или целевой клетке не закрывает выстрел.
+        if ((cx === from.x && cy === from.y) || (cx === to.x && cy === to.y)) return false;
+        return entities.some(entity => entity.position.x === cx && entity.position.y === cy);
       }
+
+      if (blocked(x, y)) return false;
+      while (x !== to.x || y !== to.y) {
+        const nextX = (2 * crossedX + 1) * dy;
+        const nextY = (2 * crossedY + 1) * dx;
+        if (nextX === nextY) {
+          // Только при точных 45° разрешаем касание углов боковых клеток.
+          // Диагональную клетку по-прежнему проверяем на препятствия.
+          if (dx !== dy && (blocked(x + sx, y) || blocked(x, y + sy))) return false;
+          x += sx;
+          y += sy;
+          crossedX++;
+          crossedY++;
+        } else if (nextX < nextY) {
+          x += sx;
+          crossedX++;
+        } else {
+          y += sy;
+          crossedY++;
+        }
+        if (blocked(x, y)) return false;
+      }
+      return true;
     }
 
-    function canTarget(target) {
+    function canTarget(target, spell) {
       const distance = Math.abs(target.x - character.position.x) + Math.abs(target.y - character.position.y);
       return target.x >= 0 && target.x < SIZE && target.y >= 0 && target.y < SIZE
         && !obstacles.has(keyOf(target))
         && distance >= 1 && distance <= spell.range && checkLOS(character.position, target);
     }
 
-    function highlightSpellRange() {
-      clearHighlight();
-      for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
-        if (canTarget({ x, y })) {
-          const cell = cells[y * SIZE + x];
-          cell.classList.add('path-reachable');
-          highlightedCells.push(cell);
+    function affectedCells(center, spell) {
+      const points = [];
+      const radius = Math.floor(spell.aoeSize / 2);
+      for (let y = center.y - radius; y <= center.y + radius; y++) {
+        for (let x = center.x - radius; x <= center.x + radius; x++) {
+          if (x >= 0 && x < SIZE && y >= 0 && y < SIZE) points.push({ x, y });
         }
+      }
+      return points;
+    }
+
+    function highlightSpellRange(center = null) {
+      clearHighlight();
+      const spell = spells.find(item => item.id === preparedSpellId);
+      if (!spell) return;
+      const marked = new Set();
+      function mark(target) {
+        if (!canTarget(target, spell)) return;
+        for (const point of affectedCells(target, spell)) marked.add(point.y * SIZE + point.x);
+      }
+      // Для куба при наведении показываем только конкретную зону.
+      // До наведения видна совокупность зон всех допустимых центров.
+      if (center && spell.isAOE) mark(center);
+      else for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) mark({ x, y });
+      for (const index of marked) {
+        const cell = cells[index];
+        cell.classList.add('path-reachable');
+        highlightedCells.push(cell);
       }
     }
 
@@ -246,13 +303,21 @@
 
     function castSpell(targetCell) {
       const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
-      if (preparedSpellId !== spell.id || !canPrepareSpell() || !canTarget(target)) return false;
-      const victim = entities.find(e => e.id !== character.id && keyOf(e.position) === keyOf(target));
-      if (victim) victim.hp = Math.max(0, victim.hp - spell.damage);
-      removeDefeatedEntities();
+      const spell = spells.find(item => item.id === preparedSpellId);
+      if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
+      const area = new Set(affectedCells(target, spell).map(keyOf));
+      for (const victim of entities) {
+        if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== character.id)) {
+          victim.hp = Math.max(0, victim.hp - spell.damage);
+        }
+      }
+      // Оплачиваем каст до удаления погибших: АОЕ может убить самого волшебника
+      // и немедленно передать ход следующему участнику.
       character.ap -= spell.apCost;
       spell.usesThisTurn++;
+      spell.cooldown = spell.maxCooldown;
       cancelSpell();
+      removeDefeatedEntities();
       return true;
     }
 
@@ -286,12 +351,6 @@
     // Проверка в консоли: entities.find(e => e.id === activeEntityId).hp = 0;
     // removeDefeatedEntities(); // Следующий участник должен стать активным сразу.
 
-    spellSlot.addEventListener('click', () => {
-      if (!canPrepareSpell()) return;
-      preparedSpellId = spell.id;
-      highlightSpellRange();
-      updatePanel();
-    });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && preparedSpellId) cancelSpell();
     });
@@ -435,10 +494,13 @@
       document.getElementById('ap').textContent = displayed ? `AP: ${displayed.ap} / ${displayed.maxAP}` : '—';
       document.getElementById('mp').textContent = displayed ? `MP: ${displayed.mp} / ${displayed.maxMP}` : '—';
       endTurnButton.disabled = !displayed || isMoving || activeEntityId !== character.id;
-      spellSlot.disabled = !displayed || !canPrepareSpell();
-      spellSlot.classList.toggle('prepared', preparedSpellId === spell.id);
-      spellSlot.setAttribute('aria-pressed', preparedSpellId === spell.id ? 'true' : 'false');
-      spellSlot.title = `${spell.name} · 3 AP · ${spell.usesThisTurn} / 2 использований`;
+      for (const spell of spells) {
+        const slot = spellSlots.get(spell.id);
+        slot.disabled = !displayed || !canPrepareSpell(spell);
+        slot.classList.toggle('prepared', preparedSpellId === spell.id);
+        slot.setAttribute('aria-pressed', preparedSpellId === spell.id ? 'true' : 'false');
+        slot.title = `${spell.name} · урон ${spell.damage} · ${spell.isAOE ? 'АОЕ 3×3' : 'одна цель'} · дальность 1–${spell.range} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований`;
+      }
       for (const cell of cells) cell.classList.remove('entity-hover');
       for (const entity of entities) {
         const active = entity.id === activeEntityId;
@@ -471,7 +533,12 @@
         updatePanel();
         return;
       }
-      if (entity.id === character.id) spell.usesThisTurn = 0;
+      if (entity.id === character.id) {
+        for (const spell of spells) {
+          spell.usesThisTurn = 0;
+          spell.cooldown = Math.max(0, spell.cooldown - 1);
+        }
+      }
       activeEntityId = entity.id;
       entity.ap = entity.maxAP;
       entity.mp = entity.maxMP;
@@ -526,7 +593,18 @@
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       fieldHoveredEntityId = entities.find(entity => keyOf(entity.position) === keyOf(target))?.id ?? null;
       updatePanel();
-      if (isMoving || activeEntityId !== character.id || preparedSpellId) return;
+      if (isMoving || activeEntityId !== character.id) return;
+      if (preparedSpellId) {
+        const spell = spells.find(item => item.id === preparedSpellId);
+        if (spell.isAOE) {
+          const key = `aoe:${keyOf(target)}`;
+          if (previewKey !== key) {
+            highlightSpellRange(target);
+            previewKey = key;
+          }
+        }
+        return;
+      }
       // Повторные события в одной клетке не запускают A* заново.
       // Позиция и MP включены в ключ, чтобы не использовать устаревшее превью.
       const key = `${keyOf(target)}:${keyOf(character.position)}:${character.mp}`;

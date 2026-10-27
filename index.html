@@ -119,7 +119,7 @@
     const cells = [];
     // Карта препятствий: ключ — координаты, значение — тип объекта.
     const obstacles = new Map([
-      ['3,3', 'crate'], ['4,3', 'crate'], ['7,6', 'crate'],
+      ['3,3', 'crate'], ['4,4', 'crate'], ['7,6', 'crate'],
       ['11,10', 'crate'], ['12,4', 'crate'], ['4,12', 'crate'],
       ['5,7', 'water'], ['5,8', 'water'], ['6,8', 'water'],
       ['10,12', 'water'], ['11,12', 'water']
@@ -156,12 +156,12 @@
     const phoenix = {
       id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8,
       maxAP: 1, ap: 1, maxMP: 4, mp: 4,
-      position: { x: 12, y: 6 }
+      position: { x: 3, y: 4 }
     };
     const secondPhoenix = {
       id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8,
       maxAP: 1, ap: 1, maxMP: 4, mp: 4,
-      position: { x: 3, y: 10 }
+      position: { x: 7, y: 7 }
     };
     const entities = [character, phoenix, secondPhoenix];
     let activeEntityId = character.id;

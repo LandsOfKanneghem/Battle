@@ -165,6 +165,7 @@
     };
     const entities = [character, phoenix, secondPhoenix];
     let activeEntityId = character.id;
+    let turnVersion = 0; // Защита от таймеров предыдущего хода.
     let hoveredEntityId = null;
     // Источники наведения разделены: очередь имеет приоритет над полем.
     let fieldHoveredEntityId = null;
@@ -256,6 +257,11 @@
     }
 
     function removeDefeatedEntities() {
+      const activeIndex = entities.findIndex(entity => entity.id === activeEntityId);
+      const activeDied = activeIndex !== -1 && entities[activeIndex].hp <= 0;
+      // Выбираем следующего выжившего в исходном порядке, включая переход через конец.
+      const successor = activeDied ? entities.slice(activeIndex + 1)
+        .concat(entities.slice(0, activeIndex)).find(entity => entity.hp > 0) : null;
       // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
       for (let i = entities.length - 1; i >= 0; i--) {
         const entity = entities[i];
@@ -263,11 +269,22 @@
         entity.svg.remove();
         turnSlots.get(entity.id).remove();
         turnSlots.delete(entity.id);
+        if (hoveredEntityId === entity.id) hoveredEntityId = null;
         if (fieldHoveredEntityId === entity.id) fieldHoveredEntityId = null;
         if (queueHoveredEntityId === entity.id) queueHoveredEntityId = null;
         entities.splice(i, 1);
       }
+      if (activeDied || entities.length === 0) {
+        isMoving = false;
+        stepQueue = [];
+        battlefield.classList.remove('moving');
+        beginTurn(successor); // Смена активного участника происходит сразу.
+      } else {
+        updatePanel();
+      }
     }
+    // Проверка в консоли: entities.find(e => e.id === activeEntityId).hp = 0;
+    // removeDefeatedEntities(); // Следующий участник должен стать активным сразу.
 
     spellSlot.addEventListener('click', () => {
       if (!canPrepareSpell()) return;
@@ -413,12 +430,12 @@
     function updatePanel() {
       hoveredEntityId = queueHoveredEntityId ?? fieldHoveredEntityId;
       const displayed = entities.find(entity => entity.id === (hoveredEntityId ?? activeEntityId));
-      document.getElementById('character-name').textContent = displayed.name;
-      document.getElementById('hp').textContent = `HP: ${displayed.hp}`;
-      document.getElementById('ap').textContent = `AP: ${displayed.ap} / ${displayed.maxAP}`;
-      document.getElementById('mp').textContent = `MP: ${displayed.mp} / ${displayed.maxMP}`;
-      endTurnButton.disabled = isMoving || activeEntityId !== character.id;
-      spellSlot.disabled = !canPrepareSpell();
+      document.getElementById('character-name').textContent = displayed?.name ?? '—';
+      document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp}` : '—';
+      document.getElementById('ap').textContent = displayed ? `AP: ${displayed.ap} / ${displayed.maxAP}` : '—';
+      document.getElementById('mp').textContent = displayed ? `MP: ${displayed.mp} / ${displayed.maxMP}` : '—';
+      endTurnButton.disabled = !displayed || isMoving || activeEntityId !== character.id;
+      spellSlot.disabled = !displayed || !canPrepareSpell();
       spellSlot.classList.toggle('prepared', preparedSpellId === spell.id);
       spellSlot.setAttribute('aria-pressed', preparedSpellId === spell.id ? 'true' : 'false');
       spellSlot.title = `${spell.name} · 3 AP · ${spell.usesThisTurn} / 2 использований`;
@@ -442,7 +459,18 @@
     }
 
     function beginTurn(entity) {
+      // Удалённого участника заменяем текущим живым или первым в очереди.
+      if (entities.indexOf(entity) === -1) {
+        entity = entities.find(item => item.id === activeEntityId) ?? entities[0];
+      }
+      const version = ++turnVersion;
       preparedSpellId = null;
+      if (!entity) {
+        activeEntityId = null;
+        clearHighlight();
+        updatePanel();
+        return;
+      }
       if (entity.id === character.id) spell.usesThisTurn = 0;
       activeEntityId = entity.id;
       entity.ap = entity.maxAP;
@@ -452,6 +480,13 @@
       if (entity.type === 'phoenix') {
         // Каждый враг отдельно показывается в очереди в течение 100 мс.
         setTimeout(() => {
+          // Смерть или новая передача уже завершили этот ход: старый таймер не действует.
+          if (version !== turnVersion) return;
+          const index = entities.indexOf(entity);
+          if (index === -1) {
+            beginTurn(entities.find(item => item.id === activeEntityId) ?? entities[0]);
+            return;
+          }
           entity.ap = entity.maxAP;
           entity.mp = entity.maxMP;
           const nextIndex = (entities.indexOf(entity) + 1) % entities.length;
@@ -467,6 +502,7 @@
     });
 
     function takeStep() {
+      if (!isMoving || activeEntityId !== character.id || !entities.includes(character)) return;
       character.position = stepQueue.shift();
       character.mp -= 1;
       renderPosition();

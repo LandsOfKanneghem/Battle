@@ -18,8 +18,8 @@
       width: min(96vw, 96dvh);
       aspect-ratio: 1;
       display: grid;
-      grid-template-columns: repeat(20, minmax(0, 1fr));
-      grid-template-rows: repeat(20, minmax(0, 1fr));
+      grid-template-columns: repeat(16, minmax(0, 1fr));
+      grid-template-rows: repeat(16, minmax(0, 1fr));
       gap: 1px;
       padding: 1px;
       background: #b8b8b8;
@@ -32,19 +32,53 @@
     }
     .cell:hover { background: #424954; }
     #battlefield.moving .cell { cursor: wait; }
-    .wizard { display: block; width: 100%; height: 100%; pointer-events: none; }
+    .cell.blocked { cursor: not-allowed; }
+    .cell.unreachable { animation: rejected 450ms ease-out; }
+    @keyframes rejected {
+      from { background: #d74b4b; }
+      to { background: #30343b; }
+    }
+    .obstacle, .wizard { display: block; width: 100%; height: 100%; pointer-events: none; }
   </style>
 </head>
 <body>
-  <div id="battlefield" aria-label="Поле боя 20 на 20 клеток"></div>
+  <div id="battlefield" aria-label="Поле боя 16 на 16 клеток"></div>
   <script>
-    const SIZE = 20;
+    const SIZE = 16;
     const STEP_MS = 90;
     const battlefield = document.getElementById('battlefield');
     const cells = [];
+    // Карта препятствий: ключ — координаты, значение — тип объекта.
+    const obstacles = new Map([
+      ['3,3', 'crate'], ['4,3', 'crate'], ['7,6', 'crate'],
+      ['11,10', 'crate'], ['12,4', 'crate'], ['4,12', 'crate'],
+      ['5,7', 'water'], ['5,8', 'water'], ['6,8', 'water'],
+      ['10,12', 'water'], ['11,12', 'water']
+    ]);
+    const keyOf = ({ x, y }) => `${x},${y}`;
+    const isFree = ({ x, y }) => x >= 0 && x < SIZE && y >= 0 && y < SIZE
+      && !obstacles.has(`${x},${y}`);
+
+    function createObstacle(type) {
+      const sprite = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      sprite.setAttribute('viewBox', '0 0 40 40');
+      sprite.setAttribute('class', 'obstacle');
+      sprite.setAttribute('role', 'img');
+      sprite.setAttribute('aria-label', type === 'crate' ? 'Ящик' : 'Глубокая вода');
+      sprite.innerHTML = type === 'crate' ? `
+        <rect x="4" y="4" width="32" height="32" rx="2" fill="#925c32" stroke="#d5a36a" stroke-width="2"/>
+        <path d="M6 13 H34 M6 26 H34" stroke="#57351e" stroke-width="2"/>
+        <path d="M7 7 L33 33 M33 7 L7 33" stroke="#d5a36a" stroke-width="4"/>` : `
+        <rect x="1" y="1" width="38" height="38" fill="#1251a0"/>
+        <path d="M4 10 Q8 6 12 10 T20 10 T28 10 T36 10
+                 M4 21 Q8 17 12 21 T20 21 T28 21 T36 21
+                 M4 32 Q8 28 12 32 T20 32 T28 32 T36 32"
+              fill="none" stroke="#6ecfff" stroke-width="2"/>`;
+      return sprite;
+    }
 
     // Всё изменяемое состояние движения хранится здесь.
-    let position = { x: 10, y: 10 };
+    let position = { x: 8, y: 8 };
     let stepQueue = [];
     let isMoving = false;
 
@@ -70,6 +104,12 @@
         cell.className = 'cell';
         cell.dataset.x = x;
         cell.dataset.y = y;
+        const type = obstacles.get(`${x},${y}`);
+        if (type) {
+          cell.classList.add('blocked');
+          cell.appendChild(createObstacle(type));
+        }
+        cell.addEventListener('animationend', () => cell.classList.remove('unreachable'));
         battlefield.appendChild(cell);
         cells.push(cell);
       }
@@ -81,23 +121,38 @@
     }
 
     function buildPath(start, target) {
-      const path = [];
-      let { x, y } = start;
-      let horizontalTurn = true;
+      if (!isFree(start) || !isFree(target)) return null;
+      const heuristic = (point) => Math.abs(point.x - target.x) + Math.abs(point.y - target.y);
+      const open = [{ ...start, g: 0, h: heuristic(start), parent: null, axis: null, turn: 0 }];
+      const bestCost = new Map([[keyOf(start), 0]]);
+      const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
 
-      // Пока доступны обе оси, строго чередуем их. Остаток пути
-      // продолжается по единственной незавершённой оси.
-      while (x !== target.x || y !== target.y) {
-        if (x !== target.x && (horizontalTurn || y === target.y)) {
-          x += Math.sign(target.x - x);
-          horizontalTurn = false;
-        } else {
-          y += Math.sign(target.y - y);
-          horizontalTurn = true;
+      // A*: стоимость шага равна 1, эвристика — манхэттенское расстояние.
+      // Чередование осей влияет только на выбор среди равных оценок,
+      // поэтому не мешает находить кратчайшие обходные маршруты.
+      while (open.length > 0) {
+        open.sort((a, b) => (a.g + a.h) - (b.g + b.h) || a.h - b.h || a.turn - b.turn);
+        const current = open.shift();
+        if (current.g !== bestCost.get(keyOf(current))) continue;
+        if (current.x === target.x && current.y === target.y) {
+          const path = [];
+          for (let node = current; node.parent; node = node.parent) {
+            path.push({ x: node.x, y: node.y });
+          }
+          return path.reverse();
         }
-        path.push({ x, y });
+        for (const [dx, dy] of directions) {
+          const next = { x: current.x + dx, y: current.y + dy };
+          if (!isFree(next)) continue;
+          const g = current.g + 1;
+          if (g >= (bestCost.get(keyOf(next)) ?? Infinity)) continue;
+          bestCost.set(keyOf(next), g);
+          const axis = dx ? 'x' : 'y';
+          open.push({ ...next, g, h: heuristic(next), parent: current, axis,
+            turn: axis === current.axis ? 1 : 0 });
+        }
       }
-      return path;
+      return null; // Свободная цель может быть отрезана препятствиями.
     }
 
     function takeStep() {
@@ -117,7 +172,15 @@
       const cell = event.target.closest('.cell');
       if (!cell || !battlefield.contains(cell)) return;
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
-      stepQueue = buildPath(position, target);
+      if (!isFree(target)) return;
+      const path = buildPath(position, target);
+      if (path === null) {
+        cell.classList.remove('unreachable');
+        void cell.offsetWidth; // Перезапускаем сигнал при повторном клике.
+        cell.classList.add('unreachable');
+        return;
+      }
+      stepQueue = path;
       if (stepQueue.length === 0) return;
       isMoving = true;
       battlefield.classList.add('moving');

@@ -31,6 +31,12 @@
       border: 1px solid #515966;
       border-radius: 10px;
     }
+    .spells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 14px; }
+    .spell-slot { aspect-ratio: 1; min-width: 0; padding: 3px; background: #191e26; border: 2px solid #515966; border-radius: 4px; }
+    button.spell-slot { cursor: pointer; }
+    .spell-slot svg { display: block; width: 100%; height: 100%; pointer-events: none; }
+    .spell-slot.prepared { border-color: #ffdc36; }
+    .spell-slot:disabled { opacity: .4; cursor: default; }
     .panel h1 { font-size: 20px; margin: 0 0 16px; }
     .stats { display: grid; gap: 8px; margin-bottom: 20px; font-variant-numeric: tabular-nums; }
     #end-turn {
@@ -62,10 +68,11 @@
     @media (max-width: 640px) {
       .game { flex-direction: column; gap: 12px; }
       #battlefield {
-        width: min(96vw, calc(100vh - 240px));
-        width: min(96vw, calc(100dvh - 240px));
+        width: min(96vw, calc(100vh - 410px));
+        width: min(96vw, calc(100dvh - 410px));
       }
       .panel { width: 96vw; padding: 12px; }
+      .spells { width: 148px; margin: 10px auto 0; }
       .panel h1 { margin-bottom: 8px; font-size: 18px; }
       .stats { grid-template-columns: repeat(3, auto); gap: 8px; margin-bottom: 10px; }
     }
@@ -102,6 +109,7 @@
         <span id="mp"></span>
       </div>
       <button id="end-turn" type="button">Передать ход</button>
+      <div id="spells" class="spells" aria-label="Заклинания"></div>
     </aside>
   </main>
   <script>
@@ -142,7 +150,7 @@
     // HP постоянен между ходами; AP и MP — расходуемые ресурсы хода.
     const character = {
       id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10,
-      maxAP: 2, ap: 2, maxMP: 5, mp: 5,
+      maxAP: 8, ap: 8, maxMP: 5, mp: 5,
       position: { x: 8, y: 8 }
     };
     const phoenix = {
@@ -150,7 +158,12 @@
       maxAP: 1, ap: 1, maxMP: 4, mp: 4,
       position: { x: 12, y: 6 }
     };
-    const entities = [character, phoenix];
+    const secondPhoenix = {
+      id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8,
+      maxAP: 1, ap: 1, maxMP: 4, mp: 4,
+      position: { x: 3, y: 10 }
+    };
+    const entities = [character, phoenix, secondPhoenix];
     let activeEntityId = character.id;
     let hoveredEntityId = null;
     // Источники наведения разделены: очередь имеет приоритет над полем.
@@ -163,6 +176,108 @@
     let isMoving = false;
     let highlightedCells = [];
     let previewKey = null;
+
+    const spell = {
+      id: 'fire-shot', name: 'Огненный выстрел', damage: 3,
+      range: 6, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,
+      svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`
+    };
+    let preparedSpellId = null;
+    const spellSlot = document.createElement('button');
+    spellSlot.type = 'button';
+    spellSlot.className = 'spell-slot';
+    spellSlot.innerHTML = spell.svg;
+    spellSlot.setAttribute('aria-label', 'Огненный выстрел: урон 3, дальность 1–6, стоимость 3 AP, два раза за ход');
+    document.getElementById('spells').appendChild(spellSlot);
+    for (let i = 1; i < 16; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'spell-slot';
+      document.getElementById('spells').appendChild(slot);
+    }
+
+    function canPrepareSpell() {
+      return activeEntityId === character.id && !isMoving
+        && character.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn;
+    }
+
+    // Классический Брезенхем: проверяем только посещённые клетки,
+    // не соседей по углам — диагональная щель остаётся проходимой.
+    function checkLOS(from, to) {
+      let x = from.x, y = from.y;
+      const dx = Math.abs(to.x - x), dy = -Math.abs(to.y - y);
+      const sx = x < to.x ? 1 : -1, sy = y < to.y ? 1 : -1;
+      let error = dx + dy;
+      while (true) {
+        if (obstacles.get(`${x},${y}`) === 'crate') return false;
+        const endpoint = x === to.x && y === to.y;
+        if (!endpoint && !(x === from.x && y === from.y)
+          && entities.some(e => e.position.x === x && e.position.y === y)) return false;
+        if (endpoint) return true;
+        const twiceError = 2 * error;
+        if (twiceError >= dy) { error += dy; x += sx; }
+        if (twiceError <= dx) { error += dx; y += sy; }
+      }
+    }
+
+    function canTarget(target) {
+      const distance = Math.abs(target.x - character.position.x) + Math.abs(target.y - character.position.y);
+      return target.x >= 0 && target.x < SIZE && target.y >= 0 && target.y < SIZE
+        && !obstacles.has(keyOf(target))
+        && distance >= 1 && distance <= spell.range && checkLOS(character.position, target);
+    }
+
+    function highlightSpellRange() {
+      clearHighlight();
+      for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+        if (canTarget({ x, y })) {
+          const cell = cells[y * SIZE + x];
+          cell.classList.add('path-reachable');
+          highlightedCells.push(cell);
+        }
+      }
+    }
+
+    function cancelSpell() {
+      preparedSpellId = null;
+      clearHighlight();
+      updatePanel();
+    }
+
+    function castSpell(targetCell) {
+      const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
+      if (preparedSpellId !== spell.id || !canPrepareSpell() || !canTarget(target)) return false;
+      const victim = entities.find(e => e.id !== character.id && keyOf(e.position) === keyOf(target));
+      if (victim) victim.hp = Math.max(0, victim.hp - spell.damage);
+      removeDefeatedEntities();
+      character.ap -= spell.apCost;
+      spell.usesThisTurn++;
+      cancelSpell();
+      return true;
+    }
+
+    function removeDefeatedEntities() {
+      // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
+      for (let i = entities.length - 1; i >= 0; i--) {
+        const entity = entities[i];
+        if (entity.hp > 0) continue;
+        entity.svg.remove();
+        turnSlots.get(entity.id).remove();
+        turnSlots.delete(entity.id);
+        if (fieldHoveredEntityId === entity.id) fieldHoveredEntityId = null;
+        if (queueHoveredEntityId === entity.id) queueHoveredEntityId = null;
+        entities.splice(i, 1);
+      }
+    }
+
+    spellSlot.addEventListener('click', () => {
+      if (!canPrepareSpell()) return;
+      preparedSpellId = spell.id;
+      highlightSpellRange();
+      updatePanel();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && preparedSpellId) cancelSpell();
+    });
 
     function clearHighlight() {
       for (const cell of highlightedCells) {
@@ -211,6 +326,10 @@
       <circle cx="23" cy="12" r="5" fill="#ff8a2b"/>
       <path d="M27 11 L33 14 L27 15 M20 8 L18 2 L25 7" fill="#ffe176"/>
       <circle cx="25" cy="11" r="1" fill="#251d23"/>`;
+
+    // У каждого феникса свой SVG-элемент, хотя рисунок одинаковый.
+    secondPhoenix.svg = phoenix.svg.cloneNode(true);
+    secondPhoenix.svg.setAttribute('aria-label', secondPhoenix.name);
 
     for (const entity of entities) {
       const slot = document.createElement('div');
@@ -299,6 +418,10 @@
       document.getElementById('ap').textContent = `AP: ${displayed.ap} / ${displayed.maxAP}`;
       document.getElementById('mp').textContent = `MP: ${displayed.mp} / ${displayed.maxMP}`;
       endTurnButton.disabled = isMoving || activeEntityId !== character.id;
+      spellSlot.disabled = !canPrepareSpell();
+      spellSlot.classList.toggle('prepared', preparedSpellId === spell.id);
+      spellSlot.setAttribute('aria-pressed', preparedSpellId === spell.id ? 'true' : 'false');
+      spellSlot.title = `${spell.name} · 3 AP · ${spell.usesThisTurn} / 2 использований`;
       for (const cell of cells) cell.classList.remove('entity-hover');
       for (const entity of entities) {
         const active = entity.id === activeEntityId;
@@ -319,22 +442,28 @@
     }
 
     function beginTurn(entity) {
+      preparedSpellId = null;
+      if (entity.id === character.id) spell.usesThisTurn = 0;
       activeEntityId = entity.id;
       entity.ap = entity.maxAP;
       entity.mp = entity.maxMP;
       clearHighlight();
       updatePanel(); // HP не является ресурсом хода.
+      if (entity.type === 'phoenix') {
+        // Каждый враг отдельно показывается в очереди в течение 100 мс.
+        setTimeout(() => {
+          entity.ap = entity.maxAP;
+          entity.mp = entity.maxMP;
+          const nextIndex = (entities.indexOf(entity) + 1) % entities.length;
+          beginTurn(entities[nextIndex]);
+        }, 100);
+      }
     }
 
     endTurnButton.addEventListener('click', () => {
       if (isMoving || activeEntityId !== character.id) return;
-      beginTurn(phoenix);
-      // Феникс пока не действует: показываем его ход и пропускаем через 100 мс.
-      setTimeout(() => {
-        phoenix.ap = phoenix.maxAP;
-        phoenix.mp = phoenix.maxMP;
-        beginTurn(character);
-      }, 100);
+      const nextIndex = (entities.findIndex(entity => entity.id === activeEntityId) + 1) % entities.length;
+      beginTurn(entities[nextIndex]);
     });
 
     function takeStep() {
@@ -355,13 +484,13 @@
       if (!cell || !battlefield.contains(cell)) {
         fieldHoveredEntityId = null;
         updatePanel();
-        clearHighlight(); // В том числе при наведении на промежуток сетки.
+        if (!preparedSpellId) clearHighlight(); // В том числе при наведении на промежуток сетки.
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       fieldHoveredEntityId = entities.find(entity => keyOf(entity.position) === keyOf(target))?.id ?? null;
       updatePanel();
-      if (isMoving || activeEntityId !== character.id) return;
+      if (isMoving || activeEntityId !== character.id || preparedSpellId) return;
       // Повторные события в одной клетке не запускают A* заново.
       // Позиция и MP включены в ключ, чтобы не использовать устаревшее превью.
       const key = `${keyOf(target)}:${keyOf(character.position)}:${character.mp}`;
@@ -375,7 +504,7 @@
     });
 
     battlefield.addEventListener('mouseleave', () => {
-      clearHighlight();
+      if (!preparedSpellId) clearHighlight();
       fieldHoveredEntityId = null;
       updatePanel();
     });
@@ -385,6 +514,10 @@
       if (isMoving || activeEntityId !== character.id) return;
       const cell = event.target.closest('.cell');
       if (!cell || !battlefield.contains(cell)) return;
+      if (preparedSpellId) {
+        castSpell(cell);
+        return;
+      }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       if (!isFree(target)) return;
       const path = buildPath(character.position, target);

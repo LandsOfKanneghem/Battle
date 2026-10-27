@@ -1,6 +1,130 @@
 <!DOCTYPE html>
-<html>
-<body style="background: black; color: yellow;">
-  <h1>Hello, my RPG</h1>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Поле волшебника</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+    body {
+      background: #1a1a1a;
+      display: grid;
+      place-items: center;
+    }
+    #battlefield {
+      /* Запас по краям; dvh учитывает панели мобильного браузера. */
+      width: min(96vw, 96vh);
+      width: min(96vw, 96dvh);
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(20, minmax(0, 1fr));
+      grid-template-rows: repeat(20, minmax(0, 1fr));
+      gap: 1px;
+      padding: 1px;
+      background: #b8b8b8;
+    }
+    .cell {
+      min-width: 0;
+      min-height: 0;
+      background: #30343b;
+      cursor: pointer;
+    }
+    .cell:hover { background: #424954; }
+    #battlefield.moving .cell { cursor: wait; }
+    .wizard { display: block; width: 100%; height: 100%; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div id="battlefield" aria-label="Поле боя 20 на 20 клеток"></div>
+  <script>
+    const SIZE = 20;
+    const STEP_MS = 90;
+    const battlefield = document.getElementById('battlefield');
+    const cells = [];
+
+    // Всё изменяемое состояние движения хранится здесь.
+    let position = { x: 10, y: 10 };
+    let stepQueue = [];
+    let isMoving = false;
+
+    const wizard = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    wizard.setAttribute('viewBox', '0 0 40 40');
+    wizard.setAttribute('class', 'wizard');
+    wizard.setAttribute('role', 'img');
+    wizard.setAttribute('aria-label', 'Волшебник');
+    wizard.innerHTML = `
+      <path d="M11 36 L15 20 L25 20 L30 36 Z" fill="#287dff" stroke="#102e70"/>
+      <circle cx="20" cy="17" r="6" fill="#ffd6a0"/>
+      <path d="M9 13 L20 2 L30 13 Z" fill="#ffdc36" stroke="#a77c00"/>
+      <path d="M8 13 H32" stroke="#ffdc36" stroke-width="3"/>
+      <circle cx="18" cy="17" r="1" fill="#20202b"/>
+      <circle cx="23" cy="17" r="1" fill="#20202b"/>
+      <path d="M17 22 L21 29 L25 22" fill="#f5f0df"/>
+      <path d="M32 35 L34 20" stroke="#ce9b56" stroke-width="2"/>
+      <circle cx="34" cy="19" r="2.5" fill="#86e8ff"/>`;
+
+    for (let y = 0; y < SIZE; y++) {
+      for (let x = 0; x < SIZE; x++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.x = x;
+        cell.dataset.y = y;
+        battlefield.appendChild(cell);
+        cells.push(cell);
+      }
+    }
+
+    function renderPosition() {
+      // Перенос DOM-элемента мгновенный: никаких CSS-переходов.
+      cells[position.y * SIZE + position.x].appendChild(wizard);
+    }
+
+    function buildPath(start, target) {
+      const path = [];
+      let { x, y } = start;
+      let horizontalTurn = true;
+
+      // Пока доступны обе оси, строго чередуем их. Остаток пути
+      // продолжается по единственной незавершённой оси.
+      while (x !== target.x || y !== target.y) {
+        if (x !== target.x && (horizontalTurn || y === target.y)) {
+          x += Math.sign(target.x - x);
+          horizontalTurn = false;
+        } else {
+          y += Math.sign(target.y - y);
+          horizontalTurn = true;
+        }
+        path.push({ x, y });
+      }
+      return path;
+    }
+
+    function takeStep() {
+      position = stepQueue.shift();
+      renderPosition();
+      if (stepQueue.length > 0) {
+        setTimeout(takeStep, STEP_MS);
+      } else {
+        isMoving = false;
+        battlefield.classList.remove('moving');
+      }
+    }
+
+    battlefield.addEventListener('click', (event) => {
+      // Новая цель не прерывает уже начатый маршрут.
+      if (isMoving) return;
+      const cell = event.target.closest('.cell');
+      if (!cell || !battlefield.contains(cell)) return;
+      const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
+      stepQueue = buildPath(position, target);
+      if (stepQueue.length === 0) return;
+      isMoving = true;
+      battlefield.classList.add('moving');
+      setTimeout(takeStep, STEP_MS);
+    });
+
+    renderPosition();
+  </script>
 </body>
 </html>

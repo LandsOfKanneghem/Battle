@@ -11,11 +11,46 @@
       background: #1a1a1a;
       display: grid;
       place-items: center;
+      color: #f1f3f7;
+      font-family: system-ui, sans-serif;
     }
+    .game {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .arena { display: flex; flex-direction: column; gap: 12px; }
+    #turn-order { display: flex; gap: 8px; padding: 6px; background: #262b33; border-radius: 6px; }
+    .turn-slot { width: 44px; height: 44px; padding: 3px; border: 2px solid transparent; border-radius: 5px; background: #343b46; }
+    .turn-slot.active { background: #606c80; border-color: #ffdc36; }
+    .cell.entity-hover { outline: 2px solid #ffdc36; outline-offset: -2px; }
+    .panel {
+      width: 200px;
+      padding: 20px;
+      background: #262b33;
+      border: 1px solid #515966;
+      border-radius: 10px;
+    }
+    .panel h1 { font-size: 20px; margin: 0 0 16px; }
+    .stats { display: grid; gap: 8px; margin-bottom: 20px; font-variant-numeric: tabular-nums; }
+    #end-turn {
+      width: 100%;
+      padding: 10px;
+      border: 0;
+      border-radius: 6px;
+      background: #ffdc36;
+      color: #20202b;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #end-turn:hover:not(:disabled) { background: #ffea85; }
+    #end-turn:focus-visible { outline: 3px solid #86e8ff; outline-offset: 3px; }
+    #end-turn:disabled { opacity: 0.45; cursor: wait; }
     #battlefield {
       /* Запас по краям; dvh учитывает панели мобильного браузера. */
-      width: min(96vw, 96vh);
-      width: min(96vw, 96dvh);
+      width: min(calc(100vw - 248px), calc(96vh - 68px));
+      width: min(calc(100vw - 248px), calc(96dvh - 68px));
       aspect-ratio: 1;
       display: grid;
       grid-template-columns: repeat(16, minmax(0, 1fr));
@@ -24,6 +59,16 @@
       padding: 1px;
       background: #b8b8b8;
     }
+    @media (max-width: 640px) {
+      .game { flex-direction: column; gap: 12px; }
+      #battlefield {
+        width: min(96vw, calc(100vh - 240px));
+        width: min(96vw, calc(100dvh - 240px));
+      }
+      .panel { width: 96vw; padding: 12px; }
+      .panel h1 { margin-bottom: 8px; font-size: 18px; }
+      .stats { grid-template-columns: repeat(3, auto); gap: 8px; margin-bottom: 10px; }
+    }
     .cell {
       min-width: 0;
       min-height: 0;
@@ -31,18 +76,34 @@
       cursor: pointer;
     }
     .cell:hover { background: #424954; }
+    /* Цвет лежит в фоне клетки, под SVG и внутри линий сетки. */
+    .cell.path-reachable {
+      background-image: linear-gradient(rgba(80, 220, 120, 0.35), rgba(80, 220, 120, 0.35));
+    }
+    .cell.path-over-budget {
+      background-image: linear-gradient(rgba(220, 80, 80, 0.35), rgba(220, 80, 80, 0.35));
+    }
     #battlefield.moving .cell { cursor: wait; }
     .cell.blocked { cursor: not-allowed; }
-    .cell.unreachable { animation: rejected 450ms ease-out; }
-    @keyframes rejected {
-      from { background: #d74b4b; }
-      to { background: #30343b; }
-    }
-    .obstacle, .wizard { display: block; width: 100%; height: 100%; pointer-events: none; }
+    .obstacle, .wizard, .phoenix { display: block; width: 100%; height: 100%; pointer-events: none; }
   </style>
 </head>
 <body>
-  <div id="battlefield" aria-label="Поле боя 16 на 16 клеток"></div>
+  <main class="game">
+    <section class="arena" aria-label="Поле и очередь ходов">
+      <div id="battlefield" aria-label="Поле боя 16 на 16 клеток"></div>
+      <div id="turn-order" aria-label="Очередь ходов"></div>
+    </section>
+    <aside class="panel" aria-labelledby="character-name">
+      <h1 id="character-name">Волшебник</h1>
+      <div class="stats" aria-live="polite" aria-atomic="true">
+        <span id="hp"></span>
+        <span id="ap"></span>
+        <span id="mp"></span>
+      </div>
+      <button id="end-turn" type="button">Передать ход</button>
+    </aside>
+  </main>
   <script>
     const SIZE = 16;
     const STEP_MS = 90;
@@ -57,7 +118,8 @@
     ]);
     const keyOf = ({ x, y }) => `${x},${y}`;
     const isFree = ({ x, y }) => x >= 0 && x < SIZE && y >= 0 && y < SIZE
-      && !obstacles.has(`${x},${y}`);
+      && !obstacles.has(`${x},${y}`)
+      && !entities.some(entity => entity.id !== activeEntityId && entity.position.x === x && entity.position.y === y);
 
     function createObstacle(type) {
       const sprite = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -77,10 +139,47 @@
       return sprite;
     }
 
-    // Всё изменяемое состояние движения хранится здесь.
-    let position = { x: 8, y: 8 };
+    // HP постоянен между ходами; AP и MP — расходуемые ресурсы хода.
+    const character = {
+      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10,
+      maxAP: 2, ap: 2, maxMP: 5, mp: 5,
+      position: { x: 8, y: 8 }
+    };
+    const phoenix = {
+      id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8,
+      maxAP: 1, ap: 1, maxMP: 4, mp: 4,
+      position: { x: 12, y: 6 }
+    };
+    const entities = [character, phoenix];
+    let activeEntityId = character.id;
+    let hoveredEntityId = null;
+    // Источники наведения разделены: очередь имеет приоритет над полем.
+    let fieldHoveredEntityId = null;
+    let queueHoveredEntityId = null;
+    const turnOrder = document.getElementById('turn-order');
+    const turnSlots = new Map();
+    const endTurnButton = document.getElementById('end-turn');
     let stepQueue = [];
     let isMoving = false;
+    let highlightedCells = [];
+    let previewKey = null;
+
+    function clearHighlight() {
+      for (const cell of highlightedCells) {
+        cell.classList.remove('path-reachable', 'path-over-budget');
+      }
+      highlightedCells = [];
+      previewKey = null;
+    }
+
+    function highlightPath(path, mp) {
+      clearHighlight();
+      path.forEach((point, index) => {
+        const cell = cells[point.y * SIZE + point.x];
+        cell.classList.add(index < mp ? 'path-reachable' : 'path-over-budget');
+        highlightedCells.push(cell);
+      });
+    }
 
     const wizard = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     wizard.setAttribute('viewBox', '0 0 40 40');
@@ -98,6 +197,42 @@
       <path d="M32 35 L34 20" stroke="#ce9b56" stroke-width="2"/>
       <circle cx="34" cy="19" r="2.5" fill="#86e8ff"/>`;
 
+    character.svg = wizard;
+    phoenix.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    phoenix.svg.setAttribute('viewBox', '0 0 40 40');
+    phoenix.svg.setAttribute('class', 'phoenix');
+    phoenix.svg.setAttribute('role', 'img');
+    phoenix.svg.setAttribute('aria-label', phoenix.name);
+    phoenix.svg.innerHTML = `
+      <path d="M18 23 L10 37 L20 31 L24 39 L27 25" fill="#ff6326"/>
+      <path d="M19 22 Q5 25 2 6 L12 13 L9 3 L22 18
+               Q32 9 37 4 L35 18 L29 25 Z" fill="#ef482d" stroke="#ffb52e"/>
+      <path d="M20 14 Q15 19 18 28 L24 29 Q29 19 24 14 Z" fill="#ffbd35"/>
+      <circle cx="23" cy="12" r="5" fill="#ff8a2b"/>
+      <path d="M27 11 L33 14 L27 15 M20 8 L18 2 L25 7" fill="#ffe176"/>
+      <circle cx="25" cy="11" r="1" fill="#251d23"/>`;
+
+    for (const entity of entities) {
+      const slot = document.createElement('div');
+      slot.className = 'turn-slot';
+      slot.setAttribute('aria-label', entity.name);
+      slot.appendChild(entity.svg.cloneNode(true));
+      slot.addEventListener('mouseenter', () => {
+        queueHoveredEntityId = entity.id;
+        updatePanel();
+      });
+      slot.addEventListener('mouseleave', () => {
+        queueHoveredEntityId = null;
+        updatePanel();
+      });
+      turnSlots.set(entity.id, slot);
+      turnOrder.appendChild(slot);
+    }
+    turnOrder.addEventListener('mouseleave', () => {
+      queueHoveredEntityId = null;
+      updatePanel();
+    });
+
     for (let y = 0; y < SIZE; y++) {
       for (let x = 0; x < SIZE; x++) {
         const cell = document.createElement('div');
@@ -109,7 +244,6 @@
           cell.classList.add('blocked');
           cell.appendChild(createObstacle(type));
         }
-        cell.addEventListener('animationend', () => cell.classList.remove('unreachable'));
         battlefield.appendChild(cell);
         cells.push(cell);
       }
@@ -117,7 +251,9 @@
 
     function renderPosition() {
       // Перенос DOM-элемента мгновенный: никаких CSS-переходов.
-      cells[position.y * SIZE + position.x].appendChild(wizard);
+      for (const entity of entities) {
+        cells[entity.position.y * SIZE + entity.position.x].appendChild(entity.svg);
+      }
     }
 
     function buildPath(start, target) {
@@ -155,8 +291,55 @@
       return null; // Свободная цель может быть отрезана препятствиями.
     }
 
+    function updatePanel() {
+      hoveredEntityId = queueHoveredEntityId ?? fieldHoveredEntityId;
+      const displayed = entities.find(entity => entity.id === (hoveredEntityId ?? activeEntityId));
+      document.getElementById('character-name').textContent = displayed.name;
+      document.getElementById('hp').textContent = `HP: ${displayed.hp}`;
+      document.getElementById('ap').textContent = `AP: ${displayed.ap} / ${displayed.maxAP}`;
+      document.getElementById('mp').textContent = `MP: ${displayed.mp} / ${displayed.maxMP}`;
+      endTurnButton.disabled = isMoving || activeEntityId !== character.id;
+      for (const cell of cells) cell.classList.remove('entity-hover');
+      for (const entity of entities) {
+        const active = entity.id === activeEntityId;
+        turnSlots.get(entity.id).classList.toggle('active', active);
+        turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');
+        if (queueHoveredEntityId === entity.id) {
+          cells[entity.position.y * SIZE + entity.position.x].classList.add('entity-hover');
+        }
+      }
+    }
+
+    // Будущие действия используют эту проверку, чтобы не уйти в минус.
+    function spendAP(amount) {
+      if (isMoving || activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
+      character.ap -= amount;
+      updatePanel();
+      return true;
+    }
+
+    function beginTurn(entity) {
+      activeEntityId = entity.id;
+      entity.ap = entity.maxAP;
+      entity.mp = entity.maxMP;
+      clearHighlight();
+      updatePanel(); // HP не является ресурсом хода.
+    }
+
+    endTurnButton.addEventListener('click', () => {
+      if (isMoving || activeEntityId !== character.id) return;
+      beginTurn(phoenix);
+      // Феникс пока не действует: показываем его ход и пропускаем через 100 мс.
+      setTimeout(() => {
+        phoenix.ap = phoenix.maxAP;
+        phoenix.mp = phoenix.maxMP;
+        beginTurn(character);
+      }, 100);
+    });
+
     function takeStep() {
-      position = stepQueue.shift();
+      character.position = stepQueue.shift();
+      character.mp -= 1;
       renderPosition();
       if (stepQueue.length > 0) {
         setTimeout(takeStep, STEP_MS);
@@ -164,30 +347,61 @@
         isMoving = false;
         battlefield.classList.remove('moving');
       }
+      updatePanel();
     }
+
+    battlefield.addEventListener('mousemove', (event) => {
+      const cell = event.target.closest('.cell');
+      if (!cell || !battlefield.contains(cell)) {
+        fieldHoveredEntityId = null;
+        updatePanel();
+        clearHighlight(); // В том числе при наведении на промежуток сетки.
+        return;
+      }
+      const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
+      fieldHoveredEntityId = entities.find(entity => keyOf(entity.position) === keyOf(target))?.id ?? null;
+      updatePanel();
+      if (isMoving || activeEntityId !== character.id) return;
+      // Повторные события в одной клетке не запускают A* заново.
+      // Позиция и MP включены в ключ, чтобы не использовать устаревшее превью.
+      const key = `${keyOf(target)}:${keyOf(character.position)}:${character.mp}`;
+      if (previewKey === key) return;
+      clearHighlight();
+      if (isFree(target)) {
+        const path = buildPath(character.position, target);
+        if (path) highlightPath(path, character.mp);
+      }
+      previewKey = key;
+    });
+
+    battlefield.addEventListener('mouseleave', () => {
+      clearHighlight();
+      fieldHoveredEntityId = null;
+      updatePanel();
+    });
 
     battlefield.addEventListener('click', (event) => {
       // Новая цель не прерывает уже начатый маршрут.
-      if (isMoving) return;
+      if (isMoving || activeEntityId !== character.id) return;
       const cell = event.target.closest('.cell');
       if (!cell || !battlefield.contains(cell)) return;
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       if (!isFree(target)) return;
-      const path = buildPath(position, target);
-      if (path === null) {
-        cell.classList.remove('unreachable');
-        void cell.offsetWidth; // Перезапускаем сигнал при повторном клике.
-        cell.classList.add('unreachable');
-        return;
-      }
+      const path = buildPath(character.position, target);
+      // Недоступный маршрут игнорируем, сохраняя текущее превью.
+      if (character.mp === 0 || path === null || path.length > character.mp) return;
+      if (path.length === 0) return;
+      clearHighlight();
+      fieldHoveredEntityId = null;
       stepQueue = path;
-      if (stepQueue.length === 0) return;
       isMoving = true;
       battlefield.classList.add('moving');
+      updatePanel();
       setTimeout(takeStep, STEP_MS);
     });
 
     renderPosition();
+    updatePanel();
   </script>
 </body>
 </html>

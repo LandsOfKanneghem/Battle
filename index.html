@@ -93,7 +93,7 @@
     }
     #battlefield.moving .cell { cursor: wait; }
     .cell.blocked { cursor: not-allowed; }
-    .obstacle, .wizard, .phoenix { display: block; width: 100%; height: 100%; pointer-events: none; }
+    .obstacle, .wizard, .phoenix, .monk { display: block; width: 100%; height: 100%; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -150,21 +150,38 @@
 
     // HP постоянен между ходами; AP и MP — расходуемые ресурсы хода.
     const character = {
-      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10,
+      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10, spells: [],
       maxAP: 8, ap: 8, maxMP: 5, mp: 5,
       position: { x: 8, y: 8 }
     };
     const phoenix = {
-      id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8,
+      id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8, spells: [],
       maxAP: 1, ap: 1, maxMP: 4, mp: 4,
       position: { x: 3, y: 4 }
     };
     const secondPhoenix = {
-      id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8,
+      id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8, spells: [],
       maxAP: 1, ap: 1, maxMP: 4, mp: 4,
       position: { x: 7, y: 7 }
     };
-    const entities = [character, phoenix, secondPhoenix];
+    const monk = {
+      id: 'monk', name: 'Монах', type: 'monk', hp: 10, spells: [],
+      maxAP: 8, ap: 8, maxMP: 5, mp: 5,
+      position: { x: 7, y: 8 }
+    };
+    const entities = [character, phoenix, secondPhoenix, monk];
+    // Порядок ходов не зависит от порядка хранения и удаления существ.
+    const turnOrderIds = ['wizard', 'phoenix', 'monk', 'phoenix-2'];
+
+    function nextLivingEntity(afterId) {
+      const index = turnOrderIds.indexOf(afterId);
+      for (let offset = 1; offset <= turnOrderIds.length; offset++) {
+        const id = turnOrderIds[(index + offset) % turnOrderIds.length];
+        const entity = entities.find(item => item.id === id && item.hp > 0);
+        if (entity) return entity;
+      }
+      return null;
+    }
     let activeEntityId = character.id;
     let turnVersion = 0; // Защита от таймеров предыдущего хода.
     let hoveredEntityId = null;
@@ -180,7 +197,7 @@
     let rangeHighlightedCells = [];
     let previewKey = null;
 
-    const spells = [{
+    character.spells = [{
       id: 'fire-shot', name: 'Огненный выстрел', damage: 3,
       range: 6, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,
       cooldown: 0, maxCooldown: 0, isAOE: false, aoeSize: 1,
@@ -191,9 +208,17 @@
       cooldown: 0, maxCooldown: 2, isAOE: true, aoeSize: 3,
       svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24 Q0 14 8 3 L12 12 L20 1 L25 12 L34 4 Q42 19 35 31" fill="#f65a25"/><path d="M8 17 L20 10 L33 17 L33 31 L20 38 L8 31 Z" fill="#ff9d28" stroke="#ffdc36" stroke-width="2"/><path d="M8 17 L20 24 L33 17 M20 24 V38" fill="none" stroke="#ffe995" stroke-width="2"/></svg>`
     }];
+    // Все поля заклинания — примитивы, включая SVG-разметку, поэтому
+    // копия куба имеет независимые изменяемые cooldown и usesThisTurn.
+    monk.spells = [{ ...character.spells.find(spell => spell.id === 'fire-cube') }];
+
+    function activeEntity() {
+      return entities.find(entity => entity.id === activeEntityId);
+    }
+
     let preparedSpellId = null;
     const spellSlots = new Map();
-    for (const spell of spells) {
+    for (const spell of character.spells) {
       const slot = document.createElement('button');
       slot.type = 'button';
       slot.className = 'spell-slot';
@@ -208,15 +233,16 @@
       spellSlots.set(spell.id, slot);
       document.getElementById('spells').appendChild(slot);
     }
-    for (let i = spells.length; i < 16; i++) {
+    for (let i = character.spells.length; i < 16; i++) {
       const slot = document.createElement('div');
       slot.className = 'spell-slot';
       document.getElementById('spells').appendChild(slot);
     }
 
     function canPrepareSpell(spell) {
-      return !!spell && activeEntityId === character.id && !isMoving
-        && character.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
+      const caster = activeEntity();
+      return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !isMoving
+        && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
         && spell.cooldown === 0;
     }
 
@@ -260,10 +286,12 @@
     }
 
     function canTarget(target, spell) {
-      const distance = Math.abs(target.x - character.position.x) + Math.abs(target.y - character.position.y);
+      const caster = activeEntity();
+      if (!caster || !spell || !caster.spells.includes(spell)) return false;
+      const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
       return target.x >= 0 && target.x < SIZE && target.y >= 0 && target.y < SIZE
         && !obstacles.has(keyOf(target))
-        && distance >= 1 && distance <= spell.range && checkLOS(character.position, target);
+        && distance >= 1 && distance <= spell.range && checkLOS(caster.position, target);
     }
 
     function affectedCells(center, spell) {
@@ -279,7 +307,7 @@
 
     function highlightSpellRange(center = null) {
       clearHighlight();
-      const spell = spells.find(item => item.id === preparedSpellId);
+      const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
       if (!spell) return;
       // Зелёный фон — допустимые центры; голубая обводка — зона удара.
       for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
@@ -310,17 +338,18 @@
 
     function castSpell(targetCell) {
       const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
-      const spell = spells.find(item => item.id === preparedSpellId);
+      const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
       if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
+      const caster = activeEntity();
       const area = new Set(affectedCells(target, spell).map(keyOf));
       for (const victim of entities) {
-        if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== character.id)) {
+        if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)) {
           victim.hp = Math.max(0, victim.hp - spell.damage);
         }
       }
-      // Оплачиваем каст до удаления погибших: АОЕ может убить самого волшебника
+      // Оплачиваем каст до удаления погибших: АОЕ может убить самого заклинателя
       // и немедленно передать ход следующему участнику.
-      character.ap -= spell.apCost;
+      caster.ap -= spell.apCost;
       spell.usesThisTurn++;
       spell.cooldown = spell.maxCooldown;
       cancelSpell();
@@ -331,9 +360,6 @@
     function removeDefeatedEntities() {
       const activeIndex = entities.findIndex(entity => entity.id === activeEntityId);
       const activeDied = activeIndex !== -1 && entities[activeIndex].hp <= 0;
-      // Выбираем следующего выжившего в исходном порядке, включая переход через конец.
-      const successor = activeDied ? entities.slice(activeIndex + 1)
-        .concat(entities.slice(0, activeIndex)).find(entity => entity.hp > 0) : null;
       // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
       for (let i = entities.length - 1; i >= 0; i--) {
         const entity = entities[i];
@@ -350,7 +376,7 @@
         isMoving = false;
         stepQueue = [];
         battlefield.classList.remove('moving');
-        beginTurn(successor); // Смена активного участника происходит сразу.
+        beginTurn(nextLivingEntity(activeEntityId)); // Смена активного участника происходит сразу.
       } else {
         updatePanel();
       }
@@ -416,7 +442,23 @@
     secondPhoenix.svg = phoenix.svg.cloneNode(true);
     secondPhoenix.svg.setAttribute('aria-label', secondPhoenix.name);
 
-    for (const entity of entities) {
+    monk.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    monk.svg.setAttribute('viewBox', '0 0 40 40');
+    monk.svg.setAttribute('class', 'monk');
+    monk.svg.setAttribute('role', 'img');
+    monk.svg.setAttribute('aria-label', monk.name);
+    monk.svg.innerHTML = `
+      <path d="M10 37 L14 21 L26 21 L31 37 Z" fill="#b86028" stroke="#713c22"/>
+      <path d="M15 22 L25 35 M25 22 L15 35" stroke="#e7a34a" stroke-width="3"/>
+      <circle cx="20" cy="13" r="7" fill="#f1be8d"/>
+      <circle cx="18" cy="13" r="1" fill="#30241e"/>
+      <circle cx="23" cy="13" r="1" fill="#30241e"/>
+      <path d="M12 27 L20 29 L28 27" fill="none" stroke="#f1be8d" stroke-width="3"/>
+      <path d="M33 36 V10" stroke="#bc9159" stroke-width="2"/>`;
+
+    for (const id of turnOrderIds) {
+      const entity = entities.find(item => item.id === id);
+      if (!entity) continue;
       const slot = document.createElement('div');
       slot.className = 'turn-slot';
       slot.setAttribute('aria-label', entity.name);
@@ -502,12 +544,15 @@
       document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp}` : '—';
       document.getElementById('ap').textContent = displayed ? `AP: ${displayed.ap} / ${displayed.maxAP}` : '—';
       document.getElementById('mp').textContent = displayed ? `MP: ${displayed.mp} / ${displayed.maxMP}` : '—';
-      endTurnButton.disabled = !displayed || isMoving || activeEntityId !== character.id;
-      for (const spell of spells) {
+      endTurnButton.disabled = !displayed || isMoving || ![character.id, monk.id].includes(activeEntityId);
+      // Пока отображаем только слоты волшебника. Чужие заклинания
+      // с тем же ID не делают их доступными: проверяется сам объект.
+      for (const spell of character.spells) {
         const slot = spellSlots.get(spell.id);
+        slot.innerHTML = entities.includes(character) ? spell.svg : '';
         slot.disabled = !displayed || !canPrepareSpell(spell);
-        slot.classList.toggle('prepared', preparedSpellId === spell.id);
-        slot.setAttribute('aria-pressed', preparedSpellId === spell.id ? 'true' : 'false');
+        slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
+        slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');
         slot.title = `${spell.name} · урон ${spell.damage} · ${spell.isAOE ? 'АОЕ 3×3' : 'одна цель'} · дальность 1–${spell.range} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований`;
       }
       for (const cell of cells) cell.classList.remove('entity-hover');
@@ -530,9 +575,9 @@
     }
 
     function beginTurn(entity) {
-      // Удалённого участника заменяем текущим живым или первым в очереди.
+      // Если участник удалён, выбираем следующего живого по фиксированной очереди.
       if (entities.indexOf(entity) === -1) {
-        entity = entities.find(item => item.id === activeEntityId) ?? entities[0];
+        entity = nextLivingEntity(activeEntityId);
       }
       const version = ++turnVersion;
       preparedSpellId = null;
@@ -542,11 +587,10 @@
         updatePanel();
         return;
       }
-      if (entity.id === character.id) {
-        for (const spell of spells) {
-          spell.usesThisTurn = 0;
-          spell.cooldown = Math.max(0, spell.cooldown - 1);
-        }
+      // Начало личного хода обновляет только заклинания этого участника.
+      for (const spell of entity.spells) {
+        spell.usesThisTurn = 0;
+        spell.cooldown = Math.max(0, spell.cooldown - 1);
       }
       activeEntityId = entity.id;
       entity.ap = entity.maxAP;
@@ -560,27 +604,32 @@
           if (version !== turnVersion) return;
           const index = entities.indexOf(entity);
           if (index === -1) {
-            beginTurn(entities.find(item => item.id === activeEntityId) ?? entities[0]);
+            beginTurn(nextLivingEntity(activeEntityId));
             return;
           }
           entity.ap = entity.maxAP;
           entity.mp = entity.maxMP;
-          const nextIndex = (entities.indexOf(entity) + 1) % entities.length;
-          beginTurn(entities[nextIndex]);
+          beginTurn(nextLivingEntity(entity.id));
         }, 100);
       }
     }
 
     endTurnButton.addEventListener('click', () => {
-      if (isMoving || activeEntityId !== character.id) return;
-      const nextIndex = (entities.findIndex(entity => entity.id === activeEntityId) + 1) % entities.length;
-      beginTurn(entities[nextIndex]);
+      if (isMoving || ![character.id, monk.id].includes(activeEntityId)) return;
+      beginTurn(nextLivingEntity(activeEntityId));
     });
 
+    // Двигаться могут союзники; фениксы пока только пропускают ход.
+    function activeMover() {
+      return entities.find(entity => entity.id === activeEntityId && entity.hp > 0
+        && (entity.type === 'wizard' || entity.type === 'monk'));
+    }
+
     function takeStep() {
-      if (!isMoving || activeEntityId !== character.id || !entities.includes(character)) return;
-      character.position = stepQueue.shift();
-      character.mp -= 1;
+      const mover = activeMover();
+      if (!isMoving || !mover || mover.mp <= 0) return;
+      mover.position = stepQueue.shift();
+      mover.mp -= 1;
       renderPosition();
       if (stepQueue.length > 0) {
         setTimeout(takeStep, STEP_MS);
@@ -603,10 +652,11 @@
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       fieldHoveredEntityId = entities.find(entity => keyOf(entity.position) === keyOf(target))?.id ?? null;
       updatePanel();
-      if (isMoving || activeEntityId !== character.id) return;
+      const mover = activeMover();
+      if (isMoving || !mover) return;
       if (preparedSpellId) {
-        const spell = spells.find(item => item.id === preparedSpellId);
-        if (spell.isAOE) {
+        const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
+        if (spell?.isAOE) {
           const key = `aoe:${keyOf(target)}`;
           if (previewKey !== key) {
             highlightSpellRange(canTarget(target, spell) ? target : null);
@@ -617,12 +667,12 @@
       }
       // Повторные события в одной клетке не запускают A* заново.
       // Позиция и MP включены в ключ, чтобы не использовать устаревшее превью.
-      const key = `${keyOf(target)}:${keyOf(character.position)}:${character.mp}`;
+      const key = `${mover.id}:${keyOf(target)}:${keyOf(mover.position)}:${mover.mp}`;
       if (previewKey === key) return;
       clearHighlight();
       if (isFree(target)) {
-        const path = buildPath(character.position, target);
-        if (path) highlightPath(path, character.mp);
+        const path = buildPath(mover.position, target);
+        if (path) highlightPath(path, mover.mp);
       }
       previewKey = key;
     });
@@ -636,7 +686,8 @@
 
     battlefield.addEventListener('click', (event) => {
       // Новая цель не прерывает уже начатый маршрут.
-      if (isMoving || activeEntityId !== character.id) return;
+      const mover = activeMover();
+      if (isMoving || !mover) return;
       const cell = event.target.closest('.cell');
       if (!cell || !battlefield.contains(cell)) return;
       if (preparedSpellId) {
@@ -645,9 +696,9 @@
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       if (!isFree(target)) return;
-      const path = buildPath(character.position, target);
+      const path = buildPath(mover.position, target);
       // Недоступный маршрут игнорируем, сохраняя текущее превью.
-      if (character.mp === 0 || path === null || path.length > character.mp) return;
+      if (mover.mp === 0 || path === null || path.length > mover.mp) return;
       if (path.length === 0) return;
       clearHighlight();
       fieldHoveredEntityId = null;

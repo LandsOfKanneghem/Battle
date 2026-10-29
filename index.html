@@ -150,22 +150,22 @@
 
     // HP постоянен между ходами; AP и MP — расходуемые ресурсы хода.
     const character = {
-      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10, spells: [],
+      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10, maxHP: 10, spells: [],
       maxAP: 8, ap: 8, maxMP: 5, mp: 5,
       position: { x: 8, y: 8 }
     };
     const phoenix = {
-      id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8, spells: [],
+      id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8, maxHP: 8, spells: [],
       maxAP: 1, ap: 1, maxMP: 4, mp: 4,
       position: { x: 3, y: 4 }
     };
     const secondPhoenix = {
-      id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8, spells: [],
+      id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8, maxHP: 8, spells: [],
       maxAP: 1, ap: 1, maxMP: 4, mp: 4,
       position: { x: 7, y: 7 }
     };
     const monk = {
-      id: 'monk', name: 'Монах', type: 'monk', hp: 10, spells: [],
+      id: 'monk', name: 'Монах', type: 'monk', hp: 10, maxHP: 10, spells: [],
       maxAP: 8, ap: 8, maxMP: 5, mp: 5,
       position: { x: 7, y: 8 }
     };
@@ -210,7 +210,13 @@
     }];
     // Все поля заклинания — примитивы, включая SVG-разметку, поэтому
     // копия куба имеет независимые изменяемые cooldown и usesThisTurn.
-    monk.spells = [{ ...character.spells.find(spell => spell.id === 'fire-cube') }];
+    monk.spells = [{ ...character.spells.find(spell => spell.id === 'fire-cube') }, {
+      id: 'heal', name: 'Лечение', healAmount: 5, isHeal: true,
+      range: 5, minRange: 0, apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0,
+      // Одноклеточная зона использует те же два слоя подсветки, что и куб.
+      cooldown: 0, maxCooldown: 1, isAOE: true, aoeSize: 1,
+      svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="#164a36" stroke="#83efac"/><path d="M15 8 H25 V15 H32 V25 H25 V32 H15 V25 H8 V15 H15 Z" fill="#74ef9e"/></svg>`
+    }];
 
     function activeEntity() {
       return entities.find(entity => entity.id === activeEntityId);
@@ -218,25 +224,32 @@
 
     let preparedSpellId = null;
     const spellSlots = new Map();
-    for (const spell of character.spells) {
-      const slot = document.createElement('button');
-      slot.type = 'button';
-      slot.className = 'spell-slot';
-      slot.innerHTML = spell.svg;
-      slot.setAttribute('aria-label', spell.name);
-      slot.addEventListener('click', () => {
-        if (!canPrepareSpell(spell)) return;
-        preparedSpellId = spell.id;
-        highlightSpellRange();
-        updatePanel();
-      });
-      spellSlots.set(spell.id, slot);
-      document.getElementById('spells').appendChild(slot);
-    }
-    for (let i = character.spells.length; i < 16; i++) {
-      const slot = document.createElement('div');
-      slot.className = 'spell-slot';
-      document.getElementById('spells').appendChild(slot);
+    // Ключ — объект, поэтому одноимённые кубы разных владельцев не пересекаются.
+    function renderSpellPanel() {
+      document.getElementById('spells').replaceChildren();
+      spellSlots.clear();
+      const currentSpells = activeEntity()?.spells ?? [];
+      for (const spell of currentSpells) {
+        const slot = document.createElement('button');
+        slot.type = 'button';
+        slot.className = 'spell-slot';
+        slot.innerHTML = spell.svg;
+        slot.setAttribute('aria-label', spell.name);
+        slot.addEventListener('click', () => {
+          if (!canPrepareSpell(spell)) return;
+          preparedSpellId = spell.id;
+          highlightSpellRange();
+          updatePanel();
+        });
+        spellSlots.set(spell, slot);
+        document.getElementById('spells').appendChild(slot);
+      }
+      for (let i = currentSpells.length; i < 16; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'spell-slot';
+        document.getElementById('spells').appendChild(slot);
+      }
+
     }
 
     function canPrepareSpell(spell) {
@@ -285,13 +298,24 @@
       return true;
     }
 
-    function canTarget(target, spell) {
+    function inSpellReach(target, spell) {
       const caster = activeEntity();
       if (!caster || !spell || !caster.spells.includes(spell)) return false;
       const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
       return target.x >= 0 && target.x < SIZE && target.y >= 0 && target.y < SIZE
-        && !obstacles.has(keyOf(target))
-        && distance >= 1 && distance <= spell.range && checkLOS(caster.position, target);
+        && (spell.isHeal || !obstacles.has(keyOf(target)))
+        && distance >= (spell.isHeal ? 0 : (spell.minRange ?? 1)) && distance <= spell.range
+        && (distance === 0 || checkLOS(caster.position, target));
+    }
+
+    const isAlly = entity => entity.type === 'wizard' || entity.type === 'monk';
+
+    function canTarget(target, spell) {
+      // Лечение допускает живого союзника, включая самого заклинателя.
+      // Проверка дальности/LOS общая с кастом; вид клетки не исключает союзника.
+      if (spell?.isHeal && !entities.some(entity => entity.hp > 0 && isAlly(entity)
+        && keyOf(entity.position) === keyOf(target))) return false;
+      return inSpellReach(target, spell);
     }
 
     function affectedCells(center, spell) {
@@ -313,13 +337,9 @@
       for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
         if (!canTarget({ x, y }, spell)) continue;
         const cell = cells[y * SIZE + x];
-        if (spell.isAOE) {
-          cell.classList.add('spell-range');
-          rangeHighlightedCells.push(cell);
-        } else {
-          cell.classList.add('path-reachable');
-          highlightedCells.push(cell);
-        }
+        // Все АОЕ, включая лечение 1×1, используют одинаковые слои.
+        cell.classList.add(spell.isAOE ? 'spell-range' : 'path-reachable');
+        (spell.isAOE ? rangeHighlightedCells : highlightedCells).push(cell);
       }
       if (spell.isAOE && center && canTarget(center, spell)) {
         for (const point of affectedCells(center, spell)) {
@@ -339,12 +359,25 @@
     function castSpell(targetCell) {
       const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
       const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
-      if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
+      if (!canPrepareSpell(spell)) return false;
+      const healTarget = spell.isHeal
+        ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
+      // Враг в пределах дальности и LOS тратит лечение без эффекта.
+      // Пустая клетка, отсутствие LOS и выход за дальность не тратят ничего.
+      if (spell.isHeal) {
+        if (!healTarget || !inSpellReach(target, spell)) return false;
+      } else if (!canTarget(target, spell)) return false;
       const caster = activeEntity();
-      const area = new Set(affectedCells(target, spell).map(keyOf));
-      for (const victim of entities) {
-        if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)) {
-          victim.hp = Math.max(0, victim.hp - spell.damage);
+      if (spell.isHeal) {
+        if (isAlly(healTarget)) {
+          healTarget.hp = Math.min(healTarget.maxHP ?? healTarget.hp, healTarget.hp + spell.healAmount);
+        }
+      } else {
+        const area = new Set(affectedCells(target, spell).map(keyOf));
+        for (const victim of entities) {
+          if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)) {
+            victim.hp = Math.max(0, victim.hp - spell.damage);
+          }
         }
       }
       // Оплачиваем каст до удаления погибших: АОЕ может убить самого заклинателя
@@ -541,19 +574,17 @@
       hoveredEntityId = queueHoveredEntityId ?? fieldHoveredEntityId;
       const displayed = entities.find(entity => entity.id === (hoveredEntityId ?? activeEntityId));
       document.getElementById('character-name').textContent = displayed?.name ?? '—';
-      document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp}` : '—';
+      document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp} / ${displayed.maxHP}` : '—';
       document.getElementById('ap').textContent = displayed ? `AP: ${displayed.ap} / ${displayed.maxAP}` : '—';
       document.getElementById('mp').textContent = displayed ? `MP: ${displayed.mp} / ${displayed.maxMP}` : '—';
       endTurnButton.disabled = !displayed || isMoving || ![character.id, monk.id].includes(activeEntityId);
-      // Пока отображаем только слоты волшебника. Чужие заклинания
-      // с тем же ID не делают их доступными: проверяется сам объект.
-      for (const spell of character.spells) {
-        const slot = spellSlots.get(spell.id);
-        slot.innerHTML = entities.includes(character) ? spell.svg : '';
+      // Характеристики учитывают наведение, заклинания — только активного участника.
+      for (const spell of activeEntity()?.spells ?? []) {
+        const slot = spellSlots.get(spell);
         slot.disabled = !displayed || !canPrepareSpell(spell);
         slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
         slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');
-        slot.title = `${spell.name} · урон ${spell.damage} · ${spell.isAOE ? 'АОЕ 3×3' : 'одна цель'} · дальность 1–${spell.range} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований`;
+        slot.title = `${spell.name} · ${spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}`} · ${spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${spell.range} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований`;
       }
       for (const cell of cells) cell.classList.remove('entity-hover');
       for (const entity of entities) {
@@ -583,6 +614,7 @@
       preparedSpellId = null;
       if (!entity) {
         activeEntityId = null;
+        renderSpellPanel();
         clearHighlight();
         updatePanel();
         return;
@@ -593,6 +625,7 @@
         spell.cooldown = Math.max(0, spell.cooldown - 1);
       }
       activeEntityId = entity.id;
+      renderSpellPanel();
       entity.ap = entity.maxAP;
       entity.mp = entity.maxMP;
       clearHighlight();
@@ -710,6 +743,7 @@
     });
 
     renderPosition();
+    renderSpellPanel();
     updatePanel();
   </script>
 </body>

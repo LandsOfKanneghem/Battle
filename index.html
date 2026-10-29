@@ -77,6 +77,8 @@
       .stats { grid-template-columns: repeat(3, auto); gap: 8px; margin-bottom: 10px; }
     }
     .cell {
+      position: relative;
+      isolation: isolate;
       min-width: 0;
       min-height: 0;
       background: #30343b;
@@ -84,11 +86,24 @@
     }
     .cell:hover { background: #424954; }
     /* Цвет лежит в фоне клетки, под SVG и внутри линий сетки. */
-    .cell.spell-aoe { box-shadow: inset 0 0 0 2px rgba(100, 200, 255, 0.8); }
-    .cell.spell-range, .cell.path-reachable {
+    .terrain { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+    .terrain svg { display: block; width: 100%; height: 100%; }
+    /* Поверх поверхности, но под существами: прозрачная заливка не скрывает SVG. */
+    .cell::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    #battlefield .obstacle, #battlefield .wizard, #battlefield .phoenix, #battlefield .monk {
+      position: absolute; inset: 0; z-index: 3;
+    }
+    .path-cost {
+      position: absolute; top: 1px; right: 1px; z-index: 2;
+      color: #edb4ff; background: rgba(26, 12, 40, .85); border-radius: 3px;
+      padding: 0 3px; font-size: clamp(9px, 1.4vmin, 14px); line-height: 1.3;
+      font-weight: 700; pointer-events: none;
+    }
+    .cell.spell-aoe::after { box-shadow: inset 0 0 0 2px rgba(100, 200, 255, 0.8); }
+    .cell.spell-range::after, .cell.path-reachable::after {
       background-image: linear-gradient(rgba(80, 220, 120, 0.35), rgba(80, 220, 120, 0.35));
     }
-    .cell.path-over-budget {
+    .cell.path-over-budget::after {
       background-image: linear-gradient(rgba(220, 80, 80, 0.35), rgba(220, 80, 80, 0.35));
     }
     #battlefield.moving .cell { cursor: wait; }
@@ -118,33 +133,47 @@
     const STEP_MS = 90;
     const battlefield = document.getElementById('battlefield');
     const cells = [];
-    // Карта препятствий: ключ — координаты, значение — тип объекта.
+    // Полная карта поверхностей независима от ящиков.
+    const terrain = new Map();
+    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+      terrain.set(`${x},${y}`, x >= 9 && x <= 12 && y >= 5 && y <= 11 ? 'sand' : 'grass');
+    }
+    const waterCells = [[5,7], [5,8], [6,8], [10,12], [11,12]];
+    // Остров (14,14): восемь водных клеток делают его недоступным пешком.
+    for (let y = 13; y <= 15; y++) for (let x = 13; x <= 15; x++) {
+      if (x !== 14 || y !== 14) waterCells.push([x, y]);
+    }
+    for (const [x,y] of waterCells) terrain.set(`${x},${y}`, 'deep-water');
     const obstacles = new Map([
       ['3,3', 'crate'], ['4,4', 'crate'], ['7,6', 'crate'],
-      ['11,10', 'crate'], ['12,4', 'crate'], ['4,12', 'crate'],
-      ['5,7', 'water'], ['5,8', 'water'], ['6,8', 'water'],
-      ['10,12', 'water'], ['11,12', 'water']
+      ['11,10', 'crate'], ['12,4', 'crate'], ['4,12', 'crate'], ['15,15', 'crate']
     ]);
     const keyOf = ({ x, y }) => `${x},${y}`;
+    const entryCost = point => ({ grass: 1, sand: 2, 'deep-water': Infinity })[terrain.get(keyOf(point))] ?? Infinity;
+    const pathCost = path => path.reduce((cost, point) => cost + entryCost(point), 0);
     const isFree = ({ x, y }) => x >= 0 && x < SIZE && y >= 0 && y < SIZE
-      && !obstacles.has(`${x},${y}`)
+      && Number.isFinite(entryCost({ x, y })) && obstacles.get(`${x},${y}`) !== 'crate'
       && !entities.some(entity => entity.id !== activeEntityId && entity.position.x === x && entity.position.y === y);
 
-    function createObstacle(type) {
+    const terrainArt = {
+      grass: `<rect width="40" height="40" fill="#304c36"/><path d="M7 15 L5 10 M7 15 L9 8 M27 32 L25 26 M27 32 L30 24 M19 12 V7" stroke="#62825a" fill="none"/>`,
+      sand: `<rect width="40" height="40" fill="#a18b59"/><path d="M5 12 Q10 9 15 12 M23 29 Q28 26 35 29" stroke="#d4bd82" fill="none"/><g fill="#77623b"><circle cx="25" cy="8" r="1"/><circle cx="10" cy="30" r="1"/><circle cx="20" cy="20" r="1"/></g>`,
+      'deep-water': `<rect width="40" height="40" fill="#1251a0"/><path d="M3 10 Q7 6 11 10 T19 10 T27 10 T37 10 M3 21 Q7 17 11 21 T19 21 T27 21 T37 21 M3 32 Q7 28 11 32 T19 32 T27 32 T37 32" fill="none" stroke="#6ecfff" stroke-width="2"/>`
+    };
+    function createTerrain(type) {
+      const layer = document.createElement('div');
+      layer.className = 'terrain';
+      layer.setAttribute('aria-hidden', 'true');
+      layer.innerHTML = `<svg viewBox="0 0 40 40" preserveAspectRatio="none">${terrainArt[type]}</svg>`;
+      return layer;
+    }
+    function createObstacle() {
       const sprite = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       sprite.setAttribute('viewBox', '0 0 40 40');
       sprite.setAttribute('class', 'obstacle');
       sprite.setAttribute('role', 'img');
-      sprite.setAttribute('aria-label', type === 'crate' ? 'Ящик' : 'Глубокая вода');
-      sprite.innerHTML = type === 'crate' ? `
-        <rect x="4" y="4" width="32" height="32" rx="2" fill="#925c32" stroke="#d5a36a" stroke-width="2"/>
-        <path d="M6 13 H34 M6 26 H34" stroke="#57351e" stroke-width="2"/>
-        <path d="M7 7 L33 33 M33 7 L7 33" stroke="#d5a36a" stroke-width="4"/>` : `
-        <rect x="1" y="1" width="38" height="38" fill="#1251a0"/>
-        <path d="M4 10 Q8 6 12 10 T20 10 T28 10 T36 10
-                 M4 21 Q8 17 12 21 T20 21 T28 21 T36 21
-                 M4 32 Q8 28 12 32 T20 32 T28 32 T36 32"
-              fill="none" stroke="#6ecfff" stroke-width="2"/>`;
+      sprite.setAttribute('aria-label', 'Ящик');
+      sprite.innerHTML = `<rect x="4" y="4" width="32" height="32" rx="2" fill="#925c32" stroke="#d5a36a" stroke-width="2"/><path d="M6 13 H34 M6 26 H34" stroke="#57351e" stroke-width="2"/><path d="M7 7 L33 33 M33 7 L7 33" stroke="#d5a36a" stroke-width="4"/>`;
       return sprite;
     }
 
@@ -196,6 +225,8 @@
     let highlightedCells = [];
     let rangeHighlightedCells = [];
     let previewKey = null;
+    const costLabel = document.createElement('span');
+    costLabel.className = 'path-cost';
 
     character.spells = [{
       id: 'fire-shot', name: 'Огненный выстрел', damage: 3,
@@ -423,13 +454,16 @@
       for (const cell of rangeHighlightedCells) cell.classList.remove('spell-range');
       rangeHighlightedCells = [];
       previewKey = null;
+      costLabel.remove();
     }
 
     function highlightPath(path, mp) {
       clearHighlight();
-      path.forEach((point, index) => {
+      let cost = 0;
+      path.forEach(point => {
+        cost += entryCost(point);
         const cell = cells[point.y * SIZE + point.x];
-        cell.classList.add(index < mp ? 'path-reachable' : 'path-over-budget');
+        cell.classList.add(cost <= mp ? 'path-reachable' : 'path-over-budget');
         highlightedCells.push(cell);
       });
     }
@@ -512,6 +546,9 @@
         cell.className = 'cell';
         cell.dataset.x = x;
         cell.dataset.y = y;
+        cell.dataset.terrain = terrain.get(`${x},${y}`);
+        cell.appendChild(createTerrain(cell.dataset.terrain));
+        if (cell.dataset.terrain === 'deep-water') cell.classList.add('blocked');
         const type = obstacles.get(`${x},${y}`);
         if (type) {
           cell.classList.add('blocked');
@@ -536,7 +573,7 @@
       const bestCost = new Map([[keyOf(start), 0]]);
       const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
 
-      // A*: стоимость шага равна 1, эвристика — манхэттенское расстояние.
+      // A*: g учитывает вход на поверхность, h — Манхэттен (минимальная цена шага 1).
       // Чередование осей влияет только на выбор среди равных оценок,
       // поэтому не мешает находить кратчайшие обходные маршруты.
       while (open.length > 0) {
@@ -553,7 +590,7 @@
         for (const [dx, dy] of directions) {
           const next = { x: current.x + dx, y: current.y + dy };
           if (!isFree(next)) continue;
-          const g = current.g + 1;
+          const g = current.g + entryCost(next);
           if (g >= (bestCost.get(keyOf(next)) ?? Infinity)) continue;
           bestCost.set(keyOf(next), g);
           const axis = dx ? 'x' : 'y';
@@ -654,9 +691,17 @@
 
     function takeStep() {
       const mover = activeMover();
-      if (!isMoving || !mover || mover.mp <= 0) return;
+      if (!isMoving || !mover || stepQueue.length === 0) return;
+      const next = stepQueue[0];
+      if (entryCost(next) > mover.mp) {
+        stepQueue = [];
+        isMoving = false;
+        battlefield.classList.remove('moving');
+        updatePanel();
+        return;
+      }
       mover.position = stepQueue.shift();
-      mover.mp -= 1;
+      mover.mp -= entryCost(mover.position);
       renderPosition();
       if (stepQueue.length > 0) {
         setTimeout(takeStep, STEP_MS);
@@ -697,10 +742,16 @@
       const key = `${mover.id}:${keyOf(target)}:${keyOf(mover.position)}:${mover.mp}`;
       if (previewKey === key) return;
       clearHighlight();
-      if (isFree(target)) {
-        const path = buildPath(mover.position, target);
-        if (path) highlightPath(path, mover.mp);
+      // Стоимость нужна только для свободного места назначения.
+      // Даже свой персонаж занимает клетку: число под ним не показываем.
+      if (!isFree(target) || entities.some(entity => keyOf(entity.position) === keyOf(target))) {
+        previewKey = key;
+        return;
       }
+      const path = buildPath(mover.position, target);
+      if (path) highlightPath(path, mover.mp);
+      costLabel.textContent = path === null ? '∞' : String(pathCost(path));
+      cell.appendChild(costLabel);
       previewKey = key;
     });
 
@@ -725,7 +776,7 @@
       if (!isFree(target)) return;
       const path = buildPath(mover.position, target);
       // Недоступный маршрут игнорируем, сохраняя текущее превью.
-      if (mover.mp === 0 || path === null || path.length > mover.mp) return;
+      if (mover.mp === 0 || path === null || pathCost(path) > mover.mp) return;
       if (path.length === 0) return;
       clearHighlight();
       fieldHoveredEntityId = null;

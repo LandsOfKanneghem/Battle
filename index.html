@@ -311,10 +311,8 @@
     const isAlly = entity => entity.type === 'wizard' || entity.type === 'monk';
 
     function canTarget(target, spell) {
-      // Лечение допускает живого союзника, включая самого заклинателя.
-      // Проверка дальности/LOS общая с кастом; вид клетки не исключает союзника.
-      if (spell?.isHeal && !entities.some(entity => entity.hp > 0 && isAlly(entity)
-        && keyOf(entity.position) === keyOf(target))) return false;
+      // Доступность клетки не зависит от наличия существа: эффект
+      // определяется отдельно при касте (в том числе лечение в пустоту).
       return inSpellReach(target, spell);
     }
 
@@ -337,11 +335,11 @@
       for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
         if (!canTarget({ x, y }, spell)) continue;
         const cell = cells[y * SIZE + x];
-        // Все АОЕ, включая лечение 1×1, используют одинаковые слои.
-        cell.classList.add(spell.isAOE ? 'spell-range' : 'path-reachable');
-        (spell.isAOE ? rangeHighlightedCells : highlightedCells).push(cell);
+        // Дальность одинакова для всех заклинаний; размер зоны задаёт aoeSize.
+        cell.classList.add('spell-range');
+        rangeHighlightedCells.push(cell);
       }
-      if (spell.isAOE && center && canTarget(center, spell)) {
+      if (center && canTarget(center, spell)) {
         for (const point of affectedCells(center, spell)) {
           const cell = cells[point.y * SIZE + point.x];
           cell.classList.add('spell-aoe');
@@ -359,17 +357,13 @@
     function castSpell(targetCell) {
       const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
       const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
-      if (!canPrepareSpell(spell)) return false;
+      if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
       const healTarget = spell.isHeal
         ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
-      // Враг в пределах дальности и LOS тратит лечение без эффекта.
-      // Пустая клетка, отсутствие LOS и выход за дальность не тратят ничего.
-      if (spell.isHeal) {
-        if (!healTarget || !inSpellReach(target, spell)) return false;
-      } else if (!canTarget(target, spell)) return false;
+      // Лечение пустой клетки или врага оплачивается как обычный каст без эффекта.
       const caster = activeEntity();
       if (spell.isHeal) {
-        if (isAlly(healTarget)) {
+        if (healTarget && isAlly(healTarget)) {
           healTarget.hp = Math.min(healTarget.maxHP ?? healTarget.hp, healTarget.hp + spell.healAmount);
         }
       } else {
@@ -689,8 +683,8 @@
       if (isMoving || !mover) return;
       if (preparedSpellId) {
         const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
-        if (spell?.isAOE) {
-          const key = `aoe:${keyOf(target)}`;
+        if (spell) {
+          const key = `spell:${keyOf(target)}`;
           if (previewKey !== key) {
             highlightSpellRange(canTarget(target, spell) ? target : null);
             previewKey = key;

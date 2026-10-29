@@ -99,6 +99,14 @@
       padding: 0 3px; font-size: clamp(9px, 1.4vmin, 14px); line-height: 1.3;
       font-weight: 700; pointer-events: none;
     }
+    .effect-preview {
+      position: absolute; top: 1px; right: 1px; z-index: 4;
+      padding: 0 3px; border-radius: 3px; background: rgba(20, 20, 25, .85);
+      font-size: clamp(9px, 1.4vmin, 14px); line-height: 1.3;
+      font-weight: 700; pointer-events: none;
+    }
+    .effect-preview.damage { color: #ff8585; }
+    .effect-preview.heal { color: #83efac; }
     .cell.spell-aoe::after { box-shadow: inset 0 0 0 2px rgba(100, 200, 255, 0.8); }
     .cell.spell-range::after, .cell.path-reachable::after {
       background-image: linear-gradient(rgba(80, 220, 120, 0.35), rgba(80, 220, 120, 0.35));
@@ -224,6 +232,7 @@
     let isMoving = false;
     let highlightedCells = [];
     let rangeHighlightedCells = [];
+    let effectBadges = [];
     let previewKey = null;
     const costLabel = document.createElement('span');
     costLabel.className = 'path-cost';
@@ -371,11 +380,27 @@
         rangeHighlightedCells.push(cell);
       }
       if (center && canTarget(center, spell)) {
-        for (const point of affectedCells(center, spell)) {
+        const area = affectedCells(center, spell);
+        for (const point of area) {
           const cell = cells[point.y * SIZE + point.x];
           cell.classList.add('spell-aoe');
           highlightedCells.push(cell);
         }
+        showEffectPreview(area, spell);
+      }
+    }
+
+    function showEffectPreview(area, spell) {
+      const keys = new Set(area.map(keyOf));
+      for (const entity of entities) {
+        if (entity.hp <= 0 || !keys.has(keyOf(entity.position))) continue;
+        if (spell.isHeal && !isAlly(entity)) continue;
+        // Показываем полную величину эффекта, не ограничивая её текущим HP.
+        const badge = document.createElement('span');
+        badge.className = `effect-preview ${spell.isHeal ? 'heal' : 'damage'}`;
+        badge.textContent = spell.isHeal ? `+${spell.healAmount}` : `-${spell.damage}`;
+        cells[entity.position.y * SIZE + entity.position.x].appendChild(badge);
+        effectBadges.push(badge);
       }
     }
 
@@ -390,13 +415,14 @@
       const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
       if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
       const healTarget = spell.isHeal
-        ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
-      // Лечение пустой клетки или врага оплачивается как обычный каст без эффекта.
+        ? entities.find(entity => entity.hp > 0 && isAlly(entity)
+          && keyOf(entity.position) === keyOf(target)) : null;
+      // Дальность подсвечивается целиком, но лечение требует живого союзника.
+      // Недопустимый клик сохраняет подготовку и не меняет ресурсы.
+      if (spell.isHeal && !healTarget) return false;
       const caster = activeEntity();
       if (spell.isHeal) {
-        if (healTarget && isAlly(healTarget)) {
-          healTarget.hp = Math.min(healTarget.maxHP ?? healTarget.hp, healTarget.hp + spell.healAmount);
-        }
+        healTarget.hp = Math.min(healTarget.maxHP ?? healTarget.hp, healTarget.hp + spell.healAmount);
       } else {
         const area = new Set(affectedCells(target, spell).map(keyOf));
         for (const victim of entities) {
@@ -447,6 +473,8 @@
     });
 
     function clearHighlight() {
+      for (const badge of effectBadges) badge.remove();
+      effectBadges = [];
       for (const cell of highlightedCells) {
         cell.classList.remove('path-reachable', 'path-over-budget', 'spell-aoe');
       }

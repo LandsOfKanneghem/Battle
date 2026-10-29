@@ -54,6 +54,7 @@
     #end-turn:focus-visible { outline: 3px solid #86e8ff; outline-offset: 3px; }
     #end-turn:disabled { opacity: 0.45; cursor: wait; }
     #battlefield {
+      position: relative;
       /* Запас по краям; dvh учитывает панели мобильного браузера. */
       width: min(calc(100vw - 248px), calc(96vh - 68px));
       width: min(calc(100vw - 248px), calc(96dvh - 68px));
@@ -107,6 +108,46 @@
     }
     .effect-preview.damage { color: #ff8585; }
     .effect-preview.heal { color: #83efac; }
+    .heal-spark {
+      position: absolute; top: 65%; z-index: 5;
+      color: #74ef9e; font-size: 14px; line-height: 1; font-weight: 700;
+      text-shadow: 0 1px 2px #153822, 0 0 3px #153822;
+      pointer-events: none;
+      animation: heal-float .5s ease-out both;
+    }
+    @keyframes heal-float {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-25px); opacity: 0; }
+    }
+    .spell-projectile {
+      position: absolute; z-index: 100; pointer-events: none;
+      filter: drop-shadow(0 0 4px #ff7b24);
+    }
+    .spell-projectile svg { display: block; width: 100%; height: 100%; }
+    .cube-explosion {
+      position: absolute; inset: 0; z-index: 6; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 221, 100, .9), rgba(255, 95, 30, .65) 55%, transparent 75%);
+      pointer-events: none;
+      animation: cube-burst .4s ease-out both;
+    }
+    @keyframes cube-burst {
+      from { transform: scale(.5); opacity: .8; }
+      to { transform: scale(1.2); opacity: 0; }
+    }
+    .armageddon-rain {
+      position: absolute; inset: 0; z-index: 20; overflow: hidden;
+      pointer-events: none;
+    }
+    .armageddon-drop {
+      position: absolute; width: 4px; height: 32px; border-radius: 50%;
+      background: linear-gradient(transparent, #ff5d25, #ffc45a);
+      box-shadow: 0 0 5px rgba(255, 105, 35, .6); pointer-events: none;
+      animation: armageddon-fall .7s ease-out both;
+    }
+    @keyframes armageddon-fall {
+      from { transform: translate(-20px, -25px) rotate(-35deg); opacity: .8; }
+      to { transform: translate(35px, 55px) rotate(-35deg); opacity: 0; }
+    }
     .cell.spell-aoe::after { box-shadow: inset 0 0 0 2px rgba(100, 200, 255, 0.8); }
     .cell.spell-range::after, .cell.path-reachable::after {
       background-image: linear-gradient(rgba(80, 220, 120, 0.35), rgba(80, 220, 120, 0.35));
@@ -230,6 +271,7 @@
     const endTurnButton = document.getElementById('end-turn');
     let stepQueue = [];
     let isMoving = false;
+    let isCasting = false; // Игра заблокирована до завершения визуального эффекта.
     let highlightedCells = [];
     let rangeHighlightedCells = [];
     let effectBadges = [];
@@ -247,6 +289,12 @@
       range: 5, apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0,
       cooldown: 0, maxCooldown: 2, isAOE: true, aoeSize: 3,
       svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24 Q0 14 8 3 L12 12 L20 1 L25 12 L34 4 Q42 19 35 31" fill="#f65a25"/><path d="M8 17 L20 10 L33 17 L33 31 L20 38 L8 31 Z" fill="#ff9d28" stroke="#ffdc36" stroke-width="2"/><path d="M8 17 L20 24 L33 17 M20 24 V38" fill="none" stroke="#ffe995" stroke-width="2"/></svg>`
+    }, {
+      id: 'armageddon', name: 'Армагеддон', damage: 5,
+      range: 0, minRange: 0, apCost: 6, maxUsesPerTurn: 1, usesThisTurn: 0,
+      cooldown: 0, maxCooldown: 8, usesTotal: 0, maxUsesPerBattle: 1,
+      isAOE: true, isGlobal: true, aoeSize: SIZE,
+      svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 16 Q0 10 8 8 Q10 1 17 6 Q24 0 28 7 Q37 5 38 12 Q40 18 32 18 H10 Z" fill="#f65a25"/><path d="M11 14 L14 8 L18 13 L23 6 L26 14" fill="#ffc04c"/><g stroke-linecap="round"><path d="M5 22 L10 29 M16 21 L22 30 M28 22 L34 31 M9 32 L13 38 M24 33 L28 38" stroke="#ff6425" stroke-width="4"/><path d="M9 27 L11 30 M21 28 L23 31 M33 29 L35 32 M12 36 L13 38 M27 36 L28 38" stroke="#ffdd75" stroke-width="2"/></g></svg>`
     }];
     // Все поля заклинания — примитивы, включая SVG-разметку, поэтому
     // копия куба имеет независимые изменяемые cooldown и usesThisTurn.
@@ -276,6 +324,7 @@
         slot.innerHTML = spell.svg;
         slot.setAttribute('aria-label', spell.name);
         slot.addEventListener('click', () => {
+          if (isCasting) return;
           if (!canPrepareSpell(spell)) return;
           preparedSpellId = spell.id;
           highlightSpellRange();
@@ -294,8 +343,9 @@
 
     function canPrepareSpell(spell) {
       const caster = activeEntity();
-      return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !isMoving
+      return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !isMoving && !isCasting
         && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
+        && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
         && spell.cooldown === 0;
     }
 
@@ -351,6 +401,10 @@
     const isAlly = entity => entity.type === 'wizard' || entity.type === 'monk';
 
     function canTarget(target, spell) {
+      if (spell?.isGlobal) {
+        const caster = activeEntity();
+        return !!caster && caster.spells.includes(spell) && keyOf(target) === keyOf(caster.position);
+      }
       // Доступность клетки не зависит от наличия существа: эффект
       // определяется отдельно при касте (в том числе лечение в пустоту).
       return inSpellReach(target, spell);
@@ -358,6 +412,10 @@
 
     function affectedCells(center, spell) {
       const points = [];
+      if (spell.isGlobal) {
+        for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) points.push({ x, y });
+        return points;
+      }
       const radius = Math.floor(spell.aoeSize / 2);
       for (let y = center.y - radius; y <= center.y + radius; y++) {
         for (let x = center.x - radius; x <= center.x + radius; x++) {
@@ -410,19 +468,97 @@
       updatePanel();
     }
 
-    function castSpell(targetCell) {
-      const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
-      const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
-      if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
-      const healTarget = spell.isHeal
-        ? entities.find(entity => entity.hp > 0 && isAlly(entity)
-          && keyOf(entity.position) === keyOf(target)) : null;
-      // Дальность подсвечивается целиком, но лечение требует живого союзника.
-      // Недопустимый клик сохраняет подготовку и не меняет ресурсы.
-      if (spell.isHeal && !healTarget) return false;
-      const caster = activeEntity();
+    function playHealAnimation(cell) {
+      // Каждый каст владеет своим набором частиц и отдельным таймером очистки.
+      const sparks = [];
+      for (let i = 0; i < 5; i++) {
+        const spark = document.createElement('span');
+        spark.className = 'heal-spark';
+        spark.textContent = '+';
+        spark.setAttribute('aria-hidden', 'true');
+        // Оставляем место справа под ширину символа даже в маленькой клетке.
+        spark.style.left = `${Math.random() * Math.max(0, cell.clientWidth - 12)}px`;
+        spark.style.animationDelay = `${Math.random() * 100}ms`;
+        cell.appendChild(spark);
+        sparks.push(spark);
+      }
+      setTimeout(() => sparks.forEach(spark => spark.remove()), 600);
+    }
+
+    function playProjectileAnimation(fromCell, toCell, type = 'fire', onArrival = null) {
+      const from = fromCell.getBoundingClientRect();
+      const to = toCell.getBoundingClientRect();
+      const isCube = type === 'fire-cube';
+      const duration = isCube ? 350 : 250;
+      const size = Math.min(from.width, from.height) * (isCube ? .65 : .5);
+      const projectile = document.createElement('span');
+      projectile.className = 'spell-projectile';
+      projectile.dataset.type = type;
+      projectile.setAttribute('aria-hidden', 'true');
+      projectile.innerHTML = `<svg viewBox="0 0 40 40"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`;
+      projectile.style.width = projectile.style.height = `${size}px`;
+      projectile.style.left = `${from.left + from.width / 2 + window.scrollX - size / 2}px`;
+      projectile.style.top = `${from.top + from.height / 2 + window.scrollY - size / 2}px`;
+      document.body.appendChild(projectile);
+      // Анимация в экранных координатах: прямая между центрами, без шагов сетки.
+      const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+      const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+      const flight = projectile.animate([
+        { transform: 'translate(0, 0)' },
+        { transform: `translate(${dx}px, ${dy}px)` }
+      ], { duration, easing: 'linear', fill: 'forwards' });
+      let arrived = false;
+      function finishFlight() {
+        // Событие окончания и страховочный таймер не дублируют взрыв.
+        if (arrived) return;
+        arrived = true;
+        projectile.remove();
+        if (onArrival) onArrival();
+      }
+      flight.onfinish = finishFlight;
+      // Страховочная очистка, даже если браузер приостановил отрисовку.
+      setTimeout(finishFlight, duration + 50);
+    }
+
+    function playCubeExplosion(centerCell, spell) {
+      const center = { x: Number(centerCell.dataset.x), y: Number(centerCell.dataset.y) };
+      const flashes = [];
+      // Зона берётся из той же функции, что и для урона, включая обрезку краёв.
+      for (const point of affectedCells(center, spell)) {
+        const flash = document.createElement('span');
+        flash.className = 'cube-explosion';
+        flash.setAttribute('aria-hidden', 'true');
+        cells[point.y * SIZE + point.x].appendChild(flash);
+        flashes.push(flash);
+      }
+      setTimeout(() => flashes.forEach(flash => flash.remove()), 500);
+    }
+
+    function playArmageddonAnimation() {
+      const rain = document.createElement('div');
+      rain.className = 'armageddon-rain';
+      rain.setAttribute('aria-hidden', 'true');
+      // Плотная сетка из 320 капель покрывает всё поле без крупных пробелов.
+      // Разброс внутри каждого участка не даёт дождю выглядеть строем.
+      const columns = 20, rows = 16;
+      for (let i = 0; i < columns * rows; i++) {
+        const drop = document.createElement('span');
+        drop.className = 'armageddon-drop';
+        drop.style.left = `${((i % columns) + .15 + Math.random() * .7) * 100 / columns}%`;
+        drop.style.top = `${(Math.floor(i / columns) + .15 + Math.random() * .7) * 100 / rows}%`;
+        drop.style.animationDelay = `${Math.random() * 100}ms`;
+        rain.appendChild(drop);
+      }
+      battlefield.appendChild(rain);
+      setTimeout(() => rain.remove(), 900);
+    }
+
+    // Только эффект: ресурсы уже оплачены в первой фазе каста.
+    function applySpellEffect(spell, target, caster) {
       if (spell.isHeal) {
-        healTarget.hp = Math.min(healTarget.maxHP ?? healTarget.hp, healTarget.hp + spell.healAmount);
+        const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
+          && keyOf(entity.position) === keyOf(target));
+        if (ally) ally.hp = Math.min(ally.maxHP ?? ally.hp, ally.hp + spell.healAmount);
       } else {
         const area = new Set(affectedCells(target, spell).map(keyOf));
         for (const victim of entities) {
@@ -431,13 +567,52 @@
           }
         }
       }
-      // Оплачиваем каст до удаления погибших: АОЕ может убить самого заклинателя
-      // и немедленно передать ход следующему участнику.
+    }
+
+    function castSpell(targetCell) {
+      if (isCasting) return false;
+      const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
+      const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
+      if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
+      // Лечение по-прежнему требует живого союзника до оплаты.
+      if (spell.isHeal && !entities.some(entity => entity.hp > 0 && isAlly(entity)
+        && keyOf(entity.position) === keyOf(target))) return false;
+      const caster = activeEntity();
+      const fromCell = cells[caster.position.y * SIZE + caster.position.x];
+
+      // Фаза 1: фиксируем цель, оплачиваем каст и блокируем любые новые действия.
       caster.ap -= spell.apCost;
       spell.usesThisTurn++;
+      if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
       spell.cooldown = spell.maxCooldown;
-      cancelSpell();
-      removeDefeatedEntities();
+      isCasting = true;
+      cancelSpell(); // Также очищает превью и обновляет disabled у кнопок.
+
+      function finishCast() {
+        // Фаза 2: HP и очередь меняются лишь после завершения анимации.
+        applySpellEffect(spell, target, caster);
+        removeDefeatedEntities();
+        // Обновление UI выполнится сразу после callback, уже со снятой блокировкой.
+        queueMicrotask(updatePanel);
+        isCasting = false;
+      }
+
+      if (spell.isGlobal) {
+        playArmageddonAnimation();
+        setTimeout(finishCast, 900);
+      } else if (spell.isHeal) {
+        playHealAnimation(targetCell);
+        // 500 мс плюс до 100 мс случайной задержки последнего плюсика.
+        setTimeout(finishCast, 600);
+      } else if (spell.id === 'fire-cube') {
+        playProjectileAnimation(fromCell, targetCell, 'fire-cube', () => {
+          playCubeExplosion(targetCell, spell);
+          // 350 мс полёта + 400 мс взрыва; отсчёт от реального прибытия.
+          setTimeout(finishCast, 400);
+        });
+      } else {
+        playProjectileAnimation(fromCell, targetCell, 'fire', () => setTimeout(finishCast, 0));
+      }
       return true;
     }
 
@@ -636,14 +811,14 @@
       document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp} / ${displayed.maxHP}` : '—';
       document.getElementById('ap').textContent = displayed ? `AP: ${displayed.ap} / ${displayed.maxAP}` : '—';
       document.getElementById('mp').textContent = displayed ? `MP: ${displayed.mp} / ${displayed.maxMP}` : '—';
-      endTurnButton.disabled = !displayed || isMoving || ![character.id, monk.id].includes(activeEntityId);
+      endTurnButton.disabled = !displayed || isMoving || isCasting || ![character.id, monk.id].includes(activeEntityId);
       // Характеристики учитывают наведение, заклинания — только активного участника.
       for (const spell of activeEntity()?.spells ?? []) {
         const slot = spellSlots.get(spell);
-        slot.disabled = !displayed || !canPrepareSpell(spell);
+        slot.disabled = !displayed || isCasting || !canPrepareSpell(spell);
         slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
         slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');
-        slot.title = `${spell.name} · ${spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}`} · ${spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${spell.range} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований`;
+        slot.title = `${spell.name} · ${spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${spell.range} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
       }
       for (const cell of cells) cell.classList.remove('entity-hover');
       for (const entity of entities) {
@@ -658,7 +833,7 @@
 
     // Будущие действия используют эту проверку, чтобы не уйти в минус.
     function spendAP(amount) {
-      if (isMoving || activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
+      if (isCasting || isMoving || activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
       character.ap -= amount;
       updatePanel();
       return true;
@@ -707,6 +882,7 @@
     }
 
     endTurnButton.addEventListener('click', () => {
+      if (isCasting) return;
       if (isMoving || ![character.id, monk.id].includes(activeEntityId)) return;
       beginTurn(nextLivingEntity(activeEntityId));
     });
@@ -718,6 +894,7 @@
     }
 
     function takeStep() {
+      if (isCasting) return;
       const mover = activeMover();
       if (!isMoving || !mover || stepQueue.length === 0) return;
       const next = stepQueue[0];
@@ -741,6 +918,7 @@
     }
 
     battlefield.addEventListener('mousemove', (event) => {
+      if (isCasting) return;
       const cell = event.target.closest('.cell');
       if (!cell || !battlefield.contains(cell)) {
         fieldHoveredEntityId = null;
@@ -791,6 +969,7 @@
     });
 
     battlefield.addEventListener('click', (event) => {
+      if (isCasting) return;
       // Новая цель не прерывает уже начатый маршрут.
       const mover = activeMover();
       if (isMoving || !mover) return;

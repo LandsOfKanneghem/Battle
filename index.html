@@ -163,6 +163,26 @@
       from { transform: scale(.3); opacity: .85; }
       to { transform: scale(1.2); opacity: 0; }
     }
+    .effect-preview.membrane { white-space: pre-line; font-size: 10px; }
+    .membrane-animation { position: absolute; inset: 0; z-index: 6; pointer-events: none; animation: membrane-inflate .5s ease-out both; }
+    .membrane-animation svg { display: block; width: 100%; height: 100%; }
+    @keyframes membrane-inflate {
+      from { transform: scale(.4); opacity: .9; }
+      to { transform: scale(1.15); opacity: 0; }
+    }
+    .light-flash { position: absolute; inset: 0; z-index: 6; pointer-events: none; animation: light-burst .4s ease-out both; }
+    .light-flash svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 6px #fff4ae); }
+    @keyframes light-burst {
+      from { transform: scale(.35); opacity: 1; }
+      to { transform: scale(1.3); opacity: 0; }
+    }
+    .freeze-animation { position: absolute; inset: 0; z-index: 6; pointer-events: none; animation: freeze-crystals .5s ease-out both; }
+    .freeze-animation svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 4px #89eaff); }
+    @keyframes freeze-crystals {
+      from { transform: scale(.4); opacity: 1; }
+      to { transform: scale(1.2); opacity: 0; }
+    }
+    .effect-preview.freeze { color: #a4eaff; }
     .heal-spark {
       position: absolute; top: 65%; z-index: 5;
       color: #74ef9e; font-size: 14px; line-height: 1; font-weight: 700;
@@ -319,9 +339,9 @@
     }
 
     function createAttributes() {
-      // Отдельные объекты (включая resistances) и два броска для каждого существа.
+      // VS случаен; расходуемый ES хранится отдельно от базовых характеристик.
       return {
-        ra: 0, wp: 10, maxWP: 10, vs: Math.floor(Math.random() * 11), es: Math.floor(Math.random() * 11),
+        ra: 0, wp: 10, maxWP: 10, vs: Math.floor(Math.random() * 11),
         vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2, ac: 0,
         resistances: { fire: 0, water: 0, air: 0, earth: 0, mind: 0, poison: 0 },
         acc: 100, eva: 0, blo: 0, ini: 0
@@ -331,25 +351,25 @@
     // HP постоянен между ходами; AP и MP — расходуемые ресурсы хода.
     const character = {
       attributes: createAttributes(),
-      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10, maxHP: 10, spells: [], fireShield: null, states: [], spellsOnMe: [], baseInitiative: 0, initiative: 0,
+      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10, maxHP: 10, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 2, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
       maxAP: 8, ap: 8, baseMaxMP: 5, maxMP: 5, mp: 5,
       position: { x: 8, y: 8 }
     };
     const phoenix = {
       attributes: createAttributes(),
-      id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8, maxHP: 8, spells: [], fireShield: null, states: [], spellsOnMe: [], baseInitiative: 0, initiative: 0,
+      id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8, maxHP: 8, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
       maxAP: 1, ap: 1, baseMaxMP: 4, maxMP: 4, mp: 4,
       position: { x: 3, y: 4 }
     };
     const secondPhoenix = {
       attributes: createAttributes(),
-      id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8, maxHP: 8, spells: [], fireShield: null, states: [], spellsOnMe: [], baseInitiative: 0, initiative: 0,
+      id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8, maxHP: 8, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
       maxAP: 1, ap: 1, baseMaxMP: 4, maxMP: 4, mp: 4,
       position: { x: 7, y: 7 }
     };
     const monk = {
       attributes: createAttributes(),
-      id: 'monk', name: 'Монах', type: 'monk', hp: 10, maxHP: 10, spells: [], fireShield: null, states: [], spellsOnMe: [], baseInitiative: 0, initiative: 0,
+      id: 'monk', name: 'Монах', type: 'monk', hp: 10, maxHP: 10, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
       maxAP: 8, ap: 8, baseMaxMP: 5, maxMP: 5, mp: 5,
       position: { x: 7, y: 8 }
     };
@@ -378,6 +398,7 @@
     const endTurnButton = document.getElementById('end-turn');
     let stepQueue = [];
     let isMoving = false;
+    let isSkippingTurn = false; // В том числе последний ход Заморозки после тика до нуля.
     let isCasting = false; // Игра заблокирована до завершения визуального эффекта.
     let highlightedCells = [];
     let rangeHighlightedCells = [];
@@ -425,8 +446,19 @@
       const input = typeof stateOrId === 'string' ? { id: stateOrId, duration, casterName } : stateOrId;
       const template = stateTypes.get(input.id);
       if (!template || input.duration <= 0) return false;
+      const neutralizes = input.neutralizes ?? template.neutralizes;
+      if (entity.states.some(state => neutralizes.includes(state.id))) {
+        // A нейтрализует B: снимаем B, но A не появляется. Урон уже прошёл раньше.
+        entity.states = entity.states.filter(state => !neutralizes.includes(state.id));
+        resolveStateSuppression(entity);
+        recalculateStateStats(entity);
+        updatePanel();
+        return false;
+      }
       const existing = entity.states.find(state => state.id === input.id);
-      if (existing && (existing.permanent || existing.innate || existing.duration >= input.duration)) return false;
+      if (existing && (existing.permanent || existing.innate || existing.duration > input.duration
+        || (existing.duration === input.duration && input.id !== 'burning'))) return false;
+      // Равное по длительности Горение обновляет источник; меньшая длительность игнорируется.
       entity.states = entity.states.filter(state => state.id !== input.id);
       entity.states.push({ ...template, ...input, suppressed: false, appliedOrder: ++effectOrder,
         overrides: [...(input.overrides ?? template.overrides)],
@@ -444,11 +476,58 @@
       updatePanel();
     }
 
+    function getCurrentES(entity) {
+      // baseES — оставшаяся базовая часть: тратится последней и не восполняется.
+      return entity.baseES + entity.esBonuses.reduce((sum, bonus) => sum + bonus.remaining, 0);
+    }
+
+    function consumeES(entity, amount) {
+      let left = amount;
+      // Старые бонусы -> новые бонусы -> база. Нулевые бонусы сохраняются до истечения.
+      for (const bonus of entity.esBonuses) {
+        const spent = Math.min(bonus.remaining, left);
+        bonus.remaining -= spent;
+        left -= spent;
+        if (left === 0) break;
+      }
+      entity.baseES = Math.max(0, entity.baseES - left);
+    }
+
+    function removeSpellBonuses(entity, applied) {
+      // Удаление бонуса убирает только его remaining из суммы, не затрагивая базу.
+      entity.esBonuses = entity.esBonuses.filter(bonus => bonus.instanceId !== applied.appliedOrder);
+      // EVA остаётся отдельным нерасходуемым бонусом с тем же сроком заклинания.
+      entity.evaBonuses = entity.evaBonuses.filter(bonus => bonus.instanceId !== applied.appliedOrder);
+    }
+
+    function tickTemporaryBonuses(entity) {
+      entity.esBonuses = entity.esBonuses.map(bonus => ({ ...bonus, turnsLeft: bonus.turnsLeft - 1 }))
+        .filter(bonus => bonus.turnsLeft > 0);
+      entity.evaBonuses = entity.evaBonuses.map(bonus => ({ ...bonus, turnsLeft: bonus.turnsLeft - 1 }))
+        .filter(bonus => bonus.turnsLeft > 0);
+    }
+
     function applySpellOnEntity(entity, spellOnMe) {
       // Каждый наложенный бафф имеет собственный срок и источник.
       // Его истечение не снимает состояние: оба таймера живут независимо.
-      const applied = { ...spellOnMe, sourceId: spellOnMe.sourceId ?? spellOnMe.id, appliedOrder: ++effectOrder };
+      // По умолчанию заменяем ВСЕ одноимённые заклинания, независимо от id и силы.
+      // Отсутствующий stackable равнозначен false; правила состояний не меняем.
+      if (spellOnMe.stackable !== true) {
+        for (const old of entity.spellsOnMe.filter(effect => effect.name === spellOnMe.name)) removeSpellBonuses(entity, old);
+        entity.spellsOnMe = entity.spellsOnMe.filter(effect => effect.name !== spellOnMe.name);
+      }
+      const applied = { ...spellOnMe, stackable: spellOnMe.stackable === true,
+        sourceId: spellOnMe.sourceId ?? spellOnMe.id, appliedOrder: ++effectOrder };
       entity.spellsOnMe.push(applied);
+      const bonus = { sourceId: applied.sourceId, name: applied.name, turnsLeft: applied.duration,
+        casterName: applied.casterName, icon: applied.icon, instanceId: applied.appliedOrder };
+      if (applied.esAmount) {
+        if (!applied.stackable) {
+          entity.esBonuses = entity.esBonuses.filter(old => old.sourceId !== applied.sourceId && old.name !== applied.name);
+        }
+        entity.esBonuses.push({ ...bonus, amount: applied.esAmount, remaining: applied.esAmount });
+      }
+      if (applied.evaAmount) entity.evaBonuses.push({ ...bonus, amount: applied.evaAmount });
       if (applied.stateId) applyState(entity, {
         id: applied.stateId, duration: applied.stateDuration ?? applied.duration, casterName: applied.casterName
       });
@@ -493,9 +572,14 @@
 
     }
 
+    function isFrozen(entity) {
+      return !!entity && entity.states.some(state => state.id === 'freeze' && !state.suppressed
+        && (state.duration > 0 || state.permanent || state.innate));
+    }
+
     function canPrepareSpell(spell) {
       const caster = activeEntity();
-      return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !isMoving && !isCasting
+      return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !isMoving && !isCasting && !isSkippingTurn && !isFrozen(caster)
         && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
         && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
         && spell.cooldown === 0;
@@ -545,9 +629,10 @@
       if (!caster || !spell || !caster.spells.includes(spell)) return false;
       const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
       return target.x >= 0 && target.x < SIZE && target.y >= 0 && target.y < SIZE
+        // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
         && (spell.isHeal || !obstacles.has(keyOf(target)))
         && distance >= (spell.isHeal ? 0 : (spell.minRange ?? 1)) && distance <= spell.range
-        && (distance === 0 || checkLOS(caster.position, target));
+        && (distance === 0 || spell.noLOS === true || checkLOS(caster.position, target));
     }
 
     const isAlly = entity => entity.type === 'wizard' || entity.type === 'monk';
@@ -605,10 +690,11 @@
       for (const entity of entities) {
         if (entity.hp <= 0 || !keys.has(keyOf(entity.position))) continue;
         if ((spell.isHeal || spell.isFireShield || spell.allyOnly) && !isAlly(entity)) continue;
+        if (spell.enemyOnly && isAlly(entity)) continue;
         // Защита учитывается как в настоящем уроне; текущий HP не ограничивает превью.
         const badge = document.createElement('span');
-        badge.className = `effect-preview ${spell.isFireShield ? 'shield' : spell.isHeal || spell.stateId === 'speed' ? 'heal' : 'damage'}`;
-        badge.textContent = spell.stateId ? `${stateTypes.get(spell.stateId).mpBonus > 0 ? '+' : ''}${stateTypes.get(spell.stateId).mpBonus} MP` : spell.isFireShield ? `🛡${spell.shieldAmount}` : spell.isHeal ? `+${spell.healAmount}` : `-${spellDamage(spell, entity)}`;
+        badge.className = `effect-preview ${spell.stateId === 'freeze' ? 'freeze' : spell.isMembrane ? 'shield membrane' : spell.isFireShield ? 'shield' : spell.isHeal || spell.stateId === 'speed' ? 'heal' : 'damage'}`;
+        badge.textContent = spell.stateId === 'freeze' ? '❄' : spell.isMembrane ? `+${spell.esAmount} ES\n+${spell.evaAmount} EVA` : spell.stateId ? `${stateTypes.get(spell.stateId).mpBonus > 0 ? '+' : ''}${stateTypes.get(spell.stateId).mpBonus} MP` : spell.isFireShield ? `🛡${spell.shieldAmount}` : spell.isHeal ? `+${spell.healAmount}` : `-${spellDamage(spell, entity)}`;
         cells[entity.position.y * SIZE + entity.position.x].appendChild(badge);
         effectBadges.push(badge);
       }
@@ -732,8 +818,35 @@
       return fireShieldEffects(entity).reduce((sum, effect) => sum + effect.amount, 0);
     }
 
+    function isMagicalDamage(damageType) {
+      return !['physical', 'poison', 'pure'].includes(damageType);
+    }
+
+    function damageBreakdown(spell, entity) {
+      if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
+      // Огненный щит входит в эффективное сопротивление огню, но не свету.
+      const resistance = getEffectiveStat(entity, `resistances.${spell.damageType}`);
+      const afterResistance = Math.max(0, spell.damage - resistance);
+      const absorbed = isMagicalDamage(spell.damageType)
+        ? Math.min(getCurrentES(entity), afterResistance) : 0;
+      return { absorbed, hpDamage: afterResistance - absorbed };
+    }
+
     function spellDamage(spell, entity) {
-      return Math.max(0, spell.damage - (spell.damageType === 'fire' ? fireBlockAmount(entity) : 0));
+      // Превью не расходует ES и не бросает уклонение; показывает HP-урон при попадании.
+      return damageBreakdown(spell, entity).hpDamage;
+    }
+
+    function applyDamage(spell, entity) {
+      if (isFrozen(entity)) return; // Не расходуем ни HP, ни ES, ни бонусы защиты.
+      const { absorbed, hpDamage } = damageBreakdown(spell, entity);
+      consumeES(entity, absorbed);
+      entity.hp = Math.max(0, entity.hp - hpDamage);
+    }
+
+    function shotHits(caster, target) {
+      const hitChance = Math.max(0, Math.min(100, getEffectiveStat(caster, 'acc') - getEffectiveStat(target, 'eva')));
+      return Math.random() * 100 < hitChance;
     }
 
     function playFireShieldAnimation(cell) {
@@ -745,7 +858,17 @@
       setTimeout(() => flash.remove(), 500);
     }
 
+    function playFreezeAnimation(cell) {
+      const crystals = document.createElement('span');
+      crystals.className = 'freeze-animation';
+      crystals.setAttribute('aria-hidden', 'true');
+      crystals.innerHTML = FREEZE.icon;
+      cell.appendChild(crystals);
+      setTimeout(() => crystals.remove(), 500);
+    }
+
     function playStateAnimation(cell, stateId) {
+      if (stateId === 'freeze') { playFreezeAnimation(cell); return; }
       const animation = document.createElement('span');
       animation.className = `state-animation ${stateId === 'speed' ? 'wind' : 'mud'}`;
       animation.setAttribute('aria-hidden', 'true');
@@ -756,16 +879,43 @@
       setTimeout(() => animation.remove(), 500);
     }
 
+    function playLightFlashAnimation(cell) {
+      const flash = document.createElement('span');
+      flash.className = 'light-flash';
+      flash.setAttribute('aria-hidden', 'true');
+      flash.innerHTML = MONK_SPELLS.find(spell => spell.id === 'light-flash').svg;
+      cell.appendChild(flash);
+      setTimeout(() => flash.remove(), 400);
+    }
+
+    function playMembraneAnimation(cell) {
+      const bubble = document.createElement('span');
+      bubble.className = 'membrane-animation';
+      bubble.setAttribute('aria-hidden', 'true');
+      bubble.innerHTML = WIZARD_SPELLS.find(spell => spell.isMembrane).svg;
+      cell.appendChild(bubble);
+      setTimeout(() => bubble.remove(), 500);
+    }
+
     // Только эффект: ресурсы уже оплачены в первой фазе каста.
     function applySpellEffect(spell, target, caster) {
-      if (spell.stateId) {
+      const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
+      // Бросок делается только после анимации и только у выстрелов, до любых эффектов.
+      if (spell.isShot && directTarget && !shotHits(caster, directTarget)) return;
+      if (spell.isMembrane) {
+        if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
+          id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
+          duration: spell.effectDuration, casterName: caster.name, esAmount: spell.esAmount, evaAmount: spell.evaAmount,
+          description: `+${spell.esAmount} ES, +${spell.evaAmount} EVA`
+        });
+      } else if (spell.stateId) {
         const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
           && (!spell.allyOnly || isAlly(entity)));
         if (recipient) applySpellOnEntity(recipient, {
           id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
           description: stateTypes.get(spell.stateId).name,
           duration: spell.effectDuration, casterName: caster.name,
-          stateId: spell.stateId, stateDuration: spell.stateDuration
+          stateId: spell.stateId, stateDuration: spell.stateDuration, stackable: spell.stackable
         });
       } else if (spell.isFireShield) {
         const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
@@ -778,8 +928,12 @@
       } else {
         const area = new Set(affectedCells(target, spell).map(keyOf));
         for (const victim of entities) {
-          if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)) {
-            victim.hp = Math.max(0, victim.hp - spellDamage(spell, victim));
+          if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)
+            && (!spell.enemyOnly || !isAlly(victim))) {
+            applyDamage(spell, victim);
+            // Даже полностью заблокированный удар накладывает состояние после урона.
+            // У выстрела промах вышел из applySpellEffect раньше; другие огненные АОЕ не горят.
+            if (spell.burnDuration && victim.hp > 0) applyState(victim, 'burning', spell.burnDuration, caster.name);
           }
         }
       }
@@ -791,10 +945,12 @@
       const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
       if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
       // Лечение и защита требуют живого союзника до оплаты.
-      if ((spell.isHeal || spell.isFireShield) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
+      if ((spell.isHeal || spell.isFireShield || spell.isMembrane) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
       if (spell.stateId && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
         && (!spell.allyOnly || isAlly(entity)))) return false;
+      if (spell.enemyOnly && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
+        && keyOf(entity.position) === keyOf(target))) return false;
       const caster = activeEntity();
       const fromCell = cells[caster.position.y * SIZE + caster.position.x];
 
@@ -818,6 +974,12 @@
       if (spell.isGlobal) {
         playArmageddonAnimation();
         setTimeout(finishCast, 900);
+      } else if (spell.isMembrane) {
+        playMembraneAnimation(targetCell);
+        setTimeout(finishCast, 500);
+      } else if (spell.id === 'light-flash') {
+        playLightFlashAnimation(targetCell);
+        setTimeout(finishCast, 400);
       } else if (spell.stateId) {
         playStateAnimation(targetCell, spell.stateId);
         setTimeout(finishCast, 500);
@@ -1133,6 +1295,7 @@
 
     function getEffectiveStat(entity, statName) {
       if (!entity) return 0;
+      if (statName === 'es') return getCurrentES(entity);
       const valueAt = object => statName.split('.').reduce((value, key) => value?.[key], object);
       const base = valueAt(entity.attributes) ?? 0;
       // Не берём entity.initiative: там уже есть бонус, который иначе учёлся бы дважды.
@@ -1143,7 +1306,9 @@
       ];
       // В строке огня показываем также суммарную блокировку активных огненных защит.
       const fireProtection = statName === 'resistances.fire' ? fireBlockAmount(entity) : 0;
-      return base + fireProtection + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
+      const temporaryEvasion = statName === 'eva'
+        ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
+      return base + fireProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
         ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : 0)), 0);
     }
 
@@ -1167,7 +1332,7 @@
       }
       writeAttribute('wp', `WP: ${getEffectiveStat(displayed, 'wp')} / ${getEffectiveStat(displayed, 'maxWP')}`);
       writeAttribute('acc', `ACC: ${getEffectiveStat(displayed, 'acc')}%`);
-      writeAttribute('eva', `EVA: ${getEffectiveStat(displayed, 'eva')}% / ${getEffectiveStat(displayed, 'eva')}`);
+      writeAttribute('eva', `EVA: ${getEffectiveStat(displayed, 'eva')}% / ${attributes?.eva}`);
       writeAttribute('blo', `BLO: ${getEffectiveStat(displayed, 'blo')}% / ${getEffectiveStat(displayed, 'blo')}`);
       for (const [key, label] of Object.entries({ ac: 'Броня', fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля', mind: 'Разум', poison: 'Яд' })) {
         const id = key === 'ac' ? 'ac' : `res-${key}`;
@@ -1175,14 +1340,14 @@
         writeAttribute(id, String(value));
         document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);
       }
-      endTurnButton.disabled = !displayed || isMoving || isCasting || ![character.id, monk.id].includes(activeEntityId);
+      endTurnButton.disabled = !displayed || isMoving || isCasting || isSkippingTurn || isFrozen(activeEntity()) || ![character.id, monk.id].includes(activeEntityId);
       // Характеристики учитывают наведение, заклинания — только активного участника.
       for (const spell of activeEntity()?.spells ?? []) {
         const slot = spellSlots.get(spell);
         slot.disabled = !displayed || isCasting || !canPrepareSpell(spell);
         slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
         slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');
-        slot.title = `${spell.name} · ${spell.stateId ? `${stateTypes.get(spell.stateId).name}, ${spell.stateDuration} хода` : spell.isFireShield ? `блокирует ${spell.shieldAmount} огненного урона, ${spell.shieldDuration} хода цели` : spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${spell.range} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
+        slot.title = `${spell.name} · ${spell.isMembrane ? `+${spell.esAmount} ES, +${spell.evaAmount} EVA, ${spell.effectDuration} хода` : spell.stateId ? `${stateTypes.get(spell.stateId).name}, ${spell.stateDuration} хода` : spell.isFireShield ? `блокирует ${spell.shieldAmount} огненного урона, ${spell.shieldDuration} хода цели` : spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}${spell.damageType === 'light' ? ' светом' : ''}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${spell.range}${spell.noLOS ? ' · без LOS' : ''} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
       }
       for (const cell of cells) cell.classList.remove('entity-hover');
       for (const entity of entities) {
@@ -1197,13 +1362,14 @@
 
     // Будущие действия используют эту проверку, чтобы не уйти в минус.
     function spendAP(amount) {
-      if (isCasting || isMoving || activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
+      if (isSkippingTurn || isFrozen(activeEntity()) || isCasting || isMoving || activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
       character.ap -= amount;
       updatePanel();
       return true;
     }
 
     function beginTurn(entity) {
+      isSkippingTurn = false;
       // Если участник удалён, выбираем следующего живого по фиксированной очереди.
       if (entities.indexOf(entity) === -1) {
         entity = nextLivingEntity(activeEntityId);
@@ -1217,6 +1383,21 @@
         updatePanel();
         return;
       }
+      // DOT идёт до истечения защит/ES и последнего тика длительности самого Горения.
+      // Активируем получателя хода заранее, чтобы его смерть сразу передала ход после него.
+      activeEntityId = entity.id;
+      const burning = entity.states.find(state => state.id === 'burning' && !state.suppressed
+        && (state.duration > 0 || state.permanent || state.innate));
+      if (burning) {
+        applyDamage({ damage: burning.tickDamage, damageType: burning.damageType }, entity);
+        if (entity.hp <= 0) {
+          removeDefeatedEntities();
+          return;
+        }
+      }
+      // Проверяем ДО тика: даже последний ход (1 -> 0) должен быть пропущен.
+      isSkippingTurn = entity.type === 'phoenix' || isFrozen(entity);
+      tickTemporaryBonuses(entity); // Истечение убирает оставшийся бонус; база не меняется.
       // Срок наложенного заклинания независим от созданного им состояния.
       entity.spellsOnMe = entity.spellsOnMe.map(effect => ({ ...effect, duration: effect.duration - 1 }))
         .filter(effect => effect.duration > 0);
@@ -1242,8 +1423,9 @@
       entity.mp = entity.maxMP;
       clearHighlight();
       updatePanel(); // HP не является ресурсом хода.
-      if (entity.type === 'phoenix') {
-        // Каждый враг отдельно показывается в очереди в течение 100 мс.
+      if (isSkippingTurn) {
+        // Феникс или замороженный участник виден 100 мс, но действовать не может.
+
         setTimeout(() => {
           // Смерть или новая передача уже завершили этот ход: старый таймер не действует.
           if (version !== turnVersion) return;
@@ -1260,14 +1442,15 @@
     }
 
     endTurnButton.addEventListener('click', () => {
-      if (isCasting) return;
+      if (isCasting || isSkippingTurn || isFrozen(activeEntity())) return;
       if (isMoving || ![character.id, monk.id].includes(activeEntityId)) return;
       beginTurn(nextLivingEntity(activeEntityId));
     });
 
     // Двигаться могут союзники; фениксы пока только пропускают ход.
     function activeMover() {
-      return entities.find(entity => entity.id === activeEntityId && entity.hp > 0
+      if (isSkippingTurn) return undefined;
+      return entities.find(entity => entity.id === activeEntityId && entity.hp > 0 && !isFrozen(entity)
         && (entity.type === 'wizard' || entity.type === 'monk'));
     }
 

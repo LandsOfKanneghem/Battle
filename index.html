@@ -956,7 +956,7 @@
         });
       } else if (spell.stateId) {
         const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
-          && (!spell.allyOnly || isAlly(entity)));
+          && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)));
         if (recipient) applySpellOnEntity(recipient, {
           id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
           description: stateTypes.get(spell.stateId).name,
@@ -996,7 +996,7 @@
       if ((spell.isHeal || spell.isElementalShield || spell.isMembrane) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
       if (spell.stateId && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
-        && (!spell.allyOnly || isAlly(entity)))) return false;
+        && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;
       if (spell.enemyOnly && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
       const caster = activeEntity();

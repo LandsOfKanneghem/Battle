@@ -223,6 +223,19 @@
       background: linear-gradient(transparent, #2a7fff, #a0d4ff);
       box-shadow: 0 0 5px #2a7fff;
     }
+    .rain-cell {
+      position: absolute; inset: 0; z-index: 20; overflow: hidden;
+      pointer-events: none;
+    }
+    .rain-drop {
+      position: absolute; width: 3px; height: 35%; border-radius: 50%;
+      background: linear-gradient(transparent, #2a7fff, #a0d4ff);
+      animation: rain-fall .65s linear both;
+    }
+    @keyframes rain-fall {
+      from { transform: translateY(0); opacity: .9; }
+      to { transform: translateY(var(--rain-distance)); opacity: 0; }
+    }
     @keyframes armageddon-fall {
       from { transform: translate(-20px, -25px) rotate(-35deg); opacity: .8; }
       to { transform: translate(35px, 55px) rotate(-35deg); opacity: 0; }
@@ -842,9 +855,29 @@
       setTimeout(() => rain.remove(), 900);
     }
 
-    function playRainAnimation() {
-      // Та же длительность и плотность капель, но водная палитра.
-      playArmageddonAnimation(true);
+    function playRainAnimation(center, spell) {
+      const area = affectedCells(center, spell);
+      const layers = [];
+      for (const point of area) {
+        const cell = cells[point.y * SIZE + point.x];
+        const { width, height } = cell.getBoundingClientRect();
+        const layer = document.createElement('span');
+        layer.className = 'rain-cell';
+        layer.setAttribute('aria-hidden', 'true');
+        layer.style.setProperty('--rain-distance', `${height * 1.5}px`);
+        // Отдельный обрезающий слой удерживает капли внутри каждой клетки АОЕ.
+        for (let i = 0; i < 3; i++) {
+          const drop = document.createElement('span');
+          drop.className = 'rain-drop';
+          drop.style.left = `${Math.random() * Math.max(0, width - 3)}px`;
+          drop.style.top = `${-35 - Math.random() * 10}%`;
+          drop.style.animationDelay = `${Math.random() * 150}ms`;
+          layer.appendChild(drop);
+        }
+        cell.appendChild(layer);
+        layers.push(layer);
+      }
+      setTimeout(() => layers.forEach(layer => layer.remove()), 900);
     }
 
     function elementalShieldEffects(entity, damageType) {
@@ -1037,7 +1070,7 @@
       }
 
       if (spell.isRain) {
-        playRainAnimation();
+        playRainAnimation(target, spell);
         setTimeout(finishCast, 900);
       } else if (spell.isGlobal) {
         playArmageddonAnimation();

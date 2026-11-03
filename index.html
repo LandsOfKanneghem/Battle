@@ -339,9 +339,9 @@
     }
 
     function createAttributes() {
-      // VS случаен; расходуемый ES хранится отдельно от базовых характеристик.
+      // Начальный VS равен нулю; расходуемый ES хранится отдельно от базовых характеристик.
       return {
-        ra: 0, wp: 10, maxWP: 10, vs: Math.floor(Math.random() * 11),
+        ra: 0, wp: 10, maxWP: 10, vs: 0,
         vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2, ac: 0,
         resistances: { fire: 0, water: 0, air: 0, earth: 0, mind: 0, poison: 0 },
         acc: 100, eva: 0, blo: 0, ini: 0
@@ -351,7 +351,7 @@
     // HP постоянен между ходами; AP и MP — расходуемые ресурсы хода.
     const character = {
       attributes: { ...createAttributes(), str: 0, att: 1, cha: 1, luc: 0 },
-      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 12, maxHP: 12, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 2, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
+      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 12, maxHP: 12, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
       maxAP: 6, ap: 6, baseMaxMP: 4, maxMP: 4, mp: 4,
       position: { x: 8, y: 8 }
     };

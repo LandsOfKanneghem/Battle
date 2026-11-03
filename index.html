@@ -123,7 +123,7 @@
     .terrain svg { display: block; width: 100%; height: 100%; }
     /* Поверх поверхности, но под существами: прозрачная заливка не скрывает SVG. */
     .cell::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-    #battlefield .obstacle, #battlefield .wizard, #battlefield .phoenix, #battlefield .monk {
+    #battlefield .obstacle, #battlefield .wizard, #battlefield .wolf, #battlefield .monk {
       position: absolute; inset: 0; z-index: 3;
     }
     .path-cost {
@@ -232,7 +232,7 @@
     }
     #battlefield.moving .cell { cursor: wait; }
     .cell.blocked { cursor: not-allowed; }
-    .obstacle, .wizard, .phoenix, .monk { display: block; width: 100%; height: 100%; pointer-events: none; }
+    .obstacle, .wizard, .wolf, .monk { display: block; width: 100%; height: 100%; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -355,27 +355,28 @@
       maxAP: 8, ap: 8, baseMaxMP: 5, maxMP: 5, mp: 5,
       position: { x: 8, y: 8 }
     };
-    const phoenix = {
-      attributes: createAttributes(),
-      id: 'phoenix', name: 'Феникс', type: 'phoenix', hp: 8, maxHP: 8, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
-      maxAP: 1, ap: 1, baseMaxMP: 4, maxMP: 4, mp: 4,
-      position: { x: 3, y: 4 }
-    };
-    const secondPhoenix = {
-      attributes: createAttributes(),
-      id: 'phoenix-2', name: 'Феникс', type: 'phoenix', hp: 8, maxHP: 8, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
-      maxAP: 1, ap: 1, baseMaxMP: 4, maxMP: 4, mp: 4,
-      position: { x: 7, y: 7 }
-    };
+    function createWolf(id, position) {
+      // Каждый волк получает собственные ресурсы и массивы эффектов.
+      return {
+        attributes: createAttributes(),
+        id, name: 'Волк', type: 'wolf', hp: 8, maxHP: 8, spells: [], fireShield: null,
+        states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
+        maxAP: 1, ap: 1, baseMaxMP: 4, maxMP: 4, mp: 4, position
+      };
+    }
+    // Свободные стартовые клетки: без ящиков, глубоководья и союзников.
+    const wolf1 = createWolf('wolf-1', { x: 3, y: 4 });
+    const wolf2 = createWolf('wolf-2', { x: 7, y: 7 });
+    const wolf3 = createWolf('wolf-3', { x: 12, y: 5 });
     const monk = {
       attributes: createAttributes(),
       id: 'monk', name: 'Монах', type: 'monk', hp: 10, maxHP: 10, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
       maxAP: 8, ap: 8, baseMaxMP: 5, maxMP: 5, mp: 5,
       position: { x: 7, y: 8 }
     };
-    const entities = [character, phoenix, secondPhoenix, monk];
+    const entities = [character, wolf1, wolf2, wolf3, monk];
     // Порядок ходов не зависит от порядка хранения и удаления существ.
-    const turnOrderIds = ['wizard', 'phoenix', 'monk', 'phoenix-2'];
+    const turnOrderIds = ['wizard', 'wolf-1', 'monk', 'wolf-2', 'wolf-3'];
 
     function nextLivingEntity(afterId) {
       const index = turnOrderIds.indexOf(afterId);
@@ -1119,23 +1120,24 @@
       <circle cx="34" cy="19" r="2.5" fill="#86e8ff"/>`;
 
     character.svg = wizard;
-    phoenix.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    phoenix.svg.setAttribute('viewBox', '0 0 40 40');
-    phoenix.svg.setAttribute('class', 'phoenix');
-    phoenix.svg.setAttribute('role', 'img');
-    phoenix.svg.setAttribute('aria-label', phoenix.name);
-    phoenix.svg.innerHTML = `
-      <path d="M18 23 L10 37 L20 31 L24 39 L27 25" fill="#ff6326"/>
-      <path d="M19 22 Q5 25 2 6 L12 13 L9 3 L22 18
-               Q32 9 37 4 L35 18 L29 25 Z" fill="#ef482d" stroke="#ffb52e"/>
-      <path d="M20 14 Q15 19 18 28 L24 29 Q29 19 24 14 Z" fill="#ffbd35"/>
-      <circle cx="23" cy="12" r="5" fill="#ff8a2b"/>
-      <path d="M27 11 L33 14 L27 15 M20 8 L18 2 L25 7" fill="#ffe176"/>
-      <circle cx="25" cy="11" r="1" fill="#251d23"/>`;
-
-    // У каждого феникса свой SVG-элемент, хотя рисунок одинаковый.
-    secondPhoenix.svg = phoenix.svg.cloneNode(true);
-    secondPhoenix.svg.setAttribute('aria-label', secondPhoenix.name);
+    // Один рисунок, но отдельный SVG-элемент для каждого волка.
+    for (const wolf of [wolf1, wolf2, wolf3]) {
+      wolf.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      wolf.svg.setAttribute('viewBox', '0 0 40 40');
+      wolf.svg.setAttribute('class', 'wolf');
+      wolf.svg.setAttribute('role', 'img');
+      wolf.svg.setAttribute('aria-label', wolf.name);
+      wolf.svg.innerHTML = `
+        <path d="M11 21 L3 12 L2 23 L10 28 Z" fill="#73818e" stroke="#344453"/>
+        <path d="M10 22 Q17 16 28 21 L30 29 H10 Z" fill="#8e9ca8" stroke="#344453"/>
+        <path d="M11 27 L10 36 H14 L16 27 M18 28 L18 36 H22 L23 27
+                 M25 26 L26 36 H30 L29 26 M30 25 L32 35 H36 L34 24" fill="#73818e" stroke="#344453"/>
+        <path d="M25 22 L25 7 L30 12 L35 6 L36 17 L39 21 L35 26 L28 25 Z" fill="#a8b5bf" stroke="#344453"/>
+        <path d="M27 11 L27 15 L30 14 M33 13 L35 10 L35 15" fill="#dfb0ac"/>
+        <path d="M27 22 L32 27 L35 24" fill="#d9e0e5"/>
+        <circle cx="33" cy="18" r="1.2" fill="#eaca70"/>
+        <path d="M37 20 L39 21 L37 23 Z" fill="#23323e"/>`;
+    }
 
     monk.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     monk.svg.setAttribute('viewBox', '0 0 40 40');
@@ -1441,7 +1443,7 @@
         }
       }
       // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
-      isSkippingTurn = entity.type === 'phoenix' || isFrozen(entity);
+      isSkippingTurn = entity.type === 'wolf' || isFrozen(entity);
       // Длительности меняются только по casterId, один раз даже для caster = target.
       tickCasterEffects(entity.id);
       // Начало личного хода обновляет только заклинания этого участника.
@@ -1456,7 +1458,7 @@
       clearHighlight();
       updatePanel(); // HP не является ресурсом хода.
       if (isSkippingTurn) {
-        // Феникс или замороженный участник виден 100 мс, но действовать не может.
+        // Волк или замороженный участник виден 100 мс, но действовать не может.
 
         setTimeout(() => {
           // Смерть или новая передача уже завершили этот ход: старый таймер не действует.
@@ -1479,7 +1481,7 @@
       beginTurn(nextLivingEntity(activeEntityId));
     });
 
-    // Двигаться могут союзники; фениксы пока только пропускают ход.
+    // Двигаться могут союзники; волки пока только пропускают ход.
     function activeMover() {
       if (isSkippingTurn) return undefined;
       return entities.find(entity => entity.id === activeEntityId && entity.hp > 0 && !isFrozen(entity)

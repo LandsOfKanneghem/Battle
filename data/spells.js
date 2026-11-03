@@ -61,12 +61,19 @@ const SPELL_DEFINITIONS = [{
   apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 3,
   isAOE: true, aoeSize: 3,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 22 Q1 21 4 14 Q6 9 12 11 Q13 2 22 5 Q29 4 31 12 Q39 11 37 19 Q36 23 30 22 Z" fill="#427fb6" stroke="#a0d4ff" stroke-width="2"/><path d="M11 27 L8 33 M21 27 L18 36 M31 27 L28 33" fill="none" stroke="#58b5ff" stroke-width="3" stroke-linecap="round"/></svg>`
+}, {
+  id: 'wind-rose', name: 'Роза ветров', stackable: false, isWindRose: true, target: 'any',
+  minRange: 0, range: 4, modifiable: true, noLOS: true,
+  apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 3,
+  // Подсвечиваем только центр; толчок проверяет четыре соседние клетки отдельно.
+  isAOE: true, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="none" stroke="#70aebc" stroke-width="2"/><path d="M20 2 L24 16 L38 20 L24 24 L20 38 L16 24 L2 20 L16 16 Z" fill="#b8f3f5" stroke="#498998"/><path d="M20 8 V32 M8 20 H32" stroke="#fff" stroke-width="2"/><circle cx="20" cy="20" r="3" fill="#447d99"/></svg>`
 }];
 // Определения сохранены; вернуть скрытые заклинания можно строкой WIZARD_SPELLS.push(...HIDDEN_SPELLS).
 const HIDDEN_SPELLS = SPELL_DEFINITIONS.filter(spell => ['fire-cube', 'deep-freeze', 'armageddon'].includes(spell.id));
 const WIZARD_SPELLS = [
   'fire-shot', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield',
-  'haste', 'slow', 'liquid-membrane', 'rain'
+  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose'
 ].map(id => SPELL_DEFINITIONS.find(spell => spell.id === id));
 
 // Все поля заклинания — примитивы, включая SVG-разметку, поэтому

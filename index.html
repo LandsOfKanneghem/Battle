@@ -152,6 +152,11 @@
     }
     .state-animation { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
     .state-animation svg { width: 100%; height: 100%; display: block; }
+    .state-animation.wind-rose { inset: -100%; animation: wind-rose-burst .5s ease-out both; }
+    @keyframes wind-rose-burst {
+      from { transform: scale(.3); opacity: 1; }
+      to { transform: scale(1); opacity: 0; }
+    }
     .state-animation.wind { overflow: hidden; }
     .state-animation.wind svg { animation: wind-gust .5s ease-out both; }
     .state-animation.mud svg { animation: mud-splash .5s ease-out both; }
@@ -984,12 +989,33 @@
       setTimeout(() => bubble.remove(), 500);
     }
 
+    function playWindRoseAnimation(centerCell) {
+      const gust = document.createElement('span');
+      gust.className = 'state-animation wind-rose';
+      gust.setAttribute('aria-hidden', 'true');
+      gust.innerHTML = `<svg viewBox="0 0 120 120" aria-hidden="true"><g fill="none" stroke="#c3ffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M60 48 V12 M49 24 L60 12 L71 24 M60 72 V108 M49 96 L60 108 L71 96 M48 60 H12 M24 49 L12 60 L24 71 M72 60 H108 M96 49 L108 60 L96 71"/><circle cx="60" cy="60" r="9" stroke="#82c9dc"/></g></svg>`;
+      centerCell.appendChild(gust);
+      setTimeout(() => gust.remove(), 500);
+    }
+
     // Только эффект: ресурсы уже оплачены в первой фазе каста.
     function applySpellEffect(spell, target, caster) {
       const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
       // Бросок делается только после анимации и только у выстрелов, до любых эффектов.
       if (spell.isShot && directTarget && !shotHits(caster, directTarget)) return;
-      if (spell.isRain) {
+      if (spell.isWindRose) {
+        // Принудительное перемещение: не расходуем MP и не запускаем очередь шагов.
+        for (const direction of [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }]) {
+          const source = { x: target.x + direction.x, y: target.y + direction.y };
+          const destination = { x: target.x + 2 * direction.x, y: target.y + 2 * direction.y };
+          const victim = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(source));
+          if (!victim || destination.x < 0 || destination.x >= SIZE || destination.y < 0 || destination.y >= SIZE
+            || obstacles.get(keyOf(destination)) === 'crate' || terrain.get(keyOf(destination)) === 'deep-water'
+            || entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(destination))) continue;
+          victim.position = destination;
+        }
+        renderPosition();
+      } else if (spell.isRain) {
         // Влага действует на всех живых существ в квадрате, включая самого кастера.
         const area = new Set(affectedCells(target, spell).map(keyOf));
         for (const victim of entities) {
@@ -1069,7 +1095,10 @@
         isCasting = false;
       }
 
-      if (spell.isRain) {
+      if (spell.isWindRose) {
+        playWindRoseAnimation(targetCell);
+        setTimeout(finishCast, 500);
+      } else if (spell.isRain) {
         playRainAnimation(target, spell);
         setTimeout(finishCast, 900);
       } else if (spell.isGlobal) {
@@ -1451,7 +1480,7 @@
         slot.disabled = !displayed || isCasting || !canPrepareSpell(spell);
         slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
         slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');
-        slot.title = `${spell.name} · ${spell.isMembrane ? `+${spell.esAmount} ES, +${spell.evaAmount} EVA, ${spell.effectDuration} хода` : spell.stateId ? `${stateTypes.get(spell.stateId).name}, ${spell.stateDuration} хода` : spell.isElementalShield ? `блокирует ${spell.shieldAmount} урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[spell.damageType]}, ${spell.shieldDuration} хода кастера` : spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}${spell.damageType === 'light' ? ' светом' : ''}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${effectiveSpellRange(spell)}${spell.modifiable ? ' (+RANGE)' : ''}${spell.noLOS ? ' · без LOS' : ''} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
+        slot.title = `${spell.name} · ${spell.isWindRose ? 'толкает соседей на 1 клетку' : spell.isMembrane ? `+${spell.esAmount} ES, +${spell.evaAmount} EVA, ${spell.effectDuration} хода` : spell.stateId ? `${stateTypes.get(spell.stateId).name}, ${spell.stateDuration} хода` : spell.isElementalShield ? `блокирует ${spell.shieldAmount} урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[spell.damageType]}, ${spell.shieldDuration} хода кастера` : spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}${spell.damageType === 'light' ? ' светом' : ''}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${effectiveSpellRange(spell)}${spell.modifiable ? ' (+RANGE)' : ''}${spell.noLOS ? ' · без LOS' : ''} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
       }
       for (const cell of cells) cell.classList.remove('entity-hover');
       for (const entity of entities) {

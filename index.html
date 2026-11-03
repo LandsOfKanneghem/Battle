@@ -350,18 +350,18 @@
 
     // HP постоянен между ходами; AP и MP — расходуемые ресурсы хода.
     const character = {
-      attributes: createAttributes(),
-      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10, maxHP: 10, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 2, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
-      maxAP: 8, ap: 8, baseMaxMP: 5, maxMP: 5, mp: 5,
+      attributes: { ...createAttributes(), str: 0, att: 1, cha: 1, luc: 0 },
+      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 12, maxHP: 12, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 2, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
+      maxAP: 6, ap: 6, baseMaxMP: 4, maxMP: 4, mp: 4,
       position: { x: 8, y: 8 }
     };
     function createWolf(id, position) {
-      // Каждый волк получает собственные ресурсы и массивы эффектов.
+      // У волков свои базовые характеристики; ресурсы и массивы эффектов независимы.
       return {
-        attributes: createAttributes(),
-        id, name: 'Волк', type: 'wolf', hp: 8, maxHP: 8, spells: [], elementalShields: [],
+        attributes: { ...createAttributes(), wp: 4, maxWP: 4, vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
+        id, name: 'Волк', type: 'wolf', hp: 6, maxHP: 6, spells: [], elementalShields: [],
         states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
-        maxAP: 1, ap: 1, baseMaxMP: 4, maxMP: 4, mp: 4, position
+        maxAP: 6, ap: 6, baseMaxMP: 5, maxMP: 5, mp: 5, position
       };
     }
     // Свободные стартовые клетки: без ящиков, глубоководья и союзников.
@@ -369,9 +369,9 @@
     const wolf2 = createWolf('wolf-2', { x: 7, y: 7 });
     const wolf3 = createWolf('wolf-3', { x: 12, y: 5 });
     const monk = {
-      attributes: createAttributes(),
-      id: 'monk', name: 'Монах', type: 'monk', hp: 10, maxHP: 10, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
-      maxAP: 8, ap: 8, baseMaxMP: 5, maxMP: 5, mp: 5,
+      attributes: { ...createAttributes(), str: 0, att: 1, cha: 1, luc: 0 },
+      id: 'monk', name: 'Монах', type: 'monk', hp: 12, maxHP: 12, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
+      maxAP: 6, ap: 6, baseMaxMP: 4, maxMP: 4, mp: 4,
       position: { x: 7, y: 8 }
     };
     const entities = [character, wolf1, wolf2, wolf3, monk];

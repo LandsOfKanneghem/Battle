@@ -51,9 +51,9 @@ const SPELL_DEFINITIONS = [{
   cooldown: 0, maxCooldown: 4, isAOE: false, aoeSize: 1, svg: FREEZE.icon
 }, ...ELEMENTAL_SHIELD_SPELLS, {
   id: 'liquid-membrane', name: 'Жидкая мембрана', stackable: false, isMembrane: true, allyOnly: true,
-  esAmount: 5, evaAmount: 50, effectDuration: 2, minRange: 0, range: 5, modifiable: true,
-  apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 1,
-  isAOE: true, aoeSize: 1,
+  esAmount: 4, evaAmount: 10, effectDuration: 2, minRange: 0, range: 4, modifiable: true, noLOS: false,
+  apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
+  isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><radialGradient id="membrane-glow"><stop offset="0" stop-color="#e8ffff" stop-opacity=".25"/><stop offset=".75" stop-color="#70d4eb" stop-opacity=".5"/><stop offset="1" stop-color="#d3b4ff" stop-opacity=".8"/></radialGradient></defs><circle cx="20" cy="20" r="17" fill="url(#membrane-glow)" stroke="#a7f4ed" stroke-width="2"/><path d="M9 16 Q10 8 18 7 M24 33 Q32 31 33 24" fill="none" stroke="#ffdfae" stroke-width="2" stroke-linecap="round"/></svg>`
 }];
 // Определения сохранены; вернуть скрытые заклинания можно строкой WIZARD_SPELLS.push(...HIDDEN_SPELLS).

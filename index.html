@@ -724,15 +724,16 @@
     }
 
     function showEffectPreview(area, spell) {
+      // Бейдж нужен только для урона; дальность и зона подсвечиваются отдельно.
+      if (!(spell.damage > 0)) return;
       const keys = new Set(area.map(keyOf));
       for (const entity of entities) {
         if (entity.hp <= 0 || !keys.has(keyOf(entity.position))) continue;
-        if ((spell.isHeal || spell.isFireShield || spell.allyOnly) && !isAlly(entity)) continue;
         if (spell.enemyOnly && isAlly(entity)) continue;
         // Защита учитывается как в настоящем уроне; текущий HP не ограничивает превью.
         const badge = document.createElement('span');
-        badge.className = `effect-preview ${spell.stateId === 'freeze' ? 'freeze' : spell.isMembrane ? 'shield membrane' : spell.isFireShield ? 'shield' : spell.isHeal || spell.stateId === 'speed' ? 'heal' : 'damage'}`;
-        badge.textContent = spell.stateId === 'freeze' ? '❄' : spell.isMembrane ? `+${spell.esAmount} ES\n+${spell.evaAmount} EVA` : spell.stateId ? `${stateTypes.get(spell.stateId).mpBonus > 0 ? '+' : ''}${stateTypes.get(spell.stateId).mpBonus} MP` : spell.isFireShield ? `🛡${spell.shieldAmount}` : spell.isHeal ? `+${spell.healAmount}` : `-${spellDamage(spell, entity)}`;
+        badge.className = 'effect-preview damage';
+        badge.textContent = `-${spellDamage(spell, entity)}`;
         cells[entity.position.y * SIZE + entity.position.x].appendChild(badge);
         effectBadges.push(badge);
       }

@@ -398,7 +398,7 @@
     const endTurnButton = document.getElementById('end-turn');
     let stepQueue = [];
     let isMoving = false;
-    let isSkippingTurn = false; // В том числе последний ход Заморозки после тика до нуля.
+    let isSkippingTurn = false; // В том числе последний ход самоналоженной Заморозки после тика до нуля.
     let isCasting = false; // Игра заблокирована до завершения визуального эффекта.
     let highlightedCells = [];
     let rangeHighlightedCells = [];
@@ -460,7 +460,8 @@
         || (existing.duration === input.duration && input.id !== 'burning'))) return false;
       // Равное по длительности Горение обновляет источник; меньшая длительность игнорируется.
       entity.states = entity.states.filter(state => state.id !== input.id);
-      entity.states.push({ ...template, ...input, suppressed: false, appliedOrder: ++effectOrder,
+      entity.states.push({ ...template, ...input, casterId: input.casterId ?? activeEntity()?.id,
+        suppressed: false, appliedOrder: ++effectOrder,
         overrides: [...(input.overrides ?? template.overrides)],
         neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
       resolveStateSuppression(entity);
@@ -500,11 +501,46 @@
       entity.evaBonuses = entity.evaBonuses.filter(bonus => bonus.instanceId !== applied.appliedOrder);
     }
 
-    function tickTemporaryBonuses(entity) {
-      entity.esBonuses = entity.esBonuses.map(bonus => ({ ...bonus, turnsLeft: bonus.turnsLeft - 1 }))
+    function tickTemporaryBonuses(entity, casterId) {
+      entity.esBonuses = entity.esBonuses.map(bonus => bonus.casterId === casterId
+        ? { ...bonus, turnsLeft: bonus.turnsLeft - 1 } : bonus)
         .filter(bonus => bonus.turnsLeft > 0);
-      entity.evaBonuses = entity.evaBonuses.map(bonus => ({ ...bonus, turnsLeft: bonus.turnsLeft - 1 }))
+      entity.evaBonuses = entity.evaBonuses.map(bonus => bonus.casterId === casterId
+        ? { ...bonus, turnsLeft: bonus.turnsLeft - 1 } : bonus)
         .filter(bonus => bonus.turnsLeft > 0);
+    }
+
+    function tickCasterEffects(casterId) {
+      // Единственное место отсчёта: эффекты источника на ВСЕХ целях, включая его самого.
+      for (const target of entities) {
+        // Подавленные состояния тоже тикают; врождённые и постоянные не истекают.
+        target.states = target.states.map(state => state.casterId === casterId && !state.permanent && !state.innate
+          ? { ...state, duration: state.duration - 1 } : state)
+          .filter(state => state.permanent || state.innate || state.duration > 0);
+        resolveStateSuppression(target);
+        recalculateStateStats(target);
+        // Срок заклинания независим от срока созданного им состояния.
+        target.spellsOnMe = target.spellsOnMe.map(effect => effect.casterId === casterId
+          ? { ...effect, duration: effect.duration - 1 } : effect)
+          .filter(effect => effect.duration > 0);
+        tickTemporaryBonuses(target, casterId);
+        storeFireShields(target, fireShieldEffects(target)
+          .map(effect => effect.casterId === casterId ? { ...effect, turnsLeft: effect.turnsLeft - 1 } : effect)
+          .filter(effect => effect.turnsLeft > 0));
+      }
+    }
+
+    function removeCasterEffects(casterId) {
+      // Смерть источника снимает его эффекты сразу, даже если сейчас ход другой цели.
+      for (const target of entities) {
+        target.states = target.states.filter(state => state.casterId !== casterId);
+        resolveStateSuppression(target);
+        recalculateStateStats(target);
+        target.spellsOnMe = target.spellsOnMe.filter(effect => effect.casterId !== casterId);
+        target.esBonuses = target.esBonuses.filter(bonus => bonus.casterId !== casterId);
+        target.evaBonuses = target.evaBonuses.filter(bonus => bonus.casterId !== casterId);
+        storeFireShields(target, fireShieldEffects(target).filter(effect => effect.casterId !== casterId));
+      }
     }
 
     function applySpellOnEntity(entity, spellOnMe) {
@@ -516,11 +552,12 @@
         for (const old of entity.spellsOnMe.filter(effect => effect.name === spellOnMe.name)) removeSpellBonuses(entity, old);
         entity.spellsOnMe = entity.spellsOnMe.filter(effect => effect.name !== spellOnMe.name);
       }
-      const applied = { ...spellOnMe, stackable: spellOnMe.stackable === true,
+      const applied = { ...spellOnMe, casterId: spellOnMe.casterId ?? activeEntity()?.id,
+        stackable: spellOnMe.stackable === true,
         sourceId: spellOnMe.sourceId ?? spellOnMe.id, appliedOrder: ++effectOrder };
       entity.spellsOnMe.push(applied);
       const bonus = { sourceId: applied.sourceId, name: applied.name, turnsLeft: applied.duration,
-        casterName: applied.casterName, icon: applied.icon, instanceId: applied.appliedOrder };
+        casterId: applied.casterId, casterName: applied.casterName, icon: applied.icon, instanceId: applied.appliedOrder };
       if (applied.esAmount) {
         if (!applied.stackable) {
           entity.esBonuses = entity.esBonuses.filter(old => old.sourceId !== applied.sourceId && old.name !== applied.name);
@@ -529,7 +566,8 @@
       }
       if (applied.evaAmount) entity.evaBonuses.push({ ...bonus, amount: applied.evaAmount });
       if (applied.stateId) applyState(entity, {
-        id: applied.stateId, duration: applied.stateDuration ?? applied.duration, casterName: applied.casterName
+        id: applied.stateId, duration: applied.stateDuration ?? applied.duration,
+        casterId: applied.casterId, casterName: applied.casterName
       });
       updatePanel();
     }
@@ -798,7 +836,7 @@
     }
 
     function storeFireShields(entity, effects) {
-      // Основной объект имеет amount/turnsLeft/sourceId. Другие источники
+      // Основной объект имеет amount/turnsLeft/sourceId/casterId. Другие источники
       // хранятся рядом и истекают отдельно; при отсутствии защит — null.
       const [primary, ...additional] = effects;
       entity.fireShield = primary ? { ...primary, additional } : null;
@@ -807,7 +845,8 @@
     function addFireShield(entity, spell, caster = activeEntity()) {
       const effects = fireShieldEffects(entity);
       const fresh = { amount: spell.shieldAmount, turnsLeft: spell.shieldDuration, sourceId: spell.id,
-        casterName: caster?.name ?? 'Неизвестно', name: spell.name, svg: spell.svg, appliedOrder: ++effectOrder };
+        casterId: caster?.id, casterName: caster?.name ?? 'Неизвестно', name: spell.name,
+        svg: spell.svg, appliedOrder: ++effectOrder };
       const index = effects.findIndex(effect => effect.sourceId === spell.id);
       if (index === -1) effects.push(fresh);
       else effects[index] = fresh; // Тот же источник заменяется даже более слабой защитой.
@@ -905,7 +944,8 @@
       if (spell.isMembrane) {
         if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
           id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
-          duration: spell.effectDuration, casterName: caster.name, esAmount: spell.esAmount, evaAmount: spell.evaAmount,
+          duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
+          esAmount: spell.esAmount, evaAmount: spell.evaAmount,
           description: `+${spell.esAmount} ES, +${spell.evaAmount} EVA`
         });
       } else if (spell.stateId) {
@@ -914,7 +954,7 @@
         if (recipient) applySpellOnEntity(recipient, {
           id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
           description: stateTypes.get(spell.stateId).name,
-          duration: spell.effectDuration, casterName: caster.name,
+          duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
           stateId: spell.stateId, stateDuration: spell.stateDuration, stackable: spell.stackable
         });
       } else if (spell.isFireShield) {
@@ -933,7 +973,9 @@
             applyDamage(spell, victim);
             // Даже полностью заблокированный удар накладывает состояние после урона.
             // У выстрела промах вышел из applySpellEffect раньше; другие огненные АОЕ не горят.
-            if (spell.burnDuration && victim.hp > 0) applyState(victim, 'burning', spell.burnDuration, caster.name);
+            if (spell.burnDuration && victim.hp > 0) applyState(victim, {
+              id: 'burning', duration: spell.burnDuration, casterId: caster.id, casterName: caster.name
+            });
           }
         }
       }
@@ -1009,6 +1051,7 @@
       for (let i = entities.length - 1; i >= 0; i--) {
         const entity = entities[i];
         if (entity.hp > 0) continue;
+        removeCasterEffects(entity.id);
         entity.svg.remove();
         turnSlots.get(entity.id).remove();
         turnSlots.delete(entity.id);
@@ -1347,7 +1390,7 @@
         slot.disabled = !displayed || isCasting || !canPrepareSpell(spell);
         slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
         slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');
-        slot.title = `${spell.name} · ${spell.isMembrane ? `+${spell.esAmount} ES, +${spell.evaAmount} EVA, ${spell.effectDuration} хода` : spell.stateId ? `${stateTypes.get(spell.stateId).name}, ${spell.stateDuration} хода` : spell.isFireShield ? `блокирует ${spell.shieldAmount} огненного урона, ${spell.shieldDuration} хода цели` : spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}${spell.damageType === 'light' ? ' светом' : ''}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${spell.range}${spell.noLOS ? ' · без LOS' : ''} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
+        slot.title = `${spell.name} · ${spell.isMembrane ? `+${spell.esAmount} ES, +${spell.evaAmount} EVA, ${spell.effectDuration} хода` : spell.stateId ? `${stateTypes.get(spell.stateId).name}, ${spell.stateDuration} хода` : spell.isFireShield ? `блокирует ${spell.shieldAmount} огненного урона, ${spell.shieldDuration} хода кастера` : spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}${spell.damageType === 'light' ? ' светом' : ''}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${spell.range}${spell.noLOS ? ' · без LOS' : ''} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
       }
       for (const cell of cells) cell.classList.remove('entity-hover');
       for (const entity of entities) {
@@ -1383,7 +1426,8 @@
         updatePanel();
         return;
       }
-      // DOT идёт до истечения защит/ES и последнего тика длительности самого Горения.
+      // Урон Горения срабатывает только у цели, без отсчёта длительности.
+      // При самоналожении сохраняем урон до истечения защит/ES и самого Горения.
       // Активируем получателя хода заранее, чтобы его смерть сразу передала ход после него.
       activeEntityId = entity.id;
       const burning = entity.states.find(state => state.id === 'burning' && !state.suppressed
@@ -1395,23 +1439,10 @@
           return;
         }
       }
-      // Проверяем ДО тика: даже последний ход (1 -> 0) должен быть пропущен.
+      // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
       isSkippingTurn = entity.type === 'phoenix' || isFrozen(entity);
-      tickTemporaryBonuses(entity); // Истечение убирает оставшийся бонус; база не меняется.
-      // Срок наложенного заклинания независим от созданного им состояния.
-      entity.spellsOnMe = entity.spellsOnMe.map(effect => ({ ...effect, duration: effect.duration - 1 }))
-        .filter(effect => effect.duration > 0);
-      // Тикают ВСЕ состояния, включая подавленные; истёкшие не возвращаются.
-
-      entity.states = entity.states.map(state => state.permanent || state.innate
-        ? state : { ...state, duration: state.duration - 1 })
-        .filter(state => state.permanent || state.innate || state.duration > 0);
-      resolveStateSuppression(entity);
-      recalculateStateStats(entity);
-      // Длительность защиты тикает только на начале личного хода цели.
-      storeFireShields(entity, fireShieldEffects(entity)
-        .map(effect => ({ ...effect, turnsLeft: effect.turnsLeft - 1 }))
-        .filter(effect => effect.turnsLeft > 0));
+      // Длительности меняются только по casterId, один раз даже для caster = target.
+      tickCasterEffects(entity.id);
       // Начало личного хода обновляет только заклинания этого участника.
       for (const spell of entity.spells) {
         spell.usesThisTurn = 0;

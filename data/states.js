@@ -20,7 +20,15 @@ const FREEZE = {
 const BURNING = {
   id: 'burning', name: 'Горение', mpBonus: 0, initiativeBonus: 0, tickDamage: 1, damageType: 'fire',
   description: '1 урон огнём в начале хода', duration: 2, casterName: '', suppressed: false,
-  overrides: [], neutralizes: ['freeze'], blocks: [], permanent: false, innate: false,
+  overrides: [], neutralizes: ['freeze', 'wet'], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`
 };
-const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING]]);
+const WET = {
+  id: 'wet', name: 'Влага', mpBonus: 0, initiativeBonus: 0,
+  description: '+1 сопротивление огню, −1 сопротивление воде', duration: 3, casterName: '', suppressed: false,
+  // Общий расчёт характеристик учитывает модификаторы до поглощения урона ES.
+  modifiers: { resistances: { fire: 1, water: -1 } },
+  overrides: [], neutralizes: ['burning'], blocks: [], permanent: false, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 Q5 22 8 29 Q12 39 22 37 Q35 35 32 24 Q29 16 20 3 Z" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><path d="M13 26 Q11 32 19 33" fill="none" stroke="#d0f4ff" stroke-width="2" stroke-linecap="round"/></svg>`
+};
+const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET]]);

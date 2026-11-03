@@ -219,6 +219,10 @@
       box-shadow: 0 0 5px rgba(255, 105, 35, .6); pointer-events: none;
       animation: armageddon-fall .7s ease-out both;
     }
+    .armageddon-rain.water .armageddon-drop {
+      background: linear-gradient(transparent, #2a7fff, #a0d4ff);
+      box-shadow: 0 0 5px #2a7fff;
+    }
     @keyframes armageddon-fall {
       from { transform: translate(-20px, -25px) rotate(-35deg); opacity: .8; }
       to { transform: translate(35px, 55px) rotate(-35deg); opacity: 0; }
@@ -819,9 +823,9 @@
       setTimeout(() => flashes.forEach(flash => flash.remove()), 500);
     }
 
-    function playArmageddonAnimation() {
+    function playArmageddonAnimation(water = false) {
       const rain = document.createElement('div');
-      rain.className = 'armageddon-rain';
+      rain.className = `armageddon-rain${water ? ' water' : ''}`;
       rain.setAttribute('aria-hidden', 'true');
       // Плотная сетка из 320 капель покрывает всё поле без крупных пробелов.
       // Разброс внутри каждого участка не даёт дождю выглядеть строем.
@@ -836,6 +840,11 @@
       }
       battlefield.appendChild(rain);
       setTimeout(() => rain.remove(), 900);
+    }
+
+    function playRainAnimation() {
+      // Та же длительность и плотность капель, но водная палитра.
+      playArmageddonAnimation(true);
     }
 
     function elementalShieldEffects(entity, damageType) {
@@ -947,7 +956,15 @@
       const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
       // Бросок делается только после анимации и только у выстрелов, до любых эффектов.
       if (spell.isShot && directTarget && !shotHits(caster, directTarget)) return;
-      if (spell.isMembrane) {
+      if (spell.isRain) {
+        // Влага действует на всех живых существ в квадрате, включая самого кастера.
+        const area = new Set(affectedCells(target, spell).map(keyOf));
+        for (const victim of entities) {
+          if (victim.hp > 0 && area.has(keyOf(victim.position))) applyState(victim, {
+            id: spell.stateId, duration: spell.stateDuration, casterId: caster.id, casterName: caster.name
+          });
+        }
+      } else if (spell.isMembrane) {
         if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
           id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
           duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
@@ -995,7 +1012,7 @@
       // Лечение и защита требуют живого союзника до оплаты.
       if ((spell.isHeal || spell.isElementalShield || spell.isMembrane) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
-      if (spell.stateId && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
+      if (spell.stateId && !spell.isRain && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
         && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;
       if (spell.enemyOnly && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
@@ -1019,7 +1036,10 @@
         isCasting = false;
       }
 
-      if (spell.isGlobal) {
+      if (spell.isRain) {
+        playRainAnimation();
+        setTimeout(finishCast, 900);
+      } else if (spell.isGlobal) {
         playArmageddonAnimation();
         setTimeout(finishCast, 900);
       } else if (spell.isMembrane) {

@@ -1,6 +1,24 @@
 // Данные заклинаний. Размер глобальной зоны — все 16×16 клеток текущей карты.
 const fireShieldSVG = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 19 Q1 10 12 2 L16 11 L25 1 L28 12 L36 7 Q41 25 26 35 H13 Z" fill="#f65a25"/><path d="M9 15 L20 10 L31 15 L29 28 Q26 34 20 37 Q14 34 11 28 Z" fill="#6d3f27" stroke="#ffce68" stroke-width="2"/><path d="M20 15 L17 23 H23 L20 31" fill="none" stroke="#ffe3a0" stroke-width="2"/></svg>`;
 
+// Общие параметры защит; каждый слот хранит собственный кулдаун и лимит каста.
+const ELEMENTAL_SHIELD_SPELLS = [
+  { damageType: 'fire', name: 'Огня', svg: fireShieldSVG },
+  { damageType: 'water', name: 'Воды', color: '#2465a5', edge: '#90ddff',
+    symbol: '<path d="M20 12 Q10 25 16 28 Q20 32 24 28 Q30 25 20 12 Z" fill="#9ce7ff"/>' },
+  { damageType: 'earth', name: 'Земли', color: '#775035', edge: '#dfbd7d',
+    symbol: '<path d="M12 28 L18 16 L22 21 L25 18 L30 28 Z" fill="#d5b18a" stroke="#f3d9a3"/>' },
+  { damageType: 'air', name: 'Воздуха', color: '#72aebc', edge: '#d3ffff',
+    symbol: '<path d="M12 18 H24 Q30 18 27 14 Q25 11 23 14 M11 23 H28 Q33 23 29 27 M15 28 H21" fill="none" stroke="#e3ffff" stroke-width="2" stroke-linecap="round"/>' }
+].map(element => ({
+  id: `${element.damageType}-shield`, name: `Защита от ${element.name}`,
+  stackable: false, isElementalShield: true, damageType: element.damageType,
+  shieldAmount: 2, shieldDuration: 3, minRange: 0, range: 4, modifiable: true, allyOnly: true,
+  apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
+  isAOE: false, aoeSize: 1,
+  svg: element.svg ?? `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 10 L20 3 L33 10 L31 27 Q28 34 20 38 Q12 34 9 27 Z" fill="${element.color}" stroke="${element.edge}" stroke-width="2"/>${element.symbol}</svg>`
+}));
+
 const WIZARD_SPELLS = [{
   id: 'fire-shot', isShot: true, name: 'Огненный выстрел', stackable: false, damage: 3, damageType: 'fire', burnDuration: 2,
   range: 6, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,
@@ -18,11 +36,6 @@ const WIZARD_SPELLS = [{
   isAOE: true, isGlobal: true, aoeSize: 16,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 16 Q0 10 8 8 Q10 1 17 6 Q24 0 28 7 Q37 5 38 12 Q40 18 32 18 H10 Z" fill="#f65a25"/><path d="M11 14 L14 8 L18 13 L23 6 L26 14" fill="#ffc04c"/><g stroke-linecap="round"><path d="M5 22 L10 29 M16 21 L22 30 M28 22 L34 31 M9 32 L13 38 M24 33 L28 38" stroke="#ff6425" stroke-width="4"/><path d="M9 27 L11 30 M21 28 L23 31 M33 29 L35 32 M12 36 L13 38 M27 36 L28 38" stroke="#ffdd75" stroke-width="2"/></g></svg>`
 }, {
-  id: 'fire-shield', name: 'Защита от Огня', stackable: false, isFireShield: true,
-  shieldAmount: 2, shieldDuration: 2, minRange: 0, range: 5,
-  apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 1,
-  isAOE: false, aoeSize: 1, svg: fireShieldSVG
-}, {
   id: 'haste', name: 'Ускорение', stackable: false, magicSchool: 'air', stateId: 'speed', stateDuration: 3, effectDuration: 3, allyOnly: true,
   minRange: 0, range: 6, apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 1, isAOE: false, aoeSize: 1,
@@ -36,7 +49,7 @@ const WIZARD_SPELLS = [{
   id: 'deep-freeze', name: 'Глубокая заморозка', stackable: false, stateId: 'freeze', stateDuration: 2, effectDuration: 2, allyOnly: false,
   minRange: 1, range: 5, apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 4, isAOE: false, aoeSize: 1, svg: FREEZE.icon
-}, {
+}, ...ELEMENTAL_SHIELD_SPELLS, {
   id: 'liquid-membrane', name: 'Жидкая мембрана', stackable: false, isMembrane: true, allyOnly: true,
   esAmount: 5, evaAmount: 50, effectDuration: 2, minRange: 0, range: 5,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 1,

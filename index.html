@@ -141,12 +141,12 @@
     .effect-preview.damage { color: #ff8585; }
     .effect-preview.heal { color: #83efac; }
     .effect-preview.shield { color: #ffc36b; }
-    .fire-shield-flash svg { display: block; width: 100%; height: 100%; }
-    .fire-shield-flash {
+    .elemental-shield-flash svg { display: block; width: 100%; height: 100%; }
+    .elemental-shield-flash {
       position: absolute; inset: 2px; z-index: 6; pointer-events: none;
-      animation: fire-shield-glow .5s ease-out both;
+      animation: elemental-shield-glow .5s ease-out both;
     }
-    @keyframes fire-shield-glow {
+    @keyframes elemental-shield-glow {
       from { transform: scale(.65); opacity: .9; }
       to { transform: scale(1.1); opacity: 0; }
     }
@@ -351,7 +351,7 @@
     // HP постоянен между ходами; AP и MP — расходуемые ресурсы хода.
     const character = {
       attributes: createAttributes(),
-      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10, maxHP: 10, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 2, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
+      id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 10, maxHP: 10, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 2, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
       maxAP: 8, ap: 8, baseMaxMP: 5, maxMP: 5, mp: 5,
       position: { x: 8, y: 8 }
     };
@@ -359,7 +359,7 @@
       // Каждый волк получает собственные ресурсы и массивы эффектов.
       return {
         attributes: createAttributes(),
-        id, name: 'Волк', type: 'wolf', hp: 8, maxHP: 8, spells: [], fireShield: null,
+        id, name: 'Волк', type: 'wolf', hp: 8, maxHP: 8, spells: [], elementalShields: [],
         states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
         maxAP: 1, ap: 1, baseMaxMP: 4, maxMP: 4, mp: 4, position
       };
@@ -370,7 +370,7 @@
     const wolf3 = createWolf('wolf-3', { x: 12, y: 5 });
     const monk = {
       attributes: createAttributes(),
-      id: 'monk', name: 'Монах', type: 'monk', hp: 10, maxHP: 10, spells: [], fireShield: null, states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
+      id: 'monk', name: 'Монах', type: 'monk', hp: 10, maxHP: 10, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
       maxAP: 8, ap: 8, baseMaxMP: 5, maxMP: 5, mp: 5,
       position: { x: 7, y: 8 }
     };
@@ -525,7 +525,7 @@
           ? { ...effect, duration: effect.duration - 1 } : effect)
           .filter(effect => effect.duration > 0);
         tickTemporaryBonuses(target, casterId);
-        storeFireShields(target, fireShieldEffects(target)
+        storeElementalShields(target, elementalShieldEffects(target)
           .map(effect => effect.casterId === casterId ? { ...effect, turnsLeft: effect.turnsLeft - 1 } : effect)
           .filter(effect => effect.turnsLeft > 0));
       }
@@ -540,7 +540,7 @@
         target.spellsOnMe = target.spellsOnMe.filter(effect => effect.casterId !== casterId);
         target.esBonuses = target.esBonuses.filter(bonus => bonus.casterId !== casterId);
         target.evaBonuses = target.evaBonuses.filter(bonus => bonus.casterId !== casterId);
-        storeFireShields(target, fireShieldEffects(target).filter(effect => effect.casterId !== casterId));
+        storeElementalShields(target, elementalShieldEffects(target).filter(effect => effect.casterId !== casterId));
       }
     }
 
@@ -663,6 +663,13 @@
       return true;
     }
 
+    function effectiveSpellRange(spell, caster = activeEntity()) {
+      // RANGE меняет только верхнюю границу и только при modifiable.
+      return spell.modifiable
+        ? Math.max(spell.minRange ?? 0, spell.range + (caster?.attributes.ra ?? 0))
+        : spell.range;
+    }
+
     function inSpellReach(target, spell) {
       const caster = activeEntity();
       if (!caster || !spell || !caster.spells.includes(spell)) return false;
@@ -670,7 +677,7 @@
       return target.x >= 0 && target.x < SIZE && target.y >= 0 && target.y < SIZE
         // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
         && (spell.isHeal || !obstacles.has(keyOf(target)))
-        && distance >= (spell.isHeal ? 0 : (spell.minRange ?? 1)) && distance <= spell.range
+        && distance >= (spell.isHeal ? 0 : (spell.minRange ?? 1)) && distance <= effectiveSpellRange(spell, caster)
         && (distance === 0 || spell.noLOS === true || checkLOS(caster.position, target));
     }
 
@@ -831,32 +838,29 @@
       setTimeout(() => rain.remove(), 900);
     }
 
-    function fireShieldEffects(entity) {
-      if (!entity.fireShield) return [];
-      const { additional = [], ...primary } = entity.fireShield;
-      return [primary, ...additional].filter(effect => effect.turnsLeft > 0);
+    function elementalShieldEffects(entity, damageType) {
+      // Без типа возвращаем все защиты для панели, тика и снятия при смерти.
+      return entity.elementalShields.filter(effect => effect.turnsLeft > 0
+        && (damageType === undefined || effect.damageType === damageType));
     }
 
-    function storeFireShields(entity, effects) {
-      // Основной объект имеет amount/turnsLeft/sourceId/casterId. Другие источники
-      // хранятся рядом и истекают отдельно; при отсутствии защит — null.
-      const [primary, ...additional] = effects;
-      entity.fireShield = primary ? { ...primary, additional } : null;
+    function storeElementalShields(entity, effects) {
+      entity.elementalShields = effects;
     }
 
-    function addFireShield(entity, spell, caster = activeEntity()) {
-      const effects = fireShieldEffects(entity);
-      const fresh = { amount: spell.shieldAmount, turnsLeft: spell.shieldDuration, sourceId: spell.id,
+    function addElementalShield(entity, spell, caster = activeEntity()) {
+      const effects = elementalShieldEffects(entity);
+      const fresh = { damageType: spell.damageType, amount: spell.shieldAmount, turnsLeft: spell.shieldDuration, sourceId: spell.id,
         casterId: caster?.id, casterName: caster?.name ?? 'Неизвестно', name: spell.name,
         svg: spell.svg, appliedOrder: ++effectOrder };
       const index = effects.findIndex(effect => effect.sourceId === spell.id);
       if (index === -1) effects.push(fresh);
       else effects[index] = fresh; // Тот же источник заменяется даже более слабой защитой.
-      storeFireShields(entity, effects);
+      storeElementalShields(entity, effects);
     }
 
-    function fireBlockAmount(entity) {
-      return fireShieldEffects(entity).reduce((sum, effect) => sum + effect.amount, 0);
+    function elementalBlockAmount(entity, damageType) {
+      return elementalShieldEffects(entity, damageType).reduce((sum, effect) => sum + effect.amount, 0);
     }
 
     function isMagicalDamage(damageType) {
@@ -865,7 +869,7 @@
 
     function damageBreakdown(spell, entity) {
       if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
-      // Огненный щит входит в эффективное сопротивление огню, но не свету.
+      // Защиты входят в сопротивление только своей стихии; повторно их не вычитаем.
       const resistance = getEffectiveStat(entity, `resistances.${spell.damageType}`);
       const afterResistance = Math.max(0, spell.damage - resistance);
       const absorbed = isMagicalDamage(spell.damageType)
@@ -890,11 +894,11 @@
       return Math.random() * 100 < hitChance;
     }
 
-    function playFireShieldAnimation(cell) {
+    function playElementalShieldAnimation(cell, spell) {
       const flash = document.createElement('span');
-      flash.className = 'fire-shield-flash';
+      flash.className = 'elemental-shield-flash';
       flash.setAttribute('aria-hidden', 'true');
-      flash.innerHTML = fireShieldSVG;
+      flash.innerHTML = spell.svg;
       cell.appendChild(flash);
       setTimeout(() => flash.remove(), 500);
     }
@@ -959,10 +963,10 @@
           duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
           stateId: spell.stateId, stateDuration: spell.stateDuration, stackable: spell.stackable
         });
-      } else if (spell.isFireShield) {
+      } else if (spell.isElementalShield) {
         const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
           && keyOf(entity.position) === keyOf(target));
-        if (ally) addFireShield(ally, spell, caster);
+        if (ally) addElementalShield(ally, spell, caster);
       } else if (spell.isHeal) {
         const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
           && keyOf(entity.position) === keyOf(target));
@@ -989,7 +993,7 @@
       const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
       if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
       // Лечение и защита требуют живого союзника до оплаты.
-      if ((spell.isHeal || spell.isFireShield || spell.isMembrane) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
+      if ((spell.isHeal || spell.isElementalShield || spell.isMembrane) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
       if (spell.stateId && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
         && (!spell.allyOnly || isAlly(entity)))) return false;
@@ -1027,8 +1031,8 @@
       } else if (spell.stateId) {
         playStateAnimation(targetCell, spell.stateId);
         setTimeout(finishCast, 500);
-      } else if (spell.isFireShield) {
-        playFireShieldAnimation(targetCell);
+      } else if (spell.isElementalShield) {
+        playElementalShieldAnimation(targetCell, spell);
         setTimeout(finishCast, 500);
       } else if (spell.isHeal) {
         playHealAnimation(targetCell);
@@ -1262,7 +1266,7 @@
         n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? 'хода' : 'ходов';
       // Для защиты выводим силу именно наложенного эффекта, а не шаблона заклинания.
       const spellDescription = effect.amount !== undefined
-        ? `Блокирует ${effect.amount} ед. урона огнём` : effect.description;
+        ? `Блокирует ${effect.amount} ед. урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[effect.damageType]}` : effect.description;
       const lines = kind === 'state'
         ? [effect.description, `Длительность: ${n} ${word}`,
           ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : [])]
@@ -1290,7 +1294,7 @@
     function renderEffectPanel() {
       const entity = entities.find(item => item.id === selectedEntityId);
       if (!entity) return;
-      const effects = [...fireShieldEffects(entity), ...entity.spellsOnMe]
+      const effects = [...elementalShieldEffects(entity), ...entity.spellsOnMe]
         .sort((a, b) => (a.appliedOrder ?? 0) - (b.appliedOrder ?? 0));
       const key = JSON.stringify([entity.id, effects, entity.states]);
       // Не пересоздаём иконки на каждом mousemove: тултип остаётся стабильным.
@@ -1309,7 +1313,7 @@
         icon.type = 'button';
         icon.className = 'spell-slot effect-icon';
         const sourceSpell = entities.flatMap(item => item.spells).find(item => item.id === effect.sourceId);
-        const svg = effect.icon ?? effect.svg ?? sourceSpell?.svg ?? (effect.sourceId === 'fire-shield' ? fireShieldSVG : null);
+        const svg = effect.icon ?? effect.svg ?? sourceSpell?.svg;
         if (svg) icon.innerHTML = svg;
         else icon.textContent = '?';
         icon.setAttribute('aria-label', effect.name ?? sourceSpell?.name ?? effect.sourceId);
@@ -1348,13 +1352,14 @@
       const effects = [
         ...entity.states.filter(state => !state.suppressed && (state.duration > 0 || state.permanent || state.innate)),
         ...entity.spellsOnMe.filter(effect => effect.duration > 0 && !effect.suppressed),
-        ...fireShieldEffects(entity)
+        ...elementalShieldEffects(entity)
       ];
-      // В строке огня показываем также суммарную блокировку активных огненных защит.
-      const fireProtection = statName === 'resistances.fire' ? fireBlockAmount(entity) : 0;
+      // В каждой строке сопротивления показываем сумму защит соответствующей стихии.
+      const elementalProtection = statName.startsWith('resistances.')
+        ? elementalBlockAmount(entity, statName.split('.')[1]) : 0;
       const temporaryEvasion = statName === 'eva'
         ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
-      return base + fireProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
+      return base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
         ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : 0)), 0);
     }
 
@@ -1393,7 +1398,7 @@
         slot.disabled = !displayed || isCasting || !canPrepareSpell(spell);
         slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
         slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');
-        slot.title = `${spell.name} · ${spell.isMembrane ? `+${spell.esAmount} ES, +${spell.evaAmount} EVA, ${spell.effectDuration} хода` : spell.stateId ? `${stateTypes.get(spell.stateId).name}, ${spell.stateDuration} хода` : spell.isFireShield ? `блокирует ${spell.shieldAmount} огненного урона, ${spell.shieldDuration} хода кастера` : spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}${spell.damageType === 'light' ? ' светом' : ''}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${spell.range}${spell.noLOS ? ' · без LOS' : ''} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
+        slot.title = `${spell.name} · ${spell.isMembrane ? `+${spell.esAmount} ES, +${spell.evaAmount} EVA, ${spell.effectDuration} хода` : spell.stateId ? `${stateTypes.get(spell.stateId).name}, ${spell.stateDuration} хода` : spell.isElementalShield ? `блокирует ${spell.shieldAmount} урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[spell.damageType]}, ${spell.shieldDuration} хода кастера` : spell.isHeal ? `лечит ${spell.healAmount} HP` : `урон ${spell.damage}${spell.damageType === 'light' ? ' светом' : ''}`} · ${spell.isGlobal ? 'вся карта' : spell.isAOE ? `зона ${spell.aoeSize}×${spell.aoeSize}` : 'одна цель'} · дальность ${spell.minRange ?? 1}–${effectiveSpellRange(spell)}${spell.modifiable ? ' (+RANGE)' : ''}${spell.noLOS ? ' · без LOS' : ''} · ${spell.apCost} AP · кулдаун ${spell.maxCooldown}, текущий ${spell.cooldown} · ${spell.usesThisTurn} / ${spell.maxUsesPerTurn} использований за ход${spell.maxUsesPerBattle !== undefined ? ` · ${spell.usesTotal} / ${spell.maxUsesPerBattle} использований за бой` : ''}`;
       }
       for (const cell of cells) cell.classList.remove('entity-hover');
       for (const entity of entities) {

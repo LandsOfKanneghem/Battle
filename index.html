@@ -172,6 +172,11 @@
       from { transform: scale(.3); opacity: .9; }
       to { transform: scale(1.15); opacity: 0; }
     }
+    .state-animation.sky-shot svg { animation: sky-shot-rise .5s ease-out both; }
+    @keyframes sky-shot-rise {
+      from { transform: translateY(15px); opacity: 1; }
+      to { transform: translateY(-35px); opacity: 0; }
+    }
     .state-animation.heavy svg { animation: heavy-fall .5s ease-out both; }
     .heavy-impact {
       position: absolute; inset: 55% 8% 5%; border: 2px solid #b2bdcd;
@@ -710,13 +715,14 @@
       if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
       if (spell.burnDuration) effects.push(stateTypes.get('burning').name);
       if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
+      if (spell.isSkyShot) effects.push(spell.effectDescription);
       if (spell.isMembrane) effects.push(`+${spell.esAmount} ES, +${spell.evaAmount}% уклонения`);
       if (effects.length) {
         effects.forEach((effect, index) => {
           if (index === 0) addLine('Эффекты', effect);
           else { const line = document.createElement('p'); line.textContent = effect; tooltip.appendChild(line); }
         });
-        addLine('Длительность', spellTurnLabel(spell.stateDuration ?? spell.shieldDuration ?? spell.effectDuration ?? spell.burnDuration));
+        addLine('Длительность', spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(spell.stateDuration ?? spell.shieldDuration ?? spell.effectDuration ?? spell.burnDuration));
       }
       document.body.appendChild(tooltip);
       // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.
@@ -828,10 +834,15 @@
       return true;
     }
 
+    function hasSkyShotBuff(entity) {
+      return !!entity?.spellsOnMe.some(effect => effect.isSkyShot && effect.duration > 0 && !effect.suppressed);
+    }
+
     function effectiveSpellRange(spell, caster = activeEntity()) {
-      // RANGE меняет только верхнюю границу и только при modifiable.
+      // RANGE и бонус следующего выстрела меняют только модифицируемую верхнюю границу.
+      const skyBonus = spell.isShot && hasSkyShotBuff(caster) ? 2 : 0;
       return spell.modifiable
-        ? Math.max(spell.minRange ?? 0, spell.range + (caster?.attributes.ra ?? 0))
+        ? Math.max(spell.minRange ?? 0, spell.range + (caster?.attributes.ra ?? 0) + skyBonus)
         : spell.range;
     }
 
@@ -843,7 +854,7 @@
         // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
         && (spell.isHeal || !obstacles.has(keyOf(target)))
         && distance >= (spell.isHeal ? 0 : (spell.minRange ?? 1)) && distance <= effectiveSpellRange(spell, caster)
-        && (distance === 0 || spell.noLOS === true || checkLOS(caster.position, target));
+        && (distance === 0 || spell.noLOS === true || (spell.isShot && hasSkyShotBuff(caster)) || checkLOS(caster.position, target));
     }
 
     const isAlly = entity => entity.type === 'wizard' || entity.type === 'monk';
@@ -1200,6 +1211,15 @@
       setTimeout(() => crystals.remove(), 500);
     }
 
+    function playSkyShotAnimation(cell, spell) {
+      const arrow = document.createElement('span');
+      arrow.className = 'state-animation sky-shot';
+      arrow.setAttribute('aria-hidden', 'true');
+      arrow.innerHTML = spell.svg;
+      cell.appendChild(arrow);
+      setTimeout(() => arrow.remove(), 500);
+    }
+
     function playHeavyAnimation(cell) {
       const impact = document.createElement('span');
       impact.className = 'state-animation heavy';
@@ -1275,7 +1295,13 @@
         playMissAnimation(cells[target.y * SIZE + target.x]);
         return;
       }
-      if (spell.isSparks) {
+      if (spell.isSkyShot) {
+        if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
+          id: spell.id, name: spell.name, icon: spell.svg, isSkyShot: true,
+          description: spell.effectDescription, duration: spell.effectDuration,
+          casterId: caster.id, casterName: caster.name
+        });
+      } else if (spell.isSparks) {
         if (directTarget) {
           // Выбираем отскоки до урона: смерть основной цели не меняет уже выбранную цепь.
           const targets = sparkTargets ?? findSparkTargets(directTarget, spell.sparkRadius, spell.sparkCount);
@@ -1368,7 +1394,7 @@
       const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
       if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
       // Лечение и защита требуют живого союзника до оплаты.
-      if ((spell.isHeal || spell.isElementalShield || spell.isMembrane) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
+      if ((spell.isHeal || spell.isElementalShield || spell.isMembrane || spell.isSkyShot) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
       if (spell.stateId && !spell.isRain && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
         && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;
@@ -1387,6 +1413,9 @@
       spell.usesThisTurn++;
       if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
       spell.cooldown = spell.maxCooldown;
+      // Расходуем бафф только после успешной проверки цели и оплаты, даже при будущем промахе.
+      // Срок и смерть источника обслуживаются общим механизмом spellsOnMe.
+      if (spell.isShot) caster.spellsOnMe = caster.spellsOnMe.filter(effect => !effect.isSkyShot);
       isCasting = true;
       cancelSpell(); // Также очищает превью и обновляет disabled у кнопок.
 
@@ -1399,7 +1428,10 @@
         isCasting = false;
       }
 
-      if (spell.isSparks) {
+      if (spell.isSkyShot) {
+        playSkyShotAnimation(targetCell, spell);
+        setTimeout(finishCast, 500);
+      } else if (spell.isSparks) {
         const sparkCells = sparkTargets.map(entity => cells[entity.position.y * SIZE + entity.position.x]);
         playSparksAnimation(fromCell, targetCell, sparkCells, () => setTimeout(finishCast, 0), () => {
           shotHit = shotHits(caster, primaryTarget);
@@ -1668,7 +1700,7 @@
       const lines = kind === 'state'
         ? [effect.description, `Длительность: ${n} ${word}`,
           ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : [])]
-        : [spellDescription, `Длительность: ${n} ${word}`,
+        : [spellDescription, `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
           `Источник: ${effect.casterName ?? 'Неизвестно'}`];
       for (const text of lines) {
         const line = document.createElement('p');

@@ -69,7 +69,7 @@ const SPELL_DEFINITIONS = [{
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 22 Q1 21 4 14 Q6 9 12 11 Q13 2 22 5 Q29 4 31 12 Q39 11 37 19 Q36 23 30 22 Z" fill="#427fb6" stroke="#a0d4ff" stroke-width="2"/><path d="M11 27 L8 33 M21 27 L18 36 M31 27 L28 33" fill="none" stroke="#58b5ff" stroke-width="3" stroke-linecap="round"/></svg>`
 }, {
   id: 'wind-rose', name: 'Роза ветров', stackable: false, isWindRose: true, target: 'any',
-  description: 'Отталкивает существ, стоящих по кресту от целевой клетки, на 1 клетку от центра.',
+  description: 'Отталкивает существ, стоящих на соседних клетках от целевой клетки, на расстояние 1 клетки, если это возможно.',
   minRange: 0, range: 4, modifiable: true, noLOS: true,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 3,
   // Подсвечиваем только центр; толчок проверяет четыре соседние клетки отдельно.

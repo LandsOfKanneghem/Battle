@@ -83,6 +83,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1, svg: HEAVY.icon
 }, {
   id: 'burning-hands', name: 'Опаляющие руки', stackable: false, isCone: true, target: 'any',
+  description: 'Наносит урон огнем в конусном АОЕ на близкой дистанции.',
   damage: 4, damageType: 'fire', minRange: 1, range: 1, modifiable: false, noLOS: false,
   apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 1,
   isAOE: true, aoeSize: 3,

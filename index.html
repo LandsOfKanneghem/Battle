@@ -239,6 +239,7 @@
       filter: drop-shadow(0 0 4px #ff7b24);
     }
     .spell-projectile[data-type="ice"] { filter: drop-shadow(0 0 4px #80dcff); }
+    .spell-projectile[data-type^="spark"] { filter: drop-shadow(0 0 5px #b9edff); }
     .spell-projectile svg { display: block; width: 100%; height: 100%; }
     .cube-explosion {
       position: absolute; inset: 0; z-index: 6; border-radius: 50%;
@@ -890,7 +891,26 @@
       return blocked;
     }
 
+    function findSparkTargets(primaryTarget, radius, count) {
+      if (!primaryTarget) return [];
+      // Манхэттенская дистанция, затем угол по часовой стрелке: право → вниз → лево → верх.
+      // LOS для отскоков не проверяется; источник тоже может оказаться среди целей.
+      return entities.filter(entity => entity.hp > 0 && entity.id !== primaryTarget.id)
+        .map(entity => {
+          const dx = entity.position.x - primaryTarget.position.x;
+          const dy = entity.position.y - primaryTarget.position.y;
+          return { entity, distance: Math.abs(dx) + Math.abs(dy), angle: (Math.atan2(dy, dx) + Math.PI * 2) % (Math.PI * 2) };
+        })
+        .filter(candidate => candidate.distance <= radius)
+        .sort((a, b) => a.distance - b.distance || a.angle - b.angle || a.entity.id.localeCompare(b.entity.id))
+        .slice(0, count).map(candidate => candidate.entity);
+    }
+
     function affectedCells(center, spell, caster = activeEntity()) {
+      if (spell.isSparks) {
+        const primary = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(center));
+        return primary ? [primary, ...findSparkTargets(primary, spell.sparkRadius, spell.sparkCount)].map(entity => entity.position) : [center];
+      }
       if (spell.isCone) {
         if (!caster) return [];
         const direction = { x: center.x - caster.position.x, y: center.y - caster.position.y };
@@ -931,21 +951,23 @@
           cell.classList.add('spell-aoe');
           highlightedCells.push(cell);
         }
-        showEffectPreview(area, spell);
+        showEffectPreview(area, spell, center);
       }
     }
 
-    function showEffectPreview(area, spell) {
+    function showEffectPreview(area, spell, center = area[0]) {
       // Бейдж нужен только для урона; дальность и зона подсвечиваются отдельно.
       if (!(spell.damage > 0)) return;
       const keys = new Set(area.map(keyOf));
+      const primary = spell.isSparks ? entities.find(entity => keyOf(entity.position) === keyOf(center)) : null;
       for (const entity of entities) {
         if (entity.hp <= 0 || !keys.has(keyOf(entity.position))) continue;
         if (spell.enemyOnly && isAlly(entity)) continue;
         // Защита учитывается как в настоящем уроне; текущий HP не ограничивает превью.
         const badge = document.createElement('span');
         badge.className = 'effect-preview damage';
-        badge.textContent = `-${spellDamage(spell, entity)}`;
+        const previewSpell = spell.isSparks && entity !== primary ? { ...spell, damage: Math.floor(spell.damage / 2) } : spell;
+        badge.textContent = `-${spellDamage(previewSpell, entity)}`;
         cells[entity.position.y * SIZE + entity.position.x].appendChild(badge);
         effectBadges.push(badge);
       }
@@ -978,13 +1000,15 @@
       const from = fromCell.getBoundingClientRect();
       const to = toCell.getBoundingClientRect();
       const isCube = type === 'fire-cube';
-      const duration = isCube ? 350 : 250;
-      const size = Math.min(from.width, from.height) * (isCube ? .65 : .5);
+      const duration = isCube ? 350 : type === 'spark' ? 220 : type === 'spark-bounce' ? 180 : 250;
+      const size = Math.min(from.width, from.height) * (isCube ? .65 : type === 'spark-bounce' ? .3 : .5);
       const projectile = document.createElement('span');
       projectile.className = 'spell-projectile';
       projectile.dataset.type = type;
       projectile.setAttribute('aria-hidden', 'true');
-      projectile.innerHTML = type === 'ice'
+      projectile.innerHTML = type.startsWith('spark')
+        ? WIZARD_SPELLS.find(spell => spell.id === 'sparks').svg
+        : type === 'ice'
         ? WIZARD_SPELLS.find(spell => spell.id === 'ice-arrow').svg
         : `<svg viewBox="0 0 40 40"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`;
       projectile.style.width = projectile.style.height = `${size}px`;
@@ -1009,6 +1033,18 @@
       flight.onfinish = finishFlight;
       // Страховочная очистка, даже если браузер приостановил отрисовку.
       setTimeout(finishFlight, duration + 50);
+    }
+
+    function playSparksAnimation(fromCell, primaryCell, sparkCells, onArrival) {
+      playProjectileAnimation(fromCell, primaryCell, 'spark', () => {
+        if (!sparkCells.length) { setTimeout(onArrival, 180); return; }
+        let pending = sparkCells.length;
+        for (const cell of sparkCells) {
+          playProjectileAnimation(primaryCell, cell, 'spark-bounce', () => {
+            if (--pending === 0) onArrival();
+          });
+        }
+      });
     }
 
     function playCubeExplosion(centerCell, spell) {
@@ -1210,11 +1246,20 @@
     }
 
     // Только эффект: ресурсы уже оплачены в первой фазе каста.
-    function applySpellEffect(spell, target, caster) {
+    function applySpellEffect(spell, target, caster, sparkTargets = null) {
       const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
       // Бросок делается только после анимации и только у выстрелов, до любых эффектов.
       if (spell.isShot && directTarget && !shotHits(caster, directTarget)) return;
-      if (spell.id === 'ice-arrow') {
+      if (spell.isSparks) {
+        if (directTarget) {
+          // Выбираем отскоки до урона: смерть основной цели не меняет уже выбранную цепь.
+          const targets = sparkTargets ?? findSparkTargets(directTarget, spell.sparkRadius, spell.sparkCount);
+          applyDamage(spell, directTarget);
+          for (const secondary of targets) {
+            if (secondary.hp > 0) applyDamage({ damage: Math.floor(spell.damage / 2), damageType: spell.damageType }, secondary);
+          }
+        }
+      } else if (spell.id === 'ice-arrow') {
         if (directTarget) {
           // Сначала сопротивление → ES → HP, затем Охлаждение у выжившей цели.
           // Общая проверка попадания выше не допускает состояния при промахе.
@@ -1305,6 +1350,10 @@
       if (spell.enemyOnly && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
       const caster = activeEntity();
+      const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
+      if (spell.isSparks && !primaryTarget) return false;
+      // Этот же снимок целей используется для анимации и последующего урона.
+      const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount) : null;
       const fromCell = cells[caster.position.y * SIZE + caster.position.x];
 
       // Фаза 1: фиксируем цель, оплачиваем каст и блокируем любые новые действия.
@@ -1317,14 +1366,17 @@
 
       function finishCast() {
         // Фаза 2: HP и очередь меняются лишь после завершения анимации.
-        applySpellEffect(spell, target, caster);
+        applySpellEffect(spell, target, caster, sparkTargets);
         removeDefeatedEntities();
         // Обновление UI выполнится сразу после callback, уже со снятой блокировкой.
         queueMicrotask(updatePanel);
         isCasting = false;
       }
 
-      if (spell.id === 'ice-arrow') {
+      if (spell.isSparks) {
+        const sparkCells = sparkTargets.map(entity => cells[entity.position.y * SIZE + entity.position.x]);
+        playSparksAnimation(fromCell, targetCell, sparkCells, () => setTimeout(finishCast, 0));
+      } else if (spell.id === 'ice-arrow') {
         playProjectileAnimation(fromCell, targetCell, 'ice', () => setTimeout(finishCast, 0));
       } else if (spell.isCone) {
         playBurningHandsAnimation(fromCell, { x: target.x - caster.position.x, y: target.y - caster.position.y });

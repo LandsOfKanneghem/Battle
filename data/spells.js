@@ -103,12 +103,20 @@ const SPELL_DEFINITIONS = [{
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 5 L20 2 L32 7 L35 21 L29 33 L20 38 L8 32 L4 18 Z" fill="#858e98" stroke="#cdd4db" stroke-width="2"/><path d="M20 3 L17 13 L23 20 L17 28 L20 37 M17 13 L5 17 M23 20 L34 16 M17 28 L9 32 M23 20 L29 32" fill="none" stroke="#434e5a" stroke-width="2"/><path d="M10 8 L14 7 M27 9 L29 12" stroke="#e3e7eb" stroke-width="2" stroke-linecap="round"/></svg>`
+}, {
+  id: 'sparks', name: 'Искры', stackable: false, isSparks: true, target: 'any',
+  description: 'Наносит урон воздухом по одиночной цели, от нее отскакивает 2 искры в ближайшие цели на расстоянии 3 клеток, наносящие половину урона (несколько искр в одну цель отлететь не могут).',
+  damage: 2, damageType: 'air', sparkRadius: 3, sparkCount: 2,
+  minRange: 1, range: 5, modifiable: true, noLOS: false,
+  apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0, cooldown: 0, maxCooldown: 0,
+  isAOE: false, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M23 2 L9 22 H19 L15 38 L33 15 H23 Z" fill="#ffe36b" stroke="#fff5be" stroke-width="1.5"/><path d="M7 5 L3 12 L9 11 M34 28 L38 23 M32 35 L37 37 M8 30 L3 34" fill="none" stroke="#83eaff" stroke-width="2.5" stroke-linecap="round"/></svg>`
 }];
 // Определения сохранены; вернуть скрытые заклинания можно строкой WIZARD_SPELLS.push(...HIDDEN_SPELLS).
 const HIDDEN_SPELLS = SPELL_DEFINITIONS.filter(spell => ['fire-cube', 'deep-freeze', 'armageddon'].includes(spell.id));
 const WIZARD_SPELLS = [
   'fire-shot', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin',
-  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands', 'ice-arrow'
+  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands', 'ice-arrow', 'sparks'
 ].map(id => SPELL_DEFINITIONS.find(spell => spell.id === id));
 
 // Все поля заклинания — примитивы, включая SVG-разметку, поэтому

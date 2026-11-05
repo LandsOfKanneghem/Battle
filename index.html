@@ -698,7 +698,7 @@
       const effects = [];
       if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
       if (spell.burnDuration) effects.push(stateTypes.get('burning').name);
-      if (spell.isElementalShield) effects.push(`Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
+      if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
       if (spell.isMembrane) effects.push(`+${spell.esAmount} ES, +${spell.evaAmount}% уклонения`);
       if (effects.length) {
         effects.forEach((effect, index) => {
@@ -1100,8 +1100,8 @@
 
     function damageBreakdown(spell, entity) {
       if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
-      // Защиты входят в сопротивление только своей стихии; повторно их не вычитаем.
-      const resistance = getEffectiveStat(entity, `resistances.${spell.damageType}`);
+      // Учитываем защиту нужного типа (включая physical) один раз, до ES/HP.
+      const resistance = getEffectiveStat(entity, spell.damageType === 'physical' ? 'physical' : `resistances.${spell.damageType}`);
       const afterResistance = Math.max(0, spell.damage - resistance);
       const absorbed = isMagicalDamage(spell.damageType)
         ? Math.min(getCurrentES(entity), afterResistance) : 0;
@@ -1582,7 +1582,8 @@
         n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? 'хода' : 'ходов';
       // Для защиты выводим силу именно наложенного эффекта, а не шаблона заклинания.
       const spellDescription = effect.amount !== undefined
-        ? `Блокирует ${effect.amount} ед. урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[effect.damageType]}` : effect.description;
+        ? effect.damageType === 'physical' ? `Блокирует ${effect.amount} ед. физического урона`
+          : `Блокирует ${effect.amount} ед. урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[effect.damageType]}` : effect.description;
       const lines = kind === 'state'
         ? [effect.description, `Длительность: ${n} ${word}`,
           ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : [])]
@@ -1670,8 +1671,9 @@
         ...entity.spellsOnMe.filter(effect => effect.duration > 0 && !effect.suppressed),
         ...elementalShieldEffects(entity)
       ];
-      // В каждой строке сопротивления показываем сумму защит соответствующей стихии.
-      const elementalProtection = statName.startsWith('resistances.')
+      // Физическая и стихийные защиты добавляются только к своей характеристике.
+      const elementalProtection = statName === 'physical' ? elementalBlockAmount(entity, 'physical')
+        : statName.startsWith('resistances.')
         ? elementalBlockAmount(entity, statName.split('.')[1]) : 0;
       const temporaryEvasion = statName === 'eva'
         ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
@@ -1704,7 +1706,7 @@
       writeAttribute('blo', `BLO: ${getEffectiveStat(displayed, 'blo')}% / ${getEffectiveStat(displayed, 'blo')}`);
       for (const [key, label] of Object.entries({ ac: 'Броня', physical: 'Физика', fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля', mind: 'Разум', poison: 'Яд' })) {
         const id = key === 'ac' ? 'ac' : `res-${key}`;
-        // Броня и Физика — отдельные характеристики; physical пока только отображается.
+        // Броня и Физика — отдельные характеристики; физические защиты входят в physical.
         const value = getEffectiveStat(displayed, key === 'ac' || key === 'physical' ? key : `resistances.${key}`);
         writeAttribute(id, String(value));
         document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);

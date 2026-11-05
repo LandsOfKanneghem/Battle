@@ -96,11 +96,18 @@ const SPELL_DEFINITIONS = [{
   apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0, cooldown: 0, maxCooldown: 0,
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 34 L29 12" stroke="#bcefff" stroke-width="4"/><path d="M19 11 L36 4 L29 21 L27 13 Z" fill="#80dcff" stroke="#e3faff" stroke-width="2"/><path d="M4 26 L12 28 L14 36 M7 22 L15 24 L18 33" fill="none" stroke="#5aaad6" stroke-width="3"/><path d="M28 4 V14 M23 9 H33" stroke="#f0fdff" stroke-width="1.5"/></svg>`
+}, {
+  id: 'stone-skin', name: 'Каменная кожа', stackable: false, isElementalShield: true, damageType: 'physical', target: 'ally', allyOnly: true,
+  description: 'Союзная цель блокирует часть физического урона.',
+  shieldAmount: 2, shieldDuration: 3, minRange: 0, range: 4, modifiable: true, noLOS: false,
+  apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
+  isAOE: false, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 5 L20 2 L32 7 L35 21 L29 33 L20 38 L8 32 L4 18 Z" fill="#858e98" stroke="#cdd4db" stroke-width="2"/><path d="M20 3 L17 13 L23 20 L17 28 L20 37 M17 13 L5 17 M23 20 L34 16 M17 28 L9 32 M23 20 L29 32" fill="none" stroke="#434e5a" stroke-width="2"/><path d="M10 8 L14 7 M27 9 L29 12" stroke="#e3e7eb" stroke-width="2" stroke-linecap="round"/></svg>`
 }];
 // Определения сохранены; вернуть скрытые заклинания можно строкой WIZARD_SPELLS.push(...HIDDEN_SPELLS).
 const HIDDEN_SPELLS = SPELL_DEFINITIONS.filter(spell => ['fire-cube', 'deep-freeze', 'armageddon'].includes(spell.id));
 const WIZARD_SPELLS = [
-  'fire-shot', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield',
+  'fire-shot', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin',
   'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands', 'ice-arrow'
 ].map(id => SPELL_DEFINITIONS.find(spell => spell.id === id));
 

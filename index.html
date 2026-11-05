@@ -179,6 +179,12 @@
       from { transform: scale(.3); opacity: .9; }
       to { transform: scale(1.15); opacity: 0; }
     }
+    .state-animation.adrenaline { background: radial-gradient(circle, #ff5366aa, #b8162833 55%, transparent 75%); animation: adrenaline-pulse .5s ease-out both; }
+    @keyframes adrenaline-pulse {
+      0% { transform: scale(.5); opacity: .2; }
+      50% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.2); opacity: 0; }
+    }
     .state-animation.sky-shot svg { animation: sky-shot-rise .5s ease-out both; }
     @keyframes sky-shot-rise {
       from { transform: translateY(15px); opacity: 1; }
@@ -438,7 +444,7 @@
     const character = {
       attributes: { ...createAttributes(), str: 0, att: 1, cha: 1, luc: 0 },
       id: 'wizard', name: 'Волшебник', type: 'wizard', hp: 12, maxHP: 12, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
-      maxAP: 6, ap: 6, baseMaxMP: 4, maxMP: 4, mp: 4,
+      baseMaxAP: 6, maxAP: 6, ap: 6, baseMaxMP: 4, maxMP: 4, mp: 4,
       position: { x: 8, y: 8 }
     };
     function createWolf(id, position) {
@@ -447,7 +453,7 @@
         attributes: { ...createAttributes(), wp: 4, maxWP: 4, vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
         id, name: 'Волк', type: 'wolf', hp: 6, maxHP: 6, spells: [], elementalShields: [],
         states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
-        maxAP: 6, ap: 6, baseMaxMP: 5, maxMP: 5, mp: 5, position
+        baseMaxAP: 6, maxAP: 6, ap: 6, baseMaxMP: 5, maxMP: 5, mp: 5, position
       };
     }
     // Свободные стартовые клетки: без ящиков, глубоководья и союзников.
@@ -457,7 +463,7 @@
     const monk = {
       attributes: { ...createAttributes(), str: 0, att: 1, cha: 1, luc: 0 },
       id: 'monk', name: 'Монах', type: 'monk', hp: 12, maxHP: 12, spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [], baseInitiative: 0, initiative: 0,
-      maxAP: 6, ap: 6, baseMaxMP: 4, maxMP: 4, mp: 4,
+      baseMaxAP: 6, maxAP: 6, ap: 6, baseMaxMP: 4, maxMP: 4, mp: 4,
       position: { x: 7, y: 8 }
     };
     const entities = [character, wolf1, wolf2, wolf3, monk];
@@ -499,7 +505,22 @@
     let effectOrder = 0; // Порядок наложения, независимый от номера хода.
 
 
+    function hasActiveState(entity, id) {
+      return entity.states.some(state => state.id === id && !state.suppressed
+        && (state.duration > 0 || state.permanent || state.innate));
+    }
+
+    function restoreSuspendedWeakness(entity) {
+      entity.states.push(...(entity.suspendedWeakness ?? []));
+      entity.suspendedWeakness = [];
+    }
+
     function recalculateStateStats(entity, allowNegativeMP = false) {
+      const oldMaxAP = entity.maxAP;
+      entity.maxAP = Math.max(1, entity.baseMaxAP + entity.states.filter(state => !state.suppressed)
+        .reduce((sum, state) => sum + (state.apBonus ?? 0), 0));
+      // Изменяется именно остаток AP: потраченные действия не возвращаем; долг AP допустим.
+      entity.ap += entity.maxAP - oldMaxAP;
       const oldMaxMP = entity.maxMP;
       entity.maxMP = Math.max(1, entity.baseMaxMP + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.mpBonus, 0));
       entity.initiative = entity.baseInitiative + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.initiativeBonus, 0);
@@ -532,7 +553,11 @@
       // Поддерживаем объект состояния; форма с id удобна для ручной отладки.
       const input = typeof stateOrId === 'string' ? { id: stateOrId, duration, casterName } : stateOrId;
       const template = stateTypes.get(input.id);
-      if (!template || input.duration <= 0) return false;
+      if (!template) return false;
+      const stateDuration = input.duration ?? template.duration;
+      if (stateDuration <= 0) return false;
+      if (input.id === 'weakness' && hasActiveState(entity, 'adrenaline')) return false;
+      if (input.id === 'adrenaline' && hasActiveState(entity, 'adrenaline-crash')) return false;
       const neutralizes = input.neutralizes ?? template.neutralizes;
       if (entity.states.some(state => neutralizes.includes(state.id))) {
         // A нейтрализует B: снимаем B, но A не появляется. Урон уже прошёл раньше.
@@ -542,23 +567,42 @@
         updatePanel();
         return false;
       }
-      const existing = entity.states.find(state => state.id === input.id);
-      if (existing && (existing.permanent || existing.innate || existing.duration > input.duration
-        || (existing.duration === input.duration && input.id !== 'burning'))) return false;
+      // Слабость отката — отдельный экземпляр: не заменяет восстановленную постоянную.
+      const sameInstance = state => state.id === input.id && (input.id !== 'weakness'
+        || !!state.crashWeakness === !!input.crashWeakness);
+      const existing = entity.states.find(sameInstance);
+      if (existing && (existing.unremovable || existing.permanent || existing.innate || existing.duration > stateDuration
+        || (existing.duration === stateDuration && input.id !== 'burning'))) return false;
       // Равное по длительности Горение обновляет источник; меньшая длительность игнорируется.
-      entity.states = entity.states.filter(state => state.id !== input.id);
-      entity.states.push({ ...template, ...input, casterId: input.casterId ?? activeEntity()?.id,
+      if (input.id === 'adrenaline') {
+        entity.suspendedWeakness ??= [];
+        entity.states = entity.states.filter(state => {
+          if (state.id !== 'weakness' || state.unremovable) return true;
+          // Приостанавливаем целые экземпляры, сохраняя источник, срок и флаги.
+          if (state.permanent) entity.suspendedWeakness.push(state);
+          return false;
+        });
+      }
+      entity.states = entity.states.filter(state => !sameInstance(state));
+      entity.states.push({ ...template, ...input, duration: stateDuration, casterId: input.casterId ?? activeEntity()?.id,
         suppressed: false, appliedOrder: ++effectOrder,
         overrides: [...(input.overrides ?? template.overrides)],
         neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
       resolveStateSuppression(entity);
       recalculateStateStats(entity, true);
+      if (input.id === 'adrenaline-crash') applyState(entity, {
+        id: 'weakness', duration: 1, unremovable: true, crashWeakness: true,
+        casterId: input.casterId ?? activeEntity()?.id, casterName: input.casterName
+      });
       updatePanel();
       return true;
     }
 
     function removeState(entity, stateId) {
-      entity.states = entity.states.filter(state => state.id !== stateId || state.permanent || state.innate);
+      if (stateId === 'weakness' && hasActiveState(entity, 'adrenaline-crash')) return;
+      const hadAdrenaline = entity.states.some(state => state.id === 'adrenaline');
+      entity.states = entity.states.filter(state => state.id !== stateId || state.unremovable || state.permanent || state.innate);
+      if (hadAdrenaline && !entity.states.some(state => state.id === 'adrenaline')) restoreSuspendedWeakness(entity);
       resolveStateSuppression(entity);
       recalculateStateStats(entity);
       updatePanel();
@@ -600,10 +644,19 @@
     function tickCasterEffects(casterId) {
       // Единственное место отсчёта: эффекты источника на ВСЕХ целях, включая его самого.
       for (const target of entities) {
+        // Сначала тикают старые состояния. Новый откат не теряет ход в этом же проходе.
+        const expiredAdrenaline = target.states.filter(state => state.id === 'adrenaline'
+          && state.casterId === casterId && !state.permanent && !state.innate && state.duration <= 1);
         // Подавленные состояния тоже тикают; врождённые и постоянные не истекают.
         target.states = target.states.map(state => state.casterId === casterId && !state.permanent && !state.innate
           ? { ...state, duration: state.duration - 1 } : state)
           .filter(state => state.permanent || state.innate || state.duration > 0);
+        if (expiredAdrenaline.length) {
+          for (const adrenaline of expiredAdrenaline) applyState(target, {
+            id: 'adrenaline-crash', duration: 1, casterId: adrenaline.casterId, casterName: adrenaline.casterName
+          });
+          restoreSuspendedWeakness(target);
+        }
         resolveStateSuppression(target);
         recalculateStateStats(target);
         // Срок заклинания независим от срока созданного им состояния.
@@ -620,7 +673,11 @@
     function removeCasterEffects(casterId) {
       // Смерть источника снимает его эффекты сразу, даже если сейчас ход другой цели.
       for (const target of entities) {
+        const lostAdrenaline = target.states.some(state => state.id === 'adrenaline' && state.casterId === casterId);
+        target.suspendedWeakness = (target.suspendedWeakness ?? []).filter(state => state.casterId !== casterId);
         target.states = target.states.filter(state => state.casterId !== casterId);
+        // Смерть источника снимает его эффекты; чужая приостановленная Слабость возвращается.
+        if (lostAdrenaline) restoreSuspendedWeakness(target);
         resolveStateSuppression(target);
         recalculateStateStats(target);
         target.spellsOnMe = target.spellsOnMe.filter(effect => effect.casterId !== casterId);
@@ -1271,6 +1328,15 @@
     function playStateAnimation(cell, stateId) {
       if (stateId === 'freeze') { playFreezeAnimation(cell); return; }
       if (stateId === 'heavy') { playHeavyAnimation(cell); return; }
+      if (stateId === 'adrenaline') {
+        const pulse = document.createElement('span');
+        pulse.className = 'state-animation adrenaline';
+        pulse.setAttribute('aria-hidden', 'true');
+        pulse.innerHTML = ADRENALINE.icon;
+        cell.appendChild(pulse);
+        setTimeout(() => pulse.remove(), 500);
+        return;
+      }
       const animation = document.createElement('span');
       animation.className = `state-animation ${stateId === 'speed' ? 'wind' : 'mud'}`;
       animation.setAttribute('aria-hidden', 'true');
@@ -1740,7 +1806,7 @@
           : `Блокирует ${effect.amount} ед. урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[effect.damageType]}` : effect.description;
       const lines = kind === 'state'
         ? [effect.description, `Длительность: ${n} ${word}`,
-          ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : [])]
+          ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable ? ['Неснимаемое'] : [])]
         : [spellDescription, `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
           `Источник: ${effect.casterName ?? 'Неизвестно'}`];
       for (const text of lines) {
@@ -1832,7 +1898,7 @@
       const temporaryEvasion = statName === 'eva'
         ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
       return base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
-        ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : 0)), 0);
+        ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : statName === 'eva' ? effect.evaBonus ?? 0 : 0)), 0);
     }
 
     function updatePanel() {

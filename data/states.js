@@ -43,4 +43,22 @@ const CHILL = {
   overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="#def7ff" stroke-width="2" stroke-linecap="round"><path d="M20 5 V35 M7 12 L33 28 M7 28 L33 12 M15 8 L20 13 L25 8 M15 32 L20 27 L25 32 M9 18 L14 17 L13 11 M27 29 L26 23 L32 22 M9 22 L14 23 L13 29 M27 11 L26 17 L32 18"/></g><circle cx="20" cy="20" r="3" fill="#bfe8ff"/></svg>`
 };
-const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [CHILL.id, CHILL]]);
+const ADRENALINE = {
+  id: 'adrenaline', name: 'Адреналин', duration: 2, apBonus: 2, evaBonus: 15, mpBonus: 0, initiativeBonus: 0,
+  description: '+2 ОД, +15% уклонения, иммунитет к Слабости', casterName: '', suppressed: false,
+  overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 36 Q0 23 4 12 Q10 1 20 10 Q30 1 36 12 Q40 23 20 36 Z" fill="#d84458" stroke="#ffb2b6" stroke-width="2"/><path d="M23 7 L13 22 H21 L17 34 L29 17 H22 Z" fill="#fff2a3"/></svg>`
+};
+const ADRENALINE_CRASH = {
+  id: 'adrenaline-crash', name: 'Адреналиновый откат', duration: 1, apBonus: -2, mpBonus: 0, initiativeBonus: 0,
+  description: '-2 ОД, накладывает Слабость, иммунитет к Адреналину', casterName: '', suppressed: false,
+  overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false, unremovable: true,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 36 Q0 23 4 12 Q10 1 20 10 Q30 1 36 12 Q40 23 20 36 Z" fill="#665477" stroke="#b9a9cb" stroke-width="2"/><path d="M20 10 V29 M13 22 L20 29 L27 22" fill="none" stroke="#ded3eb" stroke-width="3"/></svg>`
+};
+const WEAKNESS = {
+  id: 'weakness', name: 'Слабость', duration: 2, apBonus: -2, mpBonus: 0, initiativeBonus: 0,
+  description: '-2 ОД', casterName: '', suppressed: false,
+  overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#626f63" stroke="#b5c0b1" stroke-width="2"/><path d="M20 8 V31 M11 22 L20 31 L29 22" fill="none" stroke="#e5e8d7" stroke-width="3" stroke-linecap="round"/></svg>`
+};
+const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS]]);

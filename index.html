@@ -686,7 +686,9 @@
       const range = spell.minRange === undefined || spell.minRange === spell.range
         ? spell.range : `${spell.minRange}–${spell.range}`;
       addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`);
-      addLine('АОЕ', spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`);
+      const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
+      // Тип выстрела дополняет форму АОЕ, не меняя её и остальные строки тултипа.
+      addLine('АОЕ', `${areaLabel}${spell.isShot ? ' [тип: Выстрел]' : ''}`);
       addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг' }[spell.target] ?? 'нет');
       addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
       const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет' };

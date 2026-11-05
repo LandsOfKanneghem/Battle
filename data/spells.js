@@ -147,4 +147,12 @@ const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cub
   minRange: 1, range: 6, modifiable: true, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 0, noLOS: true, enemyOnly: true, isAOE: true, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 1 L24 13 L35 5 L28 17 L39 20 L28 24 L35 35 L24 28 L20 39 L16 28 L5 35 L12 24 L1 20 L12 16 L5 5 L16 12 Z" fill="#ffdb62"/><path d="M20 9 L23 17 L31 20 L23 23 L20 31 L17 23 L9 20 L17 17 Z" fill="#fffbe2"/></svg>`
-}, { ...WIZARD_SPELLS.find(spell => spell.id === 'haste'), stateDuration: 2, effectDuration: 2 }];
+}, { ...WIZARD_SPELLS.find(spell => spell.id === 'haste'), stateDuration: 2, effectDuration: 2 }, {
+  id: 'weakness-vigor', name: 'Наложить слабость / бодрость', stackable: false, isWeaknessVigor: true, target: 'any',
+  description: 'Накладывает Слабость на вражескую цель либо Бодрость на союзную цель.',
+  effectDescription: 'Слабость [враг] / Бодрость [союз]', stateDuration: 2, effectDuration: 2,
+  minRange: 0, range: 4, modifiable: false, noLOS: false,
+  apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
+  isAOE: false, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 5 V33 M4 25 L11 33 L18 25" fill="none" stroke="#ef777f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 35 V7 M22 15 L29 7 L36 15" fill="none" stroke="#82e9a5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+}];

@@ -179,6 +179,13 @@
       from { transform: scale(.3); opacity: .9; }
       to { transform: scale(1.15); opacity: 0; }
     }
+    .state-animation.weakness-vigor { animation: choice-pulse .5s ease-out both; }
+    .state-animation.weakness-vigor.ally { background: radial-gradient(circle, #4add8eaa, transparent 75%); }
+    .state-animation.weakness-vigor.enemy { background: radial-gradient(circle, #ed6068aa, transparent 75%); }
+    @keyframes choice-pulse {
+      from { transform: scale(.6); opacity: 1; }
+      to { transform: scale(1.15); opacity: 0; }
+    }
     .state-animation.adrenaline { background: radial-gradient(circle, #ff5366aa, #b8162833 55%, transparent 75%); animation: adrenaline-pulse .5s ease-out both; }
     @keyframes adrenaline-pulse {
       0% { transform: scale(.5); opacity: .2; }
@@ -819,7 +826,7 @@
       if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
       if (spell.burnDuration) effects.push(stateTypes.get('burning').name);
       if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
-      if (spell.isSkyShot) effects.push(spell.effectDescription);
+      if (spell.isSkyShot || spell.isWeaknessVigor) effects.push(spell.effectDescription);
       if (spell.isMembrane) effects.push(`+${spell.esAmount} ES, +${spell.evaAmount}% уклонения`);
       if (effects.length) {
         effects.forEach((effect, index) => {
@@ -1327,6 +1334,15 @@
       setTimeout(() => arrow.remove(), 500);
     }
 
+    function playWeaknessVigorAnimation(cell, ally) {
+      const choice = document.createElement('span');
+      choice.className = `state-animation weakness-vigor ${ally ? 'ally' : 'enemy'}`;
+      choice.setAttribute('aria-hidden', 'true');
+      choice.innerHTML = ally ? VIGOR.icon : WEAKNESS.icon;
+      cell.appendChild(choice);
+      setTimeout(() => choice.remove(), 500);
+    }
+
     function playHeavyAnimation(cell) {
       const impact = document.createElement('span');
       impact.className = 'state-animation heavy';
@@ -1413,7 +1429,13 @@
         playMissAnimation(cells[target.y * SIZE + target.x]);
         return;
       }
-      if (spell.isSkyShot) {
+      if (spell.isWeaknessVigor) {
+        // Общие правила иммунитета, снятия Слабости и обновления срока остаются в applyState.
+        if (directTarget) applyState(directTarget, {
+          id: isAlly(directTarget) ? 'vigor' : 'weakness', duration: spell.stateDuration,
+          casterId: caster.id, casterName: caster.name
+        });
+      } else if (spell.isSkyShot) {
         if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
           id: spell.id, name: spell.name, icon: spell.svg, isSkyShot: true,
           description: spell.effectDescription, duration: spell.effectDuration,
@@ -1518,6 +1540,7 @@
         && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;
       if (spell.enemyOnly && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
+      if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
       const caster = activeEntity();
       const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
       // Этот же снимок целей используется для анимации и последующего урона.
@@ -1545,7 +1568,11 @@
         isCasting = false;
       }
 
-      if (spell.isSkyShot) {
+      if (spell.isWeaknessVigor) {
+        const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
+        playWeaknessVigorAnimation(targetCell, isAlly(recipient));
+        setTimeout(finishCast, 500);
+      } else if (spell.isSkyShot) {
         playSkyShotAnimation(targetCell, spell);
         setTimeout(finishCast, 500);
       } else if (spell.isSparks) {

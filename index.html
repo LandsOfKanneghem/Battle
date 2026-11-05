@@ -1260,8 +1260,15 @@
           if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)
             && (!spell.enemyOnly || !isAlly(victim))) {
             applyDamage(spell, victim);
-            // Даже полностью заблокированный удар накладывает состояние после урона.
-            // У выстрела промах вышел из applySpellEffect раньше; другие огненные АОЕ не горят.
+            if (spell.id === 'burning-hands') {
+              // Сначала урон: Влага и Заморозка ещё защищают от текущего удара.
+              // Затем прямое снятие у всех задетых целей, даже при поглощении/иммунитете.
+              // Заблокированные клетки сюда не попадают; нейтрализацию не вызываем.
+              victim.states = victim.states.filter(state => !['wet', 'chill', 'freeze'].includes(state.id));
+              resolveStateSuppression(victim);
+              recalculateStateStats(victim);
+            }
+            // Горение по-прежнему накладывают заклинания с burnDuration (например, куб).
             if (spell.burnDuration && victim.hp > 0) applyState(victim, {
               id: 'burning', duration: spell.burnDuration, casterId: caster.id, casterName: caster.name
             });

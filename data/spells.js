@@ -21,8 +21,8 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
-  id: 'fire-shot', isShot: true, name: 'Огненный выстрел', stackable: false, damage: 2, damageType: 'fire', burnDuration: 2, target: 'any',
-  description: 'Наносит урон огнем по одиночной цели и накладывает на нее Горение.',
+  id: 'fire-shot', isShot: true, name: 'Огненный выстрел', stackable: false, damage: 2, damageType: 'fire', target: 'any',
+  description: 'Наносит урон огнем по одиночной цели.',
   range: 6, minRange: 1, modifiable: true, noLOS: false, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 0, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`
@@ -83,7 +83,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1, svg: HEAVY.icon
 }, {
   id: 'burning-hands', name: 'Опаляющие руки', stackable: false, isCone: true, target: 'any',
-  description: 'Наносит урон огнем в конусном АОЕ на близкой дистанции.',
+  description: 'Наносит урон огнем в конусном АОЕ на близкой дистанции. Снимает Влагу, Охлаждение и Заморозку.',
   damage: 4, damageType: 'fire', minRange: 1, range: 1, modifiable: false, noLOS: false,
   apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 1,
   isAOE: true, aoeSize: 3,

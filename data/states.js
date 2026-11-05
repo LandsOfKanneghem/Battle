@@ -37,4 +37,10 @@ const HEAVY = {
   overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M15 14 V10 Q15 4 20 4 Q25 4 25 10 V14" fill="none" stroke="#c5c9ce" stroke-width="4"/><path d="M11 14 H29 L35 35 H5 Z" fill="#57616e" stroke="#bbc4cf" stroke-width="2"/><path d="M20 18 V29 M15 24 L20 29 L25 24" fill="none" stroke="#e5e9ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 };
-const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY]]);
+const CHILL = {
+  id: 'chill', name: 'Охлаждение', mpBonus: 0, initiativeBonus: 0,
+  description: 'Охлаждение — пока без дополнительных эффектов', duration: 2, casterName: '', suppressed: false,
+  overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="#def7ff" stroke-width="2" stroke-linecap="round"><path d="M20 5 V35 M7 12 L33 28 M7 28 L33 12 M15 8 L20 13 L25 8 M15 32 L20 27 L25 32 M9 18 L14 17 L13 11 M27 29 L26 23 L32 22 M9 22 L14 23 L13 29 M27 11 L26 17 L32 18"/></g><circle cx="20" cy="20" r="3" fill="#bfe8ff"/></svg>`
+};
+const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [CHILL.id, CHILL]]);

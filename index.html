@@ -238,6 +238,7 @@
       position: absolute; z-index: 100; pointer-events: none;
       filter: drop-shadow(0 0 4px #ff7b24);
     }
+    .spell-projectile[data-type="ice"] { filter: drop-shadow(0 0 4px #80dcff); }
     .spell-projectile svg { display: block; width: 100%; height: 100%; }
     .cube-explosion {
       position: absolute; inset: 0; z-index: 6; border-radius: 50%;
@@ -980,7 +981,9 @@
       projectile.className = 'spell-projectile';
       projectile.dataset.type = type;
       projectile.setAttribute('aria-hidden', 'true');
-      projectile.innerHTML = `<svg viewBox="0 0 40 40"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`;
+      projectile.innerHTML = type === 'ice'
+        ? WIZARD_SPELLS.find(spell => spell.id === 'ice-arrow').svg
+        : `<svg viewBox="0 0 40 40"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`;
       projectile.style.width = projectile.style.height = `${size}px`;
       projectile.style.left = `${from.left + from.width / 2 + window.scrollX - size / 2}px`;
       projectile.style.top = `${from.top + from.height / 2 + window.scrollY - size / 2}px`;
@@ -1208,7 +1211,16 @@
       const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
       // Бросок делается только после анимации и только у выстрелов, до любых эффектов.
       if (spell.isShot && directTarget && !shotHits(caster, directTarget)) return;
-      if (spell.isWindRose) {
+      if (spell.id === 'ice-arrow') {
+        if (directTarget) {
+          // Сначала сопротивление → ES → HP, затем Охлаждение у выжившей цели.
+          // Общая проверка попадания выше не допускает состояния при промахе.
+          applyDamage(spell, directTarget);
+          if (directTarget.hp > 0) applyState(directTarget, {
+            id: spell.stateId, duration: spell.stateDuration, casterId: caster.id, casterName: caster.name
+          });
+        }
+      } else if (spell.isWindRose) {
         // Принудительное перемещение: не расходуем MP и не запускаем очередь шагов.
         for (const direction of [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }]) {
           const source = { x: target.x + direction.x, y: target.y + direction.y };
@@ -1309,7 +1321,9 @@
         isCasting = false;
       }
 
-      if (spell.isCone) {
+      if (spell.id === 'ice-arrow') {
+        playProjectileAnimation(fromCell, targetCell, 'ice', () => setTimeout(finishCast, 0));
+      } else if (spell.isCone) {
         playBurningHandsAnimation(fromCell, { x: target.x - caster.position.x, y: target.y - caster.position.y });
         setTimeout(finishCast, 500);
       } else if (spell.isWindRose) {

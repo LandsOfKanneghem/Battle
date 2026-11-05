@@ -88,12 +88,20 @@ const SPELL_DEFINITIONS = [{
   apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 1,
   isAOE: true, aoeSize: 3,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 23 Q1 14 10 3 L14 13 L20 1 L25 13 L33 5 Q42 25 30 34 H11 Z" fill="#fa642b"/><path d="M12 34 L9 23 Q9 19 12 21 L16 25 V13 Q16 10 19 12 V22 V10 Q21 7 23 11 V23 V14 Q26 11 27 15 V25 L30 21 Q34 20 32 26 L28 35 Z" fill="#ffd18b" stroke="#a95429"/><path d="M16 38 H28" stroke="#ffe4ac" stroke-width="2"/></svg>`
+}, {
+  id: 'ice-arrow', name: 'Ледяная стрела', stackable: false, isShot: true, target: 'any',
+  description: 'Наносит водой по одиночной цели и накладывает на нее Охлаждение.',
+  damage: 2, damageType: 'water', stateId: 'chill', stateDuration: 2, effectDuration: 2,
+  minRange: 1, range: 5, modifiable: true, noLOS: false,
+  apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0, cooldown: 0, maxCooldown: 0,
+  isAOE: false, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 34 L29 12" stroke="#bcefff" stroke-width="4"/><path d="M19 11 L36 4 L29 21 L27 13 Z" fill="#80dcff" stroke="#e3faff" stroke-width="2"/><path d="M4 26 L12 28 L14 36 M7 22 L15 24 L18 33" fill="none" stroke="#5aaad6" stroke-width="3"/><path d="M28 4 V14 M23 9 H33" stroke="#f0fdff" stroke-width="1.5"/></svg>`
 }];
 // Определения сохранены; вернуть скрытые заклинания можно строкой WIZARD_SPELLS.push(...HIDDEN_SPELLS).
 const HIDDEN_SPELLS = SPELL_DEFINITIONS.filter(spell => ['fire-cube', 'deep-freeze', 'armageddon'].includes(spell.id));
 const WIZARD_SPELLS = [
   'fire-shot', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield',
-  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands'
+  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands', 'ice-arrow'
 ].map(id => SPELL_DEFINITIONS.find(spell => spell.id === id));
 
 // Все поля заклинания — примитивы, включая SVG-разметку, поэтому

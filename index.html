@@ -556,8 +556,8 @@
       if (!template) return false;
       const stateDuration = input.duration ?? template.duration;
       if (stateDuration <= 0) return false;
-      if (input.id === 'weakness' && hasActiveState(entity, 'adrenaline')) return false;
-      if (input.id === 'adrenaline' && hasActiveState(entity, 'adrenaline-crash')) return false;
+      if (input.id === 'weakness' && hasActiveState(entity, 'vigor')) return false;
+      if (['adrenaline', 'vigor'].includes(input.id) && hasActiveState(entity, 'adrenaline-crash')) return false;
       const neutralizes = input.neutralizes ?? template.neutralizes;
       if (entity.states.some(state => neutralizes.includes(state.id))) {
         // A нейтрализует B: снимаем B, но A не появляется. Урон уже прошёл раньше.
@@ -574,15 +574,17 @@
       if (existing && (existing.unremovable || existing.permanent || existing.innate || existing.duration > stateDuration
         || (existing.duration === stateDuration && input.id !== 'burning'))) return false;
       // Равное по длительности Горение обновляет источник; меньшая длительность игнорируется.
-      if (input.id === 'adrenaline') {
+      if (input.id === 'adrenaline' || input.id === 'vigor') {
         entity.suspendedWeakness ??= [];
         entity.states = entity.states.filter(state => {
           if (state.id !== 'weakness' || state.unremovable) return true;
-          // Приостанавливаем целые экземпляры, сохраняя источник, срок и флаги.
-          if (state.permanent) entity.suspendedWeakness.push(state);
+          // Адреналин сохраняет постоянную Слабость для возврата после своего спада.
+          if (state.permanent && input.id === 'adrenaline') entity.suspendedWeakness.push(state);
           return false;
         });
       }
+      // Откат снимает Бодрость до создания Слабости, чтобы иммунитет уже не действовал.
+      if (input.id === 'adrenaline-crash') entity.states = entity.states.filter(state => state.id !== 'vigor');
       entity.states = entity.states.filter(state => !sameInstance(state));
       entity.states.push({ ...template, ...input, duration: stateDuration, casterId: input.casterId ?? activeEntity()?.id,
         suppressed: false, appliedOrder: ++effectOrder,
@@ -590,8 +592,12 @@
         neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
       resolveStateSuppression(entity);
       recalculateStateStats(entity, true);
+      if (input.id === 'adrenaline') applyState(entity, {
+        id: 'vigor', duration: 2, casterId: input.casterId ?? activeEntity()?.id, casterName: input.casterName
+      });
       if (input.id === 'adrenaline-crash') applyState(entity, {
-        id: 'weakness', duration: 1, unremovable: true, crashWeakness: true,
+        // Неснимаемость временно даёт сам откат; родной флаг Слабости не меняем.
+        id: 'weakness', duration: 1, crashWeakness: true,
         casterId: input.casterId ?? activeEntity()?.id, casterName: input.casterName
       });
       updatePanel();
@@ -602,7 +608,10 @@
       if (stateId === 'weakness' && hasActiveState(entity, 'adrenaline-crash')) return;
       const hadAdrenaline = entity.states.some(state => state.id === 'adrenaline');
       entity.states = entity.states.filter(state => state.id !== stateId || state.unremovable || state.permanent || state.innate);
-      if (hadAdrenaline && !entity.states.some(state => state.id === 'adrenaline')) restoreSuspendedWeakness(entity);
+      if (hadAdrenaline && !entity.states.some(state => state.id === 'adrenaline')) {
+        entity.states = entity.states.filter(state => state.id !== 'vigor');
+        restoreSuspendedWeakness(entity);
+      }
       resolveStateSuppression(entity);
       recalculateStateStats(entity);
       updatePanel();
@@ -647,6 +656,8 @@
         // Сначала тикают старые состояния. Новый откат не теряет ход в этом же проходе.
         const expiredAdrenaline = target.states.filter(state => state.id === 'adrenaline'
           && state.casterId === casterId && !state.permanent && !state.innate && state.duration <= 1);
+        // Все состояния, включая Слабость, тикают только у своего источника.
+        // Слабость от отката и сам откат имеют одинаковый срок и спадают вместе.
         // Подавленные состояния тоже тикают; врождённые и постоянные не истекают.
         target.states = target.states.map(state => state.casterId === casterId && !state.permanent && !state.innate
           ? { ...state, duration: state.duration - 1 } : state)
@@ -1804,9 +1815,11 @@
       const spellDescription = effect.amount !== undefined
         ? effect.damageType === 'physical' ? `Блокирует ${effect.amount} ед. физического урона`
           : `Блокирует ${effect.amount} ед. урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[effect.damageType]}` : effect.description;
+      const weaknessLocked = kind === 'state' && effect.id === 'weakness' && entities.some(entity =>
+        entity.states.includes(effect) && hasActiveState(entity, 'adrenaline-crash'));
       const lines = kind === 'state'
         ? [effect.description, `Длительность: ${n} ${word}`,
-          ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable ? ['Неснимаемое'] : [])]
+          ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable || weaknessLocked ? [effect.id === 'weakness' ? 'Неснимаемая' : 'Неснимаемое'] : [])]
         : [spellDescription, `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
           `Источник: ${effect.casterName ?? 'Неизвестно'}`];
       for (const text of lines) {

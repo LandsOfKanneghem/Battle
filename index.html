@@ -37,6 +37,13 @@
       border-radius: 10px;
     }
     .spells { width: 176px; max-width: 100%; margin-inline: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 14px; }
+    .spell-pages { display: flex; justify-content: center; gap: 12px; margin-top: 8px; }
+    .spell-pages button {
+      width: 36px; height: 26px; border: 1px solid #65738a; border-radius: 5px;
+      background: #343e50; color: #edf3ff; font-size: 18px; cursor: pointer;
+    }
+    .spell-pages button:hover:not(:disabled) { background: #53647d; border-color: #b9cce7; }
+    .spell-pages button:disabled { color: #737c89; background: #272d36; border-color: #414955; cursor: default; }
     .spell-slot { aspect-ratio: 1; min-width: 0; padding: 3px; background: #191e26; border: 2px solid #515966; border-radius: 4px; }
     button.spell-slot { cursor: pointer; }
     .spell-slot svg { display: block; width: 100%; height: 100%; pointer-events: none; }
@@ -355,6 +362,10 @@
       </div>
       <button id="end-turn" type="button">Передать ход</button>
       <div id="spells" class="spells" aria-label="Заклинания"></div>
+      <div id="spell-pages" class="spell-pages" aria-label="Переключение страниц заклинаний" hidden>
+        <button id="spell-page-prev" type="button" aria-label="Предыдущая страница заклинаний">←</button>
+        <button id="spell-page-next" type="button" aria-label="Следующая страница заклинаний">→</button>
+      </div>
       <div id="effects-panel" class="effects-panel" aria-label="Эффекты выбранного существа" hidden>
         <button id="close-effects" class="close-effects" type="button" aria-label="Закрыть эффекты">×</button>
         <section><h2>Заклинания</h2><div id="spell-effects" class="effect-grid"></div></section>
@@ -650,12 +661,37 @@
 
     character.spells = WIZARD_SPELLS;
     monk.spells = MONK_SPELLS;
+    // Страницы содержат те же объекты: кулдауны и лимиты не зависят от открытой страницы.
+    character.spellPages = [character.spells.filter(spell => !spell.isElementalShield),
+      character.spells.filter(spell => spell.isElementalShield)];
+    monk.spellPages = [monk.spells];
 
     function activeEntity() {
       return entities.find(entity => entity.id === activeEntityId);
     }
 
     let preparedSpellId = null;
+    let currentSpellPage = 0;
+    const spellPageControls = document.getElementById('spell-pages');
+    const previousSpellPageButton = document.getElementById('spell-page-prev');
+    const nextSpellPageButton = document.getElementById('spell-page-next');
+
+    function getSpellPages(entity = activeEntity()) {
+      return entity?.spellPages ?? [entity?.spells ?? []];
+    }
+
+    function changeSpellPage(offset) {
+      const pages = getSpellPages();
+      if (isCasting || isMoving || selectedEntityId !== null || pages.length < 2) return;
+      currentSpellPage = (currentSpellPage + offset + pages.length) % pages.length;
+      // Подготовка и подсветка предыдущей страницы не должны оставаться после переключения.
+      preparedSpellId = null;
+      clearHighlight();
+      renderSpellPanel(false);
+      updatePanel();
+    }
+    previousSpellPageButton.addEventListener('click', () => changeSpellPage(-1));
+    nextSpellPageButton.addEventListener('click', () => changeSpellPage(1));
     const spellSlots = new Map();
     let spellTooltip = null;
     let spellTooltipIcon = null;
@@ -748,11 +784,14 @@
     window.addEventListener('scroll', hideSpellTooltip, true);
 
     // Ключ — объект, поэтому одноимённые кубы разных владельцев не пересекаются.
-    function renderSpellPanel() {
+    function renderSpellPanel(resetPage = true) {
+      if (resetPage) currentSpellPage = 0;
       hideSpellTooltip();
       document.getElementById('spells').replaceChildren();
       spellSlots.clear();
-      const currentSpells = activeEntity()?.spells ?? [];
+      const pages = getSpellPages();
+      if (currentSpellPage >= pages.length) currentSpellPage = 0;
+      const currentSpells = pages[currentSpellPage] ?? [];
       for (const spell of currentSpells) {
         const slot = document.createElement('button');
         slot.type = 'button';
@@ -1802,7 +1841,11 @@
       const displayed = entities.find(entity => entity.id === (selectedEntityId ?? hoveredEntityId ?? activeEntityId));
       const viewingEffects = selectedEntityId !== null;
       if (viewingEffects) hideSpellTooltip();
-      document.getElementById('spells').hidden = viewingEffects;
+      const pages = getSpellPages();
+      const hasSpells = pages.some(page => page.length > 0);
+      document.getElementById('spells').hidden = viewingEffects || !hasSpells;
+      spellPageControls.hidden = viewingEffects || !hasSpells;
+      previousSpellPageButton.disabled = nextSpellPageButton.disabled = pages.length < 2 || isCasting || isMoving;
       document.getElementById('effects-panel').hidden = !viewingEffects;
       if (viewingEffects) renderEffectPanel();
       else { effectPanelKey = null; hideEffectTooltip(); }
@@ -1830,6 +1873,7 @@
       // Характеристики учитывают наведение, заклинания — только активного участника.
       for (const spell of activeEntity()?.spells ?? []) {
         const slot = spellSlots.get(spell);
+        if (!slot) continue; // Доступность обновляем только у слотов открытой страницы.
         slot.disabled = !displayed || isCasting || !canPrepareSpell(spell);
         slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
         slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');

@@ -865,9 +865,16 @@
         const creature = entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(point));
         if (crate) blocked.add(keyOf(point)); // Ящики не получают урон и не входят в подсветку.
         if ((!crate && !creature) || point.depth === 3) continue;
+        if (point.depth === 1) {
+          // Ближайшее препятствие закрывает весь конус за собой: второй и третий ряды.
+          for (const behind of coneCells) {
+            if (behind.depth > 1) blocked.add(keyOf(behind));
+          }
+          continue;
+        }
         const offset = offsetOf(point);
-        // По правилам заклинания тень возникает только в третьем ряду.
-        const sector = point.depth === 1 || offset === 0 ? [-1, 0, 1]
+        // Из второго ряда блокируется только соответствующий сектор третьего.
+        const sector = offset === 0 ? [-1, 0, 1]
           : offset < 0 ? [-2, -1] : [1, 2];
         for (const side of sector) shadows.add(side);
       }

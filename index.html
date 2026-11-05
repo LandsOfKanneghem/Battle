@@ -321,7 +321,8 @@
           <span id="luc"></span>
         </section>
         <section class="stat-column"><h2>Сопротивления</h2>
-          <span class="resistance-stat" title="Броня" aria-label="Броня"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2 L8 1 L13 2 V8 Q12 12 8 15 Q4 12 3 8 Z" fill="#b4c1d3"/><path d="M8 3 V12" stroke="#65728a"/></svg><span id="ac"></span></span>
+          <span class="resistance-stat" title="Броня" aria-label="Броня"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1 L6 2 Q8 5 10 2 L13 1 L15 5 L12 7 L13 14 Q8 16 3 14 L4 7 L1 5 Z" fill="#aebaca" stroke="#596879" stroke-width=".7"/><path d="M4 3 L5 7 M12 3 L11 7 M8 5 V14 M4 10 L8 11 L12 10" fill="none" stroke="#e1e7ed" stroke-width=".8"/></svg><span id="ac"></span></span>
+          <span class="resistance-stat" title="Физика" aria-label="Физика"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2 L8 1 L13 2 V8 Q12 12 8 15 Q4 12 3 8 Z" fill="#b4c1d3"/><path d="M8 3 V12" stroke="#65728a"/></svg><span id="res-physical"></span></span>
           <span class="resistance-stat" title="Огонь" aria-label="Огонь"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 Q9 6 13 7 Q17 14 8 15 Q0 15 2 8 L5 3 L5 9 Q9 7 8 1" fill="#ff853e"/></svg><span id="res-fire"></span></span>
           <span class="resistance-stat" title="Вода" aria-label="Вода"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1 Q3 7 3 10 A5 5 0 0 0 13 10 Q13 7 8 1" fill="#6fbaff"/><path d="M5 10 Q5 12 7 12" fill="none" stroke="#d0efff"/></svg><span id="res-water"></span></span>
           <span class="resistance-stat" title="Воздух" aria-label="Воздух"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 5 H10 Q15 5 13 2 Q11 0 9 3 M1 9 H12 Q16 9 14 13 Q12 16 10 13 M2 13 H6" stroke="#b7eeeb" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg><span id="res-air"></span></span>
@@ -400,7 +401,7 @@
       // Начальный VS равен нулю; расходуемый ES хранится отдельно от базовых характеристик.
       return {
         ra: 0, wp: 10, maxWP: 10, vs: 0,
-        vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2, ac: 0,
+        vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2, ac: 0, physical: 0,
         resistances: { fire: 0, water: 0, air: 0, earth: 0, mind: 0, poison: 0 },
         acc: 100, eva: 0, blo: 0, ini: 0
       };
@@ -1701,9 +1702,10 @@
       writeAttribute('acc', `ACC: ${getEffectiveStat(displayed, 'acc')}%`);
       writeAttribute('eva', `EVA: ${getEffectiveStat(displayed, 'eva')}% / ${attributes?.eva}`);
       writeAttribute('blo', `BLO: ${getEffectiveStat(displayed, 'blo')}% / ${getEffectiveStat(displayed, 'blo')}`);
-      for (const [key, label] of Object.entries({ ac: 'Броня', fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля', mind: 'Разум', poison: 'Яд' })) {
+      for (const [key, label] of Object.entries({ ac: 'Броня', physical: 'Физика', fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля', mind: 'Разум', poison: 'Яд' })) {
         const id = key === 'ac' ? 'ac' : `res-${key}`;
-        const value = getEffectiveStat(displayed, key === 'ac' ? key : `resistances.${key}`);
+        // Броня и Физика — отдельные характеристики; physical пока только отображается.
+        const value = getEffectiveStat(displayed, key === 'ac' || key === 'physical' ? key : `resistances.${key}`);
         writeAttribute(id, String(value));
         document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);
       }

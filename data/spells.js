@@ -81,12 +81,18 @@ const SPELL_DEFINITIONS = [{
   minRange: 0, range: 4, modifiable: true, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 3,
   isAOE: false, aoeSize: 1, svg: HEAVY.icon
+}, {
+  id: 'burning-hands', name: 'Опаляющие руки', stackable: false, isCone: true, target: 'any',
+  damage: 4, damageType: 'fire', minRange: 1, range: 1, modifiable: false, noLOS: false,
+  apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 1,
+  isAOE: true, aoeSize: 3,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 23 Q1 14 10 3 L14 13 L20 1 L25 13 L33 5 Q42 25 30 34 H11 Z" fill="#fa642b"/><path d="M12 34 L9 23 Q9 19 12 21 L16 25 V13 Q16 10 19 12 V22 V10 Q21 7 23 11 V23 V14 Q26 11 27 15 V25 L30 21 Q34 20 32 26 L28 35 Z" fill="#ffd18b" stroke="#a95429"/><path d="M16 38 H28" stroke="#ffe4ac" stroke-width="2"/></svg>`
 }];
 // Определения сохранены; вернуть скрытые заклинания можно строкой WIZARD_SPELLS.push(...HIDDEN_SPELLS).
 const HIDDEN_SPELLS = SPELL_DEFINITIONS.filter(spell => ['fire-cube', 'deep-freeze', 'armageddon'].includes(spell.id));
 const WIZARD_SPELLS = [
   'fire-shot', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield',
-  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight'
+  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands'
 ].map(id => SPELL_DEFINITIONS.find(spell => spell.id === id));
 
 // Все поля заклинания — примитивы, включая SVG-разметку, поэтому

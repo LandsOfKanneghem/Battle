@@ -163,6 +163,15 @@
     }
     .state-animation { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
     .state-animation svg { width: 100%; height: 100%; display: block; }
+    .burning-hands-flame {
+      position: absolute; inset: 0; z-index: 6; pointer-events: none;
+      background: radial-gradient(ellipse at bottom, #fff2a3, #ff8b28 35%, #ee432588 65%, transparent 80%);
+      animation: burning-hands-wave .35s ease-out both;
+    }
+    @keyframes burning-hands-wave {
+      from { transform: scale(.3); opacity: .9; }
+      to { transform: scale(1.15); opacity: 0; }
+    }
     .state-animation.heavy svg { animation: heavy-fall .5s ease-out both; }
     .heavy-impact {
       position: absolute; inset: 55% 8% 5%; border: 2px solid #b2bdcd;
@@ -674,7 +683,7 @@
       else addLine('Раз в ход', spell.maxUsesPerTurn);
       const range = spell.minRange === undefined ? spell.range : `${spell.minRange}–${spell.range}`;
       addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`);
-      addLine('АОЕ', spell.isGlobal ? 'вся карта' : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`);
+      addLine('АОЕ', spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`);
       addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг' }[spell.target] ?? 'нет');
       addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
       const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет' };
@@ -832,7 +841,50 @@
       return inSpellReach(target, spell);
     }
 
-    function affectedCells(center, spell) {
+    function getConeCells(center, direction) {
+      const points = [];
+      if (Math.abs(direction.x) + Math.abs(direction.y) !== 1) return points;
+      for (let depth = 1; depth <= 3; depth++) {
+        for (let offset = 1 - depth; offset < depth; offset++) {
+          const x = center.x + direction.x * depth - direction.y * offset;
+          const y = center.y + direction.y * depth + direction.x * offset;
+          if (x >= 0 && x < SIZE && y >= 0 && y < SIZE) points.push({ x, y, depth });
+        }
+      }
+      return points;
+    }
+
+    function getBlockedConeCells(coneCells, direction) {
+      const blocked = new Set();
+      const axis = coneCells.find(point => point.depth === 1);
+      if (!axis) return blocked;
+      const offsetOf = point => (point.x - axis.x) * -direction.y + (point.y - axis.y) * direction.x;
+      const shadows = new Set();
+      for (const point of coneCells) {
+        const crate = obstacles.get(keyOf(point)) === 'crate';
+        const creature = entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(point));
+        if (crate) blocked.add(keyOf(point)); // Ящики не получают урон и не входят в подсветку.
+        if ((!crate && !creature) || point.depth === 3) continue;
+        const offset = offsetOf(point);
+        // По правилам заклинания тень возникает только в третьем ряду.
+        const sector = point.depth === 1 || offset === 0 ? [-1, 0, 1]
+          : offset < 0 ? [-2, -1] : [1, 2];
+        for (const side of sector) shadows.add(side);
+      }
+      for (const point of coneCells) {
+        if (point.depth === 3 && shadows.has(offsetOf(point))) blocked.add(keyOf(point));
+      }
+      return blocked;
+    }
+
+    function affectedCells(center, spell, caster = activeEntity()) {
+      if (spell.isCone) {
+        if (!caster) return [];
+        const direction = { x: center.x - caster.position.x, y: center.y - caster.position.y };
+        const cone = getConeCells(caster.position, direction);
+        const blocked = getBlockedConeCells(cone, direction);
+        return cone.filter(point => !blocked.has(keyOf(point)));
+      }
       const points = [];
       if (spell.isGlobal) {
         for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) points.push({ x, y });
@@ -1116,6 +1168,23 @@
       setTimeout(() => bubble.remove(), 500);
     }
 
+    function playBurningHandsAnimation(centerCell, direction) {
+      const origin = { x: Number(centerCell.dataset.x), y: Number(centerCell.dataset.y) };
+      const cone = getConeCells(origin, direction);
+      const blocked = getBlockedConeCells(cone, direction);
+      const flames = [];
+      for (const point of cone) {
+        if (blocked.has(keyOf(point))) continue;
+        const flame = document.createElement('span');
+        flame.className = 'burning-hands-flame';
+        flame.setAttribute('aria-hidden', 'true');
+        flame.style.animationDelay = `${point.depth * 40}ms`;
+        cells[point.y * SIZE + point.x].appendChild(flame);
+        flames.push(flame);
+      }
+      setTimeout(() => flames.forEach(flame => flame.remove()), 500);
+    }
+
     function playWindRoseAnimation(centerCell) {
       const gust = document.createElement('span');
       gust.className = 'state-animation wind-rose';
@@ -1146,7 +1215,7 @@
         renderPosition();
       } else if (spell.isRain) {
         // Влага действует на всех живых существ в квадрате, включая самого кастера.
-        const area = new Set(affectedCells(target, spell).map(keyOf));
+        const area = new Set(affectedCells(target, spell, caster).map(keyOf));
         for (const victim of entities) {
           if (victim.hp > 0 && area.has(keyOf(victim.position))) applyState(victim, {
             id: spell.stateId, duration: spell.stateDuration, casterId: caster.id, casterName: caster.name
@@ -1177,7 +1246,7 @@
           && keyOf(entity.position) === keyOf(target));
         if (ally) ally.hp = Math.min(ally.maxHP ?? ally.hp, ally.hp + spell.healAmount);
       } else {
-        const area = new Set(affectedCells(target, spell).map(keyOf));
+        const area = new Set(affectedCells(target, spell, caster).map(keyOf));
         for (const victim of entities) {
           if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)
             && (!spell.enemyOnly || !isAlly(victim))) {
@@ -1224,7 +1293,10 @@
         isCasting = false;
       }
 
-      if (spell.isWindRose) {
+      if (spell.isCone) {
+        playBurningHandsAnimation(fromCell, { x: target.x - caster.position.x, y: target.y - caster.position.y });
+        setTimeout(finishCast, 500);
+      } else if (spell.isWindRose) {
         playWindRoseAnimation(targetCell);
         setTimeout(finishCast, 500);
       } else if (spell.isRain) {

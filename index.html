@@ -1058,7 +1058,7 @@
 
     function playSparksAnimation(fromCell, primaryCell, sparkCells, onArrival, onPrimaryImpact) {
       playProjectileAnimation(fromCell, primaryCell, 'spark', () => {
-        // При промахе цепь заканчивается на основной цели, без визуальных отскоков.
+        // Без существа в точке каста или при промахе цепь заканчивается без отскоков.
         if (!onPrimaryImpact()) { onArrival(); return; }
         if (!sparkCells.length) { setTimeout(onArrival, 180); return; }
         let pending = sparkCells.length;
@@ -1289,6 +1289,8 @@
     // Только эффект: ресурсы уже оплачены в первой фазе каста.
     function applySpellEffect(spell, target, caster, sparkTargets = null, shotHit = null) {
       const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
+      // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
+      if (spell.isShot && !directTarget) return;
       // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
       if (spell.isShot && directTarget && !(shotHit ?? shotHits(caster, directTarget))) {
         // Общая точка промаха, включая готовый результат Искр: надпись появляется один раз.
@@ -1396,13 +1398,12 @@
       // Лечение и защита требуют живого союзника до оплаты.
       if ((spell.isHeal || spell.isElementalShield || spell.isMembrane || spell.isSkyShot) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
-      if (spell.stateId && !spell.isRain && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
+      if (spell.stateId && !spell.isRain && !spell.isShot && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
         && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;
       if (spell.enemyOnly && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
         && keyOf(entity.position) === keyOf(target))) return false;
       const caster = activeEntity();
       const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
-      if (spell.isSparks && !primaryTarget) return false;
       // Этот же снимок целей используется для анимации и последующего урона.
       const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount) : null;
       let shotHit = null; // Для Искр один результат используется и анимацией, и уроном.
@@ -1434,6 +1435,7 @@
       } else if (spell.isSparks) {
         const sparkCells = sparkTargets.map(entity => cells[entity.position.y * SIZE + entity.position.x]);
         playSparksAnimation(fromCell, targetCell, sparkCells, () => setTimeout(finishCast, 0), () => {
+          if (!primaryTarget) return false; // Выстрел в пустоту: без броска и отскоков.
           shotHit = shotHits(caster, primaryTarget);
           return shotHit;
         });

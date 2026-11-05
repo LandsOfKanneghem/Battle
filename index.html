@@ -1035,8 +1035,10 @@
       setTimeout(finishFlight, duration + 50);
     }
 
-    function playSparksAnimation(fromCell, primaryCell, sparkCells, onArrival) {
+    function playSparksAnimation(fromCell, primaryCell, sparkCells, onArrival, onPrimaryImpact) {
       playProjectileAnimation(fromCell, primaryCell, 'spark', () => {
+        // При промахе цепь заканчивается на основной цели, без визуальных отскоков.
+        if (!onPrimaryImpact()) { onArrival(); return; }
         if (!sparkCells.length) { setTimeout(onArrival, 180); return; }
         let pending = sparkCells.length;
         for (const cell of sparkCells) {
@@ -1246,10 +1248,10 @@
     }
 
     // Только эффект: ресурсы уже оплачены в первой фазе каста.
-    function applySpellEffect(spell, target, caster, sparkTargets = null) {
+    function applySpellEffect(spell, target, caster, sparkTargets = null, shotHit = null) {
       const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
-      // Бросок делается только после анимации и только у выстрелов, до любых эффектов.
-      if (spell.isShot && directTarget && !shotHits(caster, directTarget)) return;
+      // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
+      if (spell.isShot && directTarget && !(shotHit ?? shotHits(caster, directTarget))) return;
       if (spell.isSparks) {
         if (directTarget) {
           // Выбираем отскоки до урона: смерть основной цели не меняет уже выбранную цепь.
@@ -1354,6 +1356,7 @@
       if (spell.isSparks && !primaryTarget) return false;
       // Этот же снимок целей используется для анимации и последующего урона.
       const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount) : null;
+      let shotHit = null; // Для Искр один результат используется и анимацией, и уроном.
       const fromCell = cells[caster.position.y * SIZE + caster.position.x];
 
       // Фаза 1: фиксируем цель, оплачиваем каст и блокируем любые новые действия.
@@ -1366,7 +1369,7 @@
 
       function finishCast() {
         // Фаза 2: HP и очередь меняются лишь после завершения анимации.
-        applySpellEffect(spell, target, caster, sparkTargets);
+        applySpellEffect(spell, target, caster, sparkTargets, shotHit);
         removeDefeatedEntities();
         // Обновление UI выполнится сразу после callback, уже со снятой блокировкой.
         queueMicrotask(updatePanel);
@@ -1375,7 +1378,10 @@
 
       if (spell.isSparks) {
         const sparkCells = sparkTargets.map(entity => cells[entity.position.y * SIZE + entity.position.x]);
-        playSparksAnimation(fromCell, targetCell, sparkCells, () => setTimeout(finishCast, 0));
+        playSparksAnimation(fromCell, targetCell, sparkCells, () => setTimeout(finishCast, 0), () => {
+          shotHit = shotHits(caster, primaryTarget);
+          return shotHit;
+        });
       } else if (spell.id === 'ice-arrow') {
         playProjectileAnimation(fromCell, targetCell, 'ice', () => setTimeout(finishCast, 0));
       } else if (spell.isCone) {

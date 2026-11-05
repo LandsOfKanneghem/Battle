@@ -104,7 +104,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 5 L20 2 L32 7 L35 21 L29 33 L20 38 L8 32 L4 18 Z" fill="#858e98" stroke="#cdd4db" stroke-width="2"/><path d="M20 3 L17 13 L23 20 L17 28 L20 37 M17 13 L5 17 M23 20 L34 16 M17 28 L9 32 M23 20 L29 32" fill="none" stroke="#434e5a" stroke-width="2"/><path d="M10 8 L14 7 M27 9 L29 12" stroke="#e3e7eb" stroke-width="2" stroke-linecap="round"/></svg>`
 }, {
-  id: 'sparks', name: 'Искры', stackable: false, isSparks: true, target: 'any',
+  id: 'sparks', name: 'Искры', stackable: false, isSparks: true, isShot: true, target: 'any',
   description: 'Наносит урон воздухом по одиночной цели, от нее отскакивает 2 искры в ближайшие цели на расстоянии 3 клеток, наносящие половину урона (несколько искр в одну цель отлететь не могут).',
   damage: 2, damageType: 'air', sparkRadius: 3, sparkCount: 2,
   minRange: 1, range: 5, modifiable: true, noLOS: false,

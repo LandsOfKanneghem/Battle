@@ -38,7 +38,15 @@
     }
     .spell-pages button:hover:not(:disabled) { background: #53647d; border-color: #b9cce7; }
     .spell-pages button:disabled { color: #737c89; background: #272d36; border-color: #414955; cursor: default; }
-    .spell-slot { aspect-ratio: 1; min-width: 0; padding: 3px; background: #191e26; border: 2px solid #515966; border-radius: 4px; }
+    .spell-slot { position: relative; aspect-ratio: 1; min-width: 0; padding: 3px; background: #191e26; border: 2px solid #515966; border-radius: 4px; }
+    .cooldown-badge {
+      position: absolute; inset: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(18px, 3vmin, 28px); font-weight: 700; color: #fff;
+      text-shadow: 0 0 4px #000, 0 0 8px #000;
+      background: rgba(0, 0, 0, 0.5); border-radius: 4px;
+      pointer-events: none;
+    }
     button.spell-slot { cursor: pointer; }
     .spell-slot svg { display: block; width: 100%; height: 100%; pointer-events: none; }
     .spell-slot.prepared { border-color: #ffdc36; }

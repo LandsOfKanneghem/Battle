@@ -15,8 +15,13 @@
       gap: 16px;
     }
     .arena { display: flex; flex-direction: column; align-items: center; min-width: 0; gap: 12px; }
-    #turn-order { width: 100%; display: flex; gap: 8px; padding: 6px; background: #262b33; border-radius: 6px; }
-    .turn-slot { width: 44px; min-width: 0; height: auto; aspect-ratio: 1; padding: 3px; border: 2px solid transparent; border-radius: 5px; background: #343b46; }
+    /* Резервируем высоту полосы, чтобы переполнение не сдвигало поле. */
+    #turn-order { width: 100%; display: flex; gap: 8px; padding: 6px; background: #262b33; border-radius: 6px; overflow-x: auto; overflow-y: hidden; min-height: 55px; height: 55px; align-items: center; scrollbar-width: thin; scrollbar-color: #515966 #1a1e24; }
+    #turn-order::-webkit-scrollbar { height: 8px; }
+    #turn-order::-webkit-scrollbar-track { background: #1a1e24; border-radius: 4px; }
+    #turn-order::-webkit-scrollbar-thumb { background: #515966; border-radius: 4px; }
+    #turn-order::-webkit-scrollbar-thumb:hover { background: #606c80; }
+    .turn-slot { width: 35px; flex-shrink: 0; min-width: 0; height: auto; aspect-ratio: 1; padding: 3px; border: 2px solid transparent; border-radius: 5px; background: #343b46; }
     .turn-slot.active { background: #606c80; border-color: #ffdc36; }
     .cell.entity-hover { outline: 2px solid #ffdc36; outline-offset: -2px; }
     .panel {
@@ -130,6 +135,7 @@
       }
     }
     @media (max-width: 640px) {
+      #turn-order { width: 96vw; }
       .game { flex-direction: column; gap: 12px; }
       #battlefield {
         width: min(96vw, max(32px, calc(96vh - var(--panel-height, 550px) - 92px)));

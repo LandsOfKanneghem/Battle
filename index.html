@@ -72,6 +72,7 @@
   <script src="animations.js"></script>
   <script src="ui.js"></script>
   <script src="spellTargeting.js"></script>
+  <script src="movement.js"></script>
   <script>
     gameState.previousSpellPageButton.addEventListener('click', () => window.changeSpellPage(-1));
     gameState.nextSpellPageButton.addEventListener('click', () => window.changeSpellPage(1));
@@ -79,69 +80,12 @@
     window.addEventListener('resize', window.hideSpellTooltip);
     window.addEventListener('scroll', window.hideSpellTooltip, true);
 
-    function cancelSpell() {
-      gameState.preparedSpellId = null;
-      clearHighlight();
-      window.updatePanel();
-    }
-
-    function removeDefeatedEntities() {
-      const activeIndex = gameState.entities.findIndex(entity => entity.id === gameState.activeEntityId);
-      const activeDied = activeIndex !== -1 && gameState.entities[activeIndex].hp <= 0;
-      // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
-      for (let i = gameState.entities.length - 1; i >= 0; i--) {
-        const entity = gameState.entities[i];
-        if (entity.hp > 0) continue;
-        removeCasterEffects(entity.id);
-        entity.svg.remove();
-        gameState.turnSlots.get(entity.id).remove();
-        gameState.turnSlots.delete(entity.id);
-        if (gameState.selectedEntityId === entity.id) gameState.selectedEntityId = null;
-        if (gameState.hoveredEntityId === entity.id) gameState.hoveredEntityId = null;
-        if (gameState.fieldHoveredEntityId === entity.id) gameState.fieldHoveredEntityId = null;
-        if (gameState.queueHoveredEntityId === entity.id) gameState.queueHoveredEntityId = null;
-        gameState.entities.splice(i, 1);
-      }
-      if (activeDied || gameState.entities.length === 0) {
-        gameState.isMoving = false;
-        gameState.stepQueue = [];
-        gameState.battlefield.classList.remove('moving');
-        beginTurn(gameState.nextLivingEntity(gameState.activeEntityId)); // Смена активного участника происходит сразу.
-      } else {
-        window.updatePanel();
-      }
-    }
     // Проверка в консоли: gameState.entities.find(e => e.id === gameState.activeEntityId).hp = 0;
-    // removeDefeatedEntities(); // Следующий участник должен стать активным сразу.
+    // window.removeDefeatedEntities(); // Следующий участник должен стать активным сразу.
 
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && gameState.preparedSpellId) cancelSpell();
+      if (event.key === 'Escape' && gameState.preparedSpellId) window.cancelSpell();
     });
-
-    function clearHighlight() {
-      for (const badge of gameState.effectBadges) badge.remove();
-      gameState.effectBadges = [];
-      for (const cell of gameState.highlightedCells) {
-        cell.classList.remove('path-reachable', 'path-over-budget', 'spell-aoe');
-      }
-      gameState.highlightedCells = [];
-      for (const cell of gameState.rangeHighlightedCells) cell.classList.remove('spell-range');
-      gameState.rangeHighlightedCells = [];
-      gameState.previewKey = null;
-      gameState.costLabel.remove();
-    }
-    window.clearHighlight = clearHighlight;
-
-    function highlightPath(path, mp) {
-      clearHighlight();
-      let cost = 0;
-      path.forEach(point => {
-        cost += gameState.entryCost(point);
-        const cell = gameState.cells[point.y * gameState.SIZE + point.x];
-        cell.classList.add(cost <= mp ? 'path-reachable' : 'path-over-budget');
-        gameState.highlightedCells.push(cell);
-      });
-    }
 
     for (const id of gameState.turnOrderIds) {
       const entity = gameState.entities.find(item => item.id === id);
@@ -172,41 +116,6 @@
       }
     }
 
-    function buildPath(start, target) {
-      if (!gameState.isFree(start) || !gameState.isFree(target)) return null;
-      const heuristic = (point) => Math.abs(point.x - target.x) + Math.abs(point.y - target.y);
-      const open = [{ ...start, g: 0, h: heuristic(start), parent: null, axis: null, turn: 0 }];
-      const bestCost = new Map([[gameState.keyOf(start), 0]]);
-      const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-
-      // A*: g учитывает вход на поверхность, h — Манхэттен (минимальная цена шага 1).
-      // Чередование осей влияет только на выбор среди равных оценок,
-      // поэтому не мешает находить кратчайшие обходные маршруты.
-      while (open.length > 0) {
-        open.sort((a, b) => (a.g + a.h) - (b.g + b.h) || a.h - b.h || a.turn - b.turn);
-        const current = open.shift();
-        if (current.g !== bestCost.get(gameState.keyOf(current))) continue;
-        if (current.x === target.x && current.y === target.y) {
-          const path = [];
-          for (let node = current; node.parent; node = node.parent) {
-            path.push({ x: node.x, y: node.y });
-          }
-          return path.reverse();
-        }
-        for (const [dx, dy] of directions) {
-          const next = { x: current.x + dx, y: current.y + dy };
-          if (!gameState.isFree(next)) continue;
-          const g = current.g + gameState.entryCost(next);
-          if (g >= (bestCost.get(gameState.keyOf(next)) ?? Infinity)) continue;
-          bestCost.set(gameState.keyOf(next), g);
-          const axis = dx ? 'x' : 'y';
-          open.push({ ...next, g, h: heuristic(next), parent: current, axis,
-            turn: axis === current.axis ? 1 : 0 });
-        }
-      }
-      return null; // Свободная цель может быть отрезана препятствиями.
-    }
-
     window.addEventListener('resize', window.hideEffectTooltip);
     window.addEventListener('scroll', window.hideEffectTooltip);
 
@@ -223,111 +132,11 @@
       if (entity) window.selectEntity(entity.id);
     });
 
-    // Будущие действия используют эту проверку, чтобы не уйти в минус.
-    function spendAP(amount) {
-      if (gameState.isSkippingTurn || isFrozen(gameState.activeEntity()) || gameState.isCasting || gameState.isMoving || gameState.activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
-      character.ap -= amount;
-      window.updatePanel();
-      return true;
-    }
-
-    function beginTurn(entity) {
-      gameState.isSkippingTurn = false;
-      // Если участник удалён, выбираем следующего живого по фиксированной очереди.
-      if (gameState.entities.indexOf(entity) === -1) {
-        entity = gameState.nextLivingEntity(gameState.activeEntityId);
-      }
-      const version = ++gameState.turnVersion;
-      gameState.preparedSpellId = null;
-      if (!entity) {
-        gameState.activeEntityId = null;
-        window.renderSpellPanel();
-        clearHighlight();
-        window.updatePanel();
-        return;
-      }
-      // Урон Горения срабатывает только у цели, без отсчёта длительности.
-      // При самоналожении сохраняем урон до истечения защит/ES и самого Горения.
-      // Активируем получателя хода заранее, чтобы его смерть сразу передала ход после него.
-      gameState.activeEntityId = entity.id;
-      const burning = entity.states.find(state => state.id === 'burning' && !state.suppressed
-        && (state.duration > 0 || state.permanent || state.innate));
-      if (burning) {
-        applyDamage({ damage: burning.tickDamage, damageType: burning.damageType }, entity);
-        if (entity.hp <= 0) {
-          removeDefeatedEntities();
-          return;
-        }
-      }
-      // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
-      gameState.isSkippingTurn = entity.type === 'wolf' || isFrozen(entity);
-      // Длительности меняются только по casterId, один раз даже для caster = target.
-      tickCasterEffects(entity.id);
-      // Начало личного хода обновляет только заклинания этого участника.
-      for (const spell of entity.spells) {
-        spell.usesThisTurn = 0;
-        spell.cooldown = Math.max(0, spell.cooldown - 1);
-      }
-      gameState.activeEntityId = entity.id;
-      window.renderSpellPanel();
-      entity.ap = entity.maxAP;
-      entity.mp = entity.maxMP;
-      clearHighlight();
-      window.updatePanel(); // HP не является ресурсом хода.
-      if (gameState.isSkippingTurn) {
-        // Волк или замороженный участник виден 100 мс, но действовать не может.
-
-        setTimeout(() => {
-          // Смерть или новая передача уже завершили этот ход: старый таймер не действует.
-          if (version !== gameState.turnVersion) return;
-          const index = gameState.entities.indexOf(entity);
-          if (index === -1) {
-            beginTurn(gameState.nextLivingEntity(gameState.activeEntityId));
-            return;
-          }
-          entity.ap = entity.maxAP;
-          entity.mp = entity.maxMP;
-          beginTurn(gameState.nextLivingEntity(entity.id));
-        }, 100);
-      }
-    }
-
     gameState.endTurnButton.addEventListener('click', () => {
       if (gameState.isCasting || gameState.isSkippingTurn || isFrozen(gameState.activeEntity())) return;
       if (gameState.isMoving || ![character.id, monk.id].includes(gameState.activeEntityId)) return;
-      beginTurn(gameState.nextLivingEntity(gameState.activeEntityId));
+      window.beginTurn(gameState.nextLivingEntity(gameState.activeEntityId));
     });
-
-    // Двигаться могут союзники; волки пока только пропускают ход.
-    function activeMover() {
-      if (gameState.isSkippingTurn) return undefined;
-      return gameState.entities.find(entity => entity.id === gameState.activeEntityId && entity.hp > 0 && !isFrozen(entity)
-        && (entity.type === 'wizard' || entity.type === 'monk'));
-    }
-
-    function takeStep() {
-      if (gameState.isCasting) return;
-      const mover = activeMover();
-      if (!gameState.isMoving || !mover || gameState.stepQueue.length === 0) return;
-      const next = gameState.stepQueue[0];
-      if (gameState.entryCost(next) > mover.mp) {
-        gameState.stepQueue = [];
-        gameState.isMoving = false;
-        gameState.battlefield.classList.remove('moving');
-        window.updatePanel();
-        return;
-      }
-      mover.position = gameState.stepQueue.shift();
-      mover.mp -= gameState.entryCost(mover.position);
-      renderPosition();
-      if (gameState.stepQueue.length > 0) {
-        setTimeout(takeStep, gameState.STEP_MS);
-      } else {
-        gameState.isMoving = false;
-        gameState.battlefield.classList.remove('moving');
-      }
-      window.updatePanel();
-    }
 
     gameState.battlefield.addEventListener('mousemove', (event) => {
       if (gameState.isCasting) return;
@@ -336,13 +145,13 @@
         gameState.fieldHoveredEntityId = null;
         window.updatePanel();
         if (gameState.preparedSpellId) window.highlightSpellRange();
-        else clearHighlight(); // В том числе при наведении на промежуток сетки.
+        else window.clearHighlight(); // В том числе при наведении на промежуток сетки.
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       gameState.fieldHoveredEntityId = gameState.entities.find(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))?.id ?? null;
       window.updatePanel();
-      const mover = activeMover();
+      const mover = window.activeMover();
       if (gameState.isMoving || !mover) return;
       if (gameState.preparedSpellId) {
         const spell = gameState.activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
@@ -359,15 +168,15 @@
       // Позиция и MP включены в ключ, чтобы не использовать устаревшее превью.
       const key = `${mover.id}:${gameState.keyOf(target)}:${gameState.keyOf(mover.position)}:${mover.mp}`;
       if (gameState.previewKey === key) return;
-      clearHighlight();
+      window.clearHighlight();
       // Стоимость нужна только для свободного места назначения.
       // Даже свой персонаж занимает клетку: число под ним не показываем.
       if (!gameState.isFree(target) || gameState.entities.some(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))) {
         gameState.previewKey = key;
         return;
       }
-      const path = buildPath(mover.position, target);
-      if (path) highlightPath(path, mover.mp);
+      const path = window.buildPath(mover.position, target);
+      if (path) window.highlightPath(path, mover.mp);
       gameState.costLabel.textContent = path === null ? '∞' : String(gameState.pathCost(path));
       cell.appendChild(gameState.costLabel);
       gameState.previewKey = key;
@@ -375,7 +184,7 @@
 
     gameState.battlefield.addEventListener('mouseleave', () => {
       if (gameState.preparedSpellId) window.highlightSpellRange();
-      else clearHighlight();
+      else window.clearHighlight();
       gameState.fieldHoveredEntityId = null;
       window.updatePanel();
     });
@@ -383,7 +192,7 @@
     gameState.battlefield.addEventListener('click', (event) => {
       if (gameState.isCasting) return;
       // Новая цель не прерывает уже начатый маршрут.
-      const mover = activeMover();
+      const mover = window.activeMover();
       if (gameState.isMoving || !mover) return;
       const cell = event.target.closest('.cell');
       if (!cell || !gameState.battlefield.contains(cell)) return;
@@ -393,17 +202,17 @@
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       if (!gameState.isFree(target)) return;
-      const path = buildPath(mover.position, target);
+      const path = window.buildPath(mover.position, target);
       // Недоступный маршрут игнорируем, сохраняя текущее превью.
       if (mover.mp <= 0 || path === null || gameState.pathCost(path) > mover.mp) return;
       if (path.length === 0) return;
-      clearHighlight();
+      window.clearHighlight();
       gameState.fieldHoveredEntityId = null;
       gameState.stepQueue = path;
       gameState.isMoving = true;
       gameState.battlefield.classList.add('moving');
       window.updatePanel();
-      setTimeout(takeStep, gameState.STEP_MS);
+      setTimeout(window.takeStep, gameState.STEP_MS);
     });
 
     // Ссылки создаются после объявления всех обработчиков и до инициализации интерфейса.
@@ -415,7 +224,9 @@
       isFrozen: window.isFrozen, shotHits: window.shotHits, spellDamage: window.spellDamage,
       addElementalShield: window.addElementalShield,
       resolveStateSuppression: window.resolveStateSuppression, recalculateStateStats: window.recalculateStateStats,
-      updatePanel: window.updatePanel, removeDefeatedEntities, renderPosition, cancelSpell, clearHighlight,
+      updatePanel: window.updatePanel,
+      removeDefeatedEntities: window.removeDefeatedEntities, renderPosition,
+      cancelSpell: window.cancelSpell, clearHighlight: window.clearHighlight,
       playMissAnimation: window.playMissAnimation,
       playProjectileAnimation: window.playProjectileAnimation,
       playSparksAnimation: window.playSparksAnimation,

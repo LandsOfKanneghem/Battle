@@ -1,0 +1,195 @@
+// Движение, подсветка пути, смена ходов и удаление побеждённых.
+// Состояние читается из window.gameState; боевые и UI-функции вызываются через window.*.
+// При загрузке только объявляем функции: работа начинается после инициализации index.html.
+
+window.buildPath = function(start, target) {
+  if (!window.gameState.isFree(start) || !window.gameState.isFree(target)) return null;
+  const heuristic = (point) => Math.abs(point.x - target.x) + Math.abs(point.y - target.y);
+  const open = [{ ...start, g: 0, h: heuristic(start), parent: null, axis: null, turn: 0 }];
+  const bestCost = new Map([[window.gameState.keyOf(start), 0]]);
+  const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+
+  // A*: g учитывает вход на поверхность, h — Манхэттен (минимальная цена шага 1).
+  // Чередование осей влияет только на выбор среди равных оценок,
+  // поэтому не мешает находить кратчайшие обходные маршруты.
+  while (open.length > 0) {
+    open.sort((a, b) => (a.g + a.h) - (b.g + b.h) || a.h - b.h || a.turn - b.turn);
+    const current = open.shift();
+    if (current.g !== bestCost.get(window.gameState.keyOf(current))) continue;
+    if (current.x === target.x && current.y === target.y) {
+      const path = [];
+      for (let node = current; node.parent; node = node.parent) {
+        path.push({ x: node.x, y: node.y });
+      }
+      return path.reverse();
+    }
+    for (const [dx, dy] of directions) {
+      const next = { x: current.x + dx, y: current.y + dy };
+      if (!window.gameState.isFree(next)) continue;
+      const g = current.g + window.gameState.entryCost(next);
+      if (g >= (bestCost.get(window.gameState.keyOf(next)) ?? Infinity)) continue;
+      bestCost.set(window.gameState.keyOf(next), g);
+      const axis = dx ? 'x' : 'y';
+      open.push({ ...next, g, h: heuristic(next), parent: current, axis,
+        turn: axis === current.axis ? 1 : 0 });
+    }
+  }
+  return null; // Свободная цель может быть отрезана препятствиями.
+};
+
+// Двигаться могут союзники; волки пока только пропускают ход.
+window.activeMover = function() {
+  if (window.gameState.isSkippingTurn) return undefined;
+  return window.gameState.entities.find(entity => entity.id === window.gameState.activeEntityId && entity.hp > 0 && !window.isFrozen(entity)
+    && (entity.type === 'wizard' || entity.type === 'monk'));
+};
+
+window.takeStep = function() {
+  if (window.gameState.isCasting) return;
+  const mover = window.activeMover();
+  if (!window.gameState.isMoving || !mover || window.gameState.stepQueue.length === 0) return;
+  const next = window.gameState.stepQueue[0];
+  if (window.gameState.entryCost(next) > mover.mp) {
+    window.gameState.stepQueue = [];
+    window.gameState.isMoving = false;
+    window.gameState.battlefield.classList.remove('moving');
+    window.updatePanel();
+    return;
+  }
+  mover.position = window.gameState.stepQueue.shift();
+  mover.mp -= window.gameState.entryCost(mover.position);
+  window.renderPosition();
+  if (window.gameState.stepQueue.length > 0) {
+    setTimeout(window.takeStep, window.gameState.STEP_MS);
+  } else {
+    window.gameState.isMoving = false;
+    window.gameState.battlefield.classList.remove('moving');
+  }
+  window.updatePanel();
+};
+
+window.beginTurn = function(entity) {
+  window.gameState.isSkippingTurn = false;
+  // Если участник удалён, выбираем следующего живого по фиксированной очереди.
+  if (window.gameState.entities.indexOf(entity) === -1) {
+    entity = window.gameState.nextLivingEntity(window.gameState.activeEntityId);
+  }
+  const version = ++window.gameState.turnVersion;
+  window.gameState.preparedSpellId = null;
+  if (!entity) {
+    window.gameState.activeEntityId = null;
+    window.renderSpellPanel();
+    window.clearHighlight();
+    window.updatePanel();
+    return;
+  }
+  // Урон Горения срабатывает только у цели, без отсчёта длительности.
+  // При самоналожении сохраняем урон до истечения защит/ES и самого Горения.
+  // Активируем получателя хода заранее, чтобы его смерть сразу передала ход после него.
+  window.gameState.activeEntityId = entity.id;
+  const burning = entity.states.find(state => state.id === 'burning' && !state.suppressed
+    && (state.duration > 0 || state.permanent || state.innate));
+  if (burning) {
+    window.applyDamage({ damage: burning.tickDamage, damageType: burning.damageType }, entity);
+    if (entity.hp <= 0) {
+      window.removeDefeatedEntities();
+      return;
+    }
+  }
+  // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
+  window.gameState.isSkippingTurn = entity.type === 'wolf' || window.isFrozen(entity);
+  // Длительности меняются только по casterId, один раз даже для caster = target.
+  window.tickCasterEffects(entity.id);
+  // Начало личного хода обновляет только заклинания этого участника.
+  for (const spell of entity.spells) {
+    spell.usesThisTurn = 0;
+    spell.cooldown = Math.max(0, spell.cooldown - 1);
+  }
+  window.gameState.activeEntityId = entity.id;
+  window.renderSpellPanel();
+  entity.ap = entity.maxAP;
+  entity.mp = entity.maxMP;
+  window.clearHighlight();
+  window.updatePanel(); // HP не является ресурсом хода.
+  if (window.gameState.isSkippingTurn) {
+    // Волк или замороженный участник виден 100 мс, но действовать не может.
+
+    setTimeout(() => {
+      // Смерть или новая передача уже завершили этот ход: старый таймер не действует.
+      if (version !== window.gameState.turnVersion) return;
+      const index = window.gameState.entities.indexOf(entity);
+      if (index === -1) {
+        window.beginTurn(window.gameState.nextLivingEntity(window.gameState.activeEntityId));
+        return;
+      }
+      entity.ap = entity.maxAP;
+      entity.mp = entity.maxMP;
+      window.beginTurn(window.gameState.nextLivingEntity(entity.id));
+    }, 100);
+  }
+};
+
+window.removeDefeatedEntities = function() {
+  const activeIndex = window.gameState.entities.findIndex(entity => entity.id === window.gameState.activeEntityId);
+  const activeDied = activeIndex !== -1 && window.gameState.entities[activeIndex].hp <= 0;
+  // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
+  for (let i = window.gameState.entities.length - 1; i >= 0; i--) {
+    const entity = window.gameState.entities[i];
+    if (entity.hp > 0) continue;
+    window.removeCasterEffects(entity.id);
+    entity.svg.remove();
+    window.gameState.turnSlots.get(entity.id).remove();
+    window.gameState.turnSlots.delete(entity.id);
+    if (window.gameState.selectedEntityId === entity.id) window.gameState.selectedEntityId = null;
+    if (window.gameState.hoveredEntityId === entity.id) window.gameState.hoveredEntityId = null;
+    if (window.gameState.fieldHoveredEntityId === entity.id) window.gameState.fieldHoveredEntityId = null;
+    if (window.gameState.queueHoveredEntityId === entity.id) window.gameState.queueHoveredEntityId = null;
+    window.gameState.entities.splice(i, 1);
+  }
+  if (activeDied || window.gameState.entities.length === 0) {
+    window.gameState.isMoving = false;
+    window.gameState.stepQueue = [];
+    window.gameState.battlefield.classList.remove('moving');
+    window.beginTurn(window.gameState.nextLivingEntity(window.gameState.activeEntityId)); // Смена активного участника происходит сразу.
+  } else {
+    window.updatePanel();
+  }
+};
+
+window.highlightPath = function(path, mp) {
+  window.clearHighlight();
+  let cost = 0;
+  path.forEach(point => {
+    cost += window.gameState.entryCost(point);
+    const cell = window.gameState.cells[point.y * window.gameState.SIZE + point.x];
+    cell.classList.add(cost <= mp ? 'path-reachable' : 'path-over-budget');
+    window.gameState.highlightedCells.push(cell);
+  });
+};
+
+window.clearHighlight = function() {
+  for (const badge of window.gameState.effectBadges) badge.remove();
+  window.gameState.effectBadges = [];
+  for (const cell of window.gameState.highlightedCells) {
+    cell.classList.remove('path-reachable', 'path-over-budget', 'spell-aoe');
+  }
+  window.gameState.highlightedCells = [];
+  for (const cell of window.gameState.rangeHighlightedCells) cell.classList.remove('spell-range');
+  window.gameState.rangeHighlightedCells = [];
+  window.gameState.previewKey = null;
+  window.gameState.costLabel.remove();
+};
+
+window.cancelSpell = function() {
+  window.gameState.preparedSpellId = null;
+  window.clearHighlight();
+  window.updatePanel();
+};
+
+// Будущие действия используют эту проверку, чтобы не уйти в минус.
+window.spendAP = function(amount) {
+  if (window.gameState.isSkippingTurn || window.isFrozen(window.gameState.activeEntity()) || window.gameState.isCasting || window.gameState.isMoving || window.gameState.activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
+  character.ap -= amount;
+  window.updatePanel();
+  return true;
+};

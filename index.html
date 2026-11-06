@@ -66,6 +66,7 @@
   <script src="data/states.js"></script>
   <script src="data/spellData.js"></script>
   <script src="gameState.js"></script>
+  <script src="combat.js"></script>
   <script src="spellLogic.js"></script>
   <script>
     // Полная карта поверхностей независима от ящиков.
@@ -147,228 +148,6 @@
 
     gameState.activeEntityId = character.id;
     gameState.costLabel.className = 'path-cost';
-
-    function hasActiveState(entity, id) {
-      return entity.states.some(state => state.id === id && !state.suppressed
-        && (state.duration > 0 || state.permanent || state.innate));
-    }
-
-    function restoreSuspendedWeakness(entity) {
-      entity.states.push(...(entity.suspendedWeakness ?? []));
-      entity.suspendedWeakness = [];
-    }
-
-    function recalculateStateStats(entity, allowNegativeMP = false) {
-      const oldMaxAP = entity.maxAP;
-      entity.maxAP = Math.max(1, entity.baseMaxAP + entity.states.filter(state => !state.suppressed)
-        .reduce((sum, state) => sum + (state.apBonus ?? 0), 0));
-      // Изменяется именно остаток AP: потраченные действия не возвращаем; долг AP допустим.
-      entity.ap += entity.maxAP - oldMaxAP;
-      const oldMaxMP = entity.maxMP;
-      entity.maxMP = Math.max(1, entity.baseMaxMP + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.mpBonus, 0));
-      entity.initiative = entity.baseInitiative + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.initiativeBonus, 0);
-      // Берём фактическую дельту после ограничения maxMP >= 1, а не сумму бонусов.
-      // Перекрытие Скорости Медлительностью, например, даёт сразу -4 MP.
-      const delta = entity.maxMP - oldMaxMP;
-      if (delta !== 0) {
-        const adjusted = Math.min(entity.maxMP, entity.mp + delta);
-        // Наложение допускает долг MP; при снятии/истечении остаток не ниже нуля.
-        entity.mp = allowNegativeMP ? adjusted : Math.max(0, adjusted);
-      }
-    }
-
-    function resolveStateSuppression(entity) {
-      // При взаимном overrides побеждает последнее успешно наложенное состояние.
-      // Одностороннее overrides имеет приоритет независимо от времени наложения.
-      let pending = [...entity.states].sort((a, b) => b.appliedOrder - a.appliedOrder);
-      for (const state of pending) state.suppressed = true;
-      while (pending.length) {
-        const winner = pending.find(candidate => !pending.some(other => other !== candidate
-          && other.overrides.includes(candidate.id)
-          && (!candidate.overrides.includes(other.id) || other.appliedOrder > candidate.appliedOrder))) ?? pending[0];
-        winner.suppressed = false;
-        // Подавленные остаются в entity.states, но сами ничего не подавляют.
-        pending = pending.filter(state => state !== winner && !winner.overrides.includes(state.id));
-      }
-    }
-
-    function applyState(entity, stateOrId, duration, casterName) {
-      // Поддерживаем объект состояния; форма с id удобна для ручной отладки.
-      const input = typeof stateOrId === 'string' ? { id: stateOrId, duration, casterName } : stateOrId;
-      const template = stateTypes.get(input.id);
-      if (!template) return false;
-      const stateDuration = input.duration ?? template.duration;
-      if (stateDuration <= 0) return false;
-      if (input.id === 'weakness' && hasActiveState(entity, 'vigor')) return false;
-      if (['adrenaline', 'vigor'].includes(input.id) && hasActiveState(entity, 'adrenaline-crash')) return false;
-      const neutralizes = input.neutralizes ?? template.neutralizes;
-      if (entity.states.some(state => neutralizes.includes(state.id))) {
-        // A нейтрализует B: снимаем B, но A не появляется. Урон уже прошёл раньше.
-        entity.states = entity.states.filter(state => !neutralizes.includes(state.id));
-        resolveStateSuppression(entity);
-        recalculateStateStats(entity);
-        updatePanel();
-        return false;
-      }
-      // Слабость отката — отдельный экземпляр: не заменяет восстановленную постоянную.
-      const sameInstance = state => state.id === input.id && (input.id !== 'weakness'
-        || !!state.crashWeakness === !!input.crashWeakness);
-      const existing = entity.states.find(sameInstance);
-      if (existing && (existing.unremovable || existing.permanent || existing.innate || existing.duration > stateDuration
-        || (existing.duration === stateDuration && input.id !== 'burning'))) return false;
-      // Равное по длительности Горение обновляет источник; меньшая длительность игнорируется.
-      if (input.id === 'adrenaline' || input.id === 'vigor') {
-        entity.suspendedWeakness ??= [];
-        entity.states = entity.states.filter(state => {
-          if (state.id !== 'weakness' || state.unremovable) return true;
-          // Адреналин сохраняет постоянную Слабость для возврата после своего спада.
-          if (state.permanent && input.id === 'adrenaline') entity.suspendedWeakness.push(state);
-          return false;
-        });
-      }
-      // Откат снимает Бодрость до создания Слабости, чтобы иммунитет уже не действовал.
-      if (input.id === 'adrenaline-crash') entity.states = entity.states.filter(state => state.id !== 'vigor');
-      entity.states = entity.states.filter(state => !sameInstance(state));
-      entity.states.push({ ...template, ...input, duration: stateDuration, casterId: input.casterId ?? gameState.activeEntity()?.id,
-        suppressed: false, appliedOrder: ++gameState.effectOrder,
-        overrides: [...(input.overrides ?? template.overrides)],
-        neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
-      resolveStateSuppression(entity);
-      recalculateStateStats(entity, true);
-      if (input.id === 'adrenaline') applyState(entity, {
-        id: 'vigor', duration: 2, casterId: input.casterId ?? gameState.activeEntity()?.id, casterName: input.casterName
-      });
-      if (input.id === 'adrenaline-crash') applyState(entity, {
-        // Неснимаемость временно даёт сам откат; родной флаг Слабости не меняем.
-        id: 'weakness', duration: 1, crashWeakness: true,
-        casterId: input.casterId ?? gameState.activeEntity()?.id, casterName: input.casterName
-      });
-      updatePanel();
-      return true;
-    }
-
-    function removeState(entity, stateId) {
-      if (stateId === 'weakness' && hasActiveState(entity, 'adrenaline-crash')) return;
-      const hadAdrenaline = entity.states.some(state => state.id === 'adrenaline');
-      entity.states = entity.states.filter(state => state.id !== stateId || state.unremovable || state.permanent || state.innate);
-      if (hadAdrenaline && !entity.states.some(state => state.id === 'adrenaline')) {
-        entity.states = entity.states.filter(state => state.id !== 'vigor');
-        restoreSuspendedWeakness(entity);
-      }
-      resolveStateSuppression(entity);
-      recalculateStateStats(entity);
-      updatePanel();
-    }
-
-    function getCurrentES(entity) {
-      // baseES — оставшаяся базовая часть: тратится последней и не восполняется.
-      return entity.baseES + entity.esBonuses.reduce((sum, bonus) => sum + bonus.remaining, 0);
-    }
-
-    function consumeES(entity, amount) {
-      let left = amount;
-      // Старые бонусы -> новые бонусы -> база. Нулевые бонусы сохраняются до истечения.
-      for (const bonus of entity.esBonuses) {
-        const spent = Math.min(bonus.remaining, left);
-        bonus.remaining -= spent;
-        left -= spent;
-        if (left === 0) break;
-      }
-      entity.baseES = Math.max(0, entity.baseES - left);
-    }
-
-    function removeSpellBonuses(entity, applied) {
-      // Удаление бонуса убирает только его remaining из суммы, не затрагивая базу.
-      entity.esBonuses = entity.esBonuses.filter(bonus => bonus.instanceId !== applied.appliedOrder);
-      // EVA остаётся отдельным нерасходуемым бонусом с тем же сроком заклинания.
-      entity.evaBonuses = entity.evaBonuses.filter(bonus => bonus.instanceId !== applied.appliedOrder);
-    }
-
-    function tickTemporaryBonuses(entity, casterId) {
-      entity.esBonuses = entity.esBonuses.map(bonus => bonus.casterId === casterId
-        ? { ...bonus, turnsLeft: bonus.turnsLeft - 1 } : bonus)
-        .filter(bonus => bonus.turnsLeft > 0);
-      entity.evaBonuses = entity.evaBonuses.map(bonus => bonus.casterId === casterId
-        ? { ...bonus, turnsLeft: bonus.turnsLeft - 1 } : bonus)
-        .filter(bonus => bonus.turnsLeft > 0);
-    }
-
-    function tickCasterEffects(casterId) {
-      // Единственное место отсчёта: эффекты источника на ВСЕХ целях, включая его самого.
-      for (const target of gameState.entities) {
-        // Сначала тикают старые состояния. Новый откат не теряет ход в этом же проходе.
-        const expiredAdrenaline = target.states.filter(state => state.id === 'adrenaline'
-          && state.casterId === casterId && !state.permanent && !state.innate && state.duration <= 1);
-        // Все состояния, включая Слабость, тикают только у своего источника.
-        // Слабость от отката и сам откат имеют одинаковый срок и спадают вместе.
-        // Подавленные состояния тоже тикают; врождённые и постоянные не истекают.
-        target.states = target.states.map(state => state.casterId === casterId && !state.permanent && !state.innate
-          ? { ...state, duration: state.duration - 1 } : state)
-          .filter(state => state.permanent || state.innate || state.duration > 0);
-        if (expiredAdrenaline.length) {
-          for (const adrenaline of expiredAdrenaline) applyState(target, {
-            id: 'adrenaline-crash', duration: 1, casterId: adrenaline.casterId, casterName: adrenaline.casterName
-          });
-          restoreSuspendedWeakness(target);
-        }
-        resolveStateSuppression(target);
-        recalculateStateStats(target);
-        // Срок заклинания независим от срока созданного им состояния.
-        target.spellsOnMe = target.spellsOnMe.map(effect => effect.casterId === casterId
-          ? { ...effect, duration: effect.duration - 1 } : effect)
-          .filter(effect => effect.duration > 0);
-        tickTemporaryBonuses(target, casterId);
-        storeElementalShields(target, elementalShieldEffects(target)
-          .map(effect => effect.casterId === casterId ? { ...effect, turnsLeft: effect.turnsLeft - 1 } : effect)
-          .filter(effect => effect.turnsLeft > 0));
-      }
-    }
-
-    function removeCasterEffects(casterId) {
-      // Смерть источника снимает его эффекты сразу, даже если сейчас ход другой цели.
-      for (const target of gameState.entities) {
-        const lostAdrenaline = target.states.some(state => state.id === 'adrenaline' && state.casterId === casterId);
-        target.suspendedWeakness = (target.suspendedWeakness ?? []).filter(state => state.casterId !== casterId);
-        target.states = target.states.filter(state => state.casterId !== casterId);
-        // Смерть источника снимает его эффекты; чужая приостановленная Слабость возвращается.
-        if (lostAdrenaline) restoreSuspendedWeakness(target);
-        resolveStateSuppression(target);
-        recalculateStateStats(target);
-        target.spellsOnMe = target.spellsOnMe.filter(effect => effect.casterId !== casterId);
-        target.esBonuses = target.esBonuses.filter(bonus => bonus.casterId !== casterId);
-        target.evaBonuses = target.evaBonuses.filter(bonus => bonus.casterId !== casterId);
-        storeElementalShields(target, elementalShieldEffects(target).filter(effect => effect.casterId !== casterId));
-      }
-    }
-
-    function applySpellOnEntity(entity, spellOnMe) {
-      // Каждый наложенный бафф имеет собственный срок и источник.
-      // Его истечение не снимает состояние: оба таймера живут независимо.
-      // По умолчанию заменяем ВСЕ одноимённые заклинания, независимо от id и силы.
-      // Отсутствующий stackable равнозначен false; правила состояний не меняем.
-      if (spellOnMe.stackable !== true) {
-        for (const old of entity.spellsOnMe.filter(effect => effect.name === spellOnMe.name)) removeSpellBonuses(entity, old);
-        entity.spellsOnMe = entity.spellsOnMe.filter(effect => effect.name !== spellOnMe.name);
-      }
-      const applied = { ...spellOnMe, casterId: spellOnMe.casterId ?? gameState.activeEntity()?.id,
-        stackable: spellOnMe.stackable === true,
-        sourceId: spellOnMe.sourceId ?? spellOnMe.id, appliedOrder: ++gameState.effectOrder };
-      entity.spellsOnMe.push(applied);
-      const bonus = { sourceId: applied.sourceId, name: applied.name, turnsLeft: applied.duration,
-        casterId: applied.casterId, casterName: applied.casterName, icon: applied.icon, instanceId: applied.appliedOrder };
-      if (applied.esAmount) {
-        if (!applied.stackable) {
-          entity.esBonuses = entity.esBonuses.filter(old => old.sourceId !== applied.sourceId && old.name !== applied.name);
-        }
-        entity.esBonuses.push({ ...bonus, amount: applied.esAmount, remaining: applied.esAmount });
-      }
-      if (applied.evaAmount) entity.evaBonuses.push({ ...bonus, amount: applied.evaAmount });
-      if (applied.stateId) applyState(entity, {
-        id: applied.stateId, duration: applied.stateDuration ?? applied.duration,
-        casterId: applied.casterId, casterName: applied.casterName
-      });
-      updatePanel();
-    }
 
     character.spells = WIZARD_SPELLS;
     monk.spells = MONK_SPELLS;
@@ -521,10 +300,6 @@
 
     }
 
-    function isFrozen(entity) {
-      return !!entity && entity.states.some(state => state.id === 'freeze' && !state.suppressed
-        && (state.duration > 0 || state.permanent || state.innate));
-    }
 
     function canPrepareSpell(spell) {
       const caster = gameState.activeEntity();
@@ -780,62 +555,6 @@
         layers.push(layer);
       }
       setTimeout(() => layers.forEach(layer => layer.remove()), 900);
-    }
-
-    function elementalShieldEffects(entity, damageType) {
-      // Без типа возвращаем все защиты для панели, тика и снятия при смерти.
-      return entity.elementalShields.filter(effect => effect.turnsLeft > 0
-        && (damageType === undefined || effect.damageType === damageType));
-    }
-
-    function storeElementalShields(entity, effects) {
-      entity.elementalShields = effects;
-    }
-
-    function addElementalShield(entity, spell, caster = gameState.activeEntity()) {
-      const effects = elementalShieldEffects(entity);
-      const fresh = { damageType: spell.damageType, amount: spell.shieldAmount, turnsLeft: spell.shieldDuration, sourceId: spell.id,
-        casterId: caster?.id, casterName: caster?.name ?? 'Неизвестно', name: spell.name,
-        svg: spell.svg, appliedOrder: ++gameState.effectOrder };
-      const index = effects.findIndex(effect => effect.sourceId === spell.id);
-      if (index === -1) effects.push(fresh);
-      else effects[index] = fresh; // Тот же источник заменяется даже более слабой защитой.
-      storeElementalShields(entity, effects);
-    }
-
-    function elementalBlockAmount(entity, damageType) {
-      return elementalShieldEffects(entity, damageType).reduce((sum, effect) => sum + effect.amount, 0);
-    }
-
-    function isMagicalDamage(damageType) {
-      return !['physical', 'poison', 'pure'].includes(damageType);
-    }
-
-    function damageBreakdown(spell, entity) {
-      if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
-      // Учитываем защиту нужного типа (включая physical) один раз, до ES/HP.
-      const resistance = getEffectiveStat(entity, spell.damageType === 'physical' ? 'physical' : `resistances.${spell.damageType}`);
-      const afterResistance = Math.max(0, spell.damage - resistance);
-      const absorbed = isMagicalDamage(spell.damageType)
-        ? Math.min(getCurrentES(entity), afterResistance) : 0;
-      return { absorbed, hpDamage: afterResistance - absorbed };
-    }
-
-    function spellDamage(spell, entity) {
-      // Превью не расходует ES и не бросает уклонение; показывает HP-урон при попадании.
-      return damageBreakdown(spell, entity).hpDamage;
-    }
-
-    function applyDamage(spell, entity) {
-      if (isFrozen(entity)) return; // Не расходуем ни HP, ни ES, ни бонусы защиты.
-      const { absorbed, hpDamage } = damageBreakdown(spell, entity);
-      consumeES(entity, absorbed);
-      entity.hp = Math.max(0, entity.hp - hpDamage);
-    }
-
-    function shotHits(caster, target) {
-      const hitChance = Math.max(0, Math.min(100, getEffectiveStat(caster, 'acc') - getEffectiveStat(target, 'eva')));
-      return Math.random() * 100 < hitChance;
     }
 
     function playMissAnimation(cell) {
@@ -1254,26 +973,6 @@
       if (entity) selectEntity(entity.id);
     });
 
-    function getEffectiveStat(entity, statName) {
-      if (!entity) return 0;
-      if (statName === 'es') return getCurrentES(entity);
-      const valueAt = object => statName.split('.').reduce((value, key) => value?.[key], object);
-      const base = valueAt(entity.attributes) ?? 0;
-      // Не берём entity.initiative: там уже есть бонус, который иначе учёлся бы дважды.
-      const effects = [
-        ...entity.states.filter(state => !state.suppressed && (state.duration > 0 || state.permanent || state.innate)),
-        ...entity.spellsOnMe.filter(effect => effect.duration > 0 && !effect.suppressed),
-        ...elementalShieldEffects(entity)
-      ];
-      // Физическая и стихийные защиты добавляются только к своей характеристике.
-      const elementalProtection = statName === 'physical' ? elementalBlockAmount(entity, 'physical')
-        : statName.startsWith('resistances.')
-        ? elementalBlockAmount(entity, statName.split('.')[1]) : 0;
-      const temporaryEvasion = statName === 'eva'
-        ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
-      return base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
-        ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : statName === 'eva' ? effect.evaBonus ?? 0 : 0)), 0);
-    }
 
     function updatePanel() {
       gameState.hoveredEntityId = gameState.queueHoveredEntityId ?? gameState.fieldHoveredEntityId;
@@ -1328,6 +1027,7 @@
         }
       }
     }
+    window.updatePanel = updatePanel;
 
     // Будущие действия используют эту проверку, чтобы не уйти в минус.
     function spendAP(amount) {
@@ -1516,8 +1216,11 @@
     const spellDeps = {
       stateTypes,
       WIZARD_SPELLS, MONK_SPELLS, FREEZE, HEAVY, ADRENALINE, VIGOR, WEAKNESS,
-      applyState, applyDamage, applySpellOnEntity, hasActiveState, isFrozen, shotHits, spellDamage,
-      addElementalShield, resolveStateSuppression, recalculateStateStats,
+      applyState: window.applyState, applyDamage: window.applyDamage,
+      applySpellOnEntity: window.applySpellOnEntity, hasActiveState: window.hasActiveState,
+      isFrozen: window.isFrozen, shotHits: window.shotHits, spellDamage: window.spellDamage,
+      addElementalShield: window.addElementalShield,
+      resolveStateSuppression: window.resolveStateSuppression, recalculateStateStats: window.recalculateStateStats,
       updatePanel, removeDefeatedEntities, renderPosition, cancelSpell, clearHighlight,
       playMissAnimation, playProjectileAnimation, playSparksAnimation, playCubeExplosion,
       playArmageddonAnimation, playRainAnimation, playWeaknessVigorAnimation,

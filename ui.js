@@ -157,6 +157,7 @@ window.renderSpellPanel = function(resetPage = true) {
     const slot = document.createElement('button');
     slot.type = 'button';
     slot.className = 'spell-slot';
+    if (spell.magicSchool) slot.classList.add(`school-${spell.magicSchool}`);
     slot.innerHTML = spell.svg;
     updateCooldownBadge(slot, spell);
     updateUsesBadge(slot, spell);

@@ -69,6 +69,7 @@
   <script src="combat.js"></script>
   <script src="spellLogic.js"></script>
   <script src="animations.js"></script>
+  <script src="ui.js"></script>
   <script>
     // Полная карта поверхностей независима от ящиков.
     for (let y = 0; y < gameState.SIZE; y++) for (let x = 0; x < gameState.SIZE; x++) {
@@ -157,149 +158,11 @@
       character.spells.filter(spell => spell.isElementalShield)];
     monk.spellPages = [monk.spells];
 
-    function getSpellPages(entity = gameState.activeEntity()) {
-      return entity?.spellPages ?? [entity?.spells ?? []];
-    }
+    gameState.previousSpellPageButton.addEventListener('click', () => window.changeSpellPage(-1));
+    gameState.nextSpellPageButton.addEventListener('click', () => window.changeSpellPage(1));
 
-    function changeSpellPage(offset) {
-      const pages = getSpellPages();
-      if (gameState.isCasting || gameState.isMoving || gameState.selectedEntityId !== null || pages.length < 2) return;
-      gameState.currentSpellPage = (gameState.currentSpellPage + offset + pages.length) % pages.length;
-      // Подготовка и подсветка предыдущей страницы не должны оставаться после переключения.
-      gameState.preparedSpellId = null;
-      clearHighlight();
-      renderSpellPanel(false);
-      updatePanel();
-    }
-    gameState.previousSpellPageButton.addEventListener('click', () => changeSpellPage(-1));
-    gameState.nextSpellPageButton.addEventListener('click', () => changeSpellPage(1));
-    let spellTooltip = null;
-    let spellTooltipIcon = null;
-
-    function hideSpellTooltip() {
-      spellTooltip?.remove();
-      spellTooltipIcon?.removeAttribute('aria-describedby');
-      spellTooltip = null;
-      spellTooltipIcon = null;
-    }
-
-    function spellTurnLabel(n) {
-      // Для нулевого кулдауна используем принятый в книге вариант «0 хода».
-      const word = n === 0 ? 'хода' : n % 10 === 1 && n % 100 !== 11 ? 'ход'
-        : n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? 'хода' : 'ходов';
-      return `${n} ${word}`;
-    }
-
-    function showSpellTooltip(icon, spell) {
-      hideSpellTooltip();
-      const tooltip = document.createElement('div');
-      tooltip.className = 'spell-tooltip';
-      tooltip.id = 'spell-tooltip';
-      tooltip.setAttribute('role', 'tooltip');
-      const title = document.createElement('strong');
-      title.className = 'spell-title';
-      title.textContent = spell.name;
-      tooltip.appendChild(title);
-      const description = document.createElement('p');
-      description.className = 'spell-description';
-      description.textContent = spell.description ?? 'NULL';
-      tooltip.appendChild(description);
-      const addLine = (label, value) => {
-        const line = document.createElement('p');
-        const caption = document.createElement('strong');
-        caption.textContent = `${label}:`;
-        line.append(caption, ` ${value}`);
-        tooltip.appendChild(line);
-      };
-      addLine('ОД', spell.apCost);
-      addLine('КД', spellTurnLabel(spell.maxCooldown));
-      if (spell.maxUsesPerBattle !== undefined) addLine('Раз за бой', spell.maxUsesPerBattle);
-      else addLine('Раз в ход', spell.maxUsesPerTurn);
-      // Совпадающие границы показываем одним числом, сохраняя отметку изменяемости.
-      const range = spell.minRange === undefined || spell.minRange === spell.range
-        ? spell.range : `${spell.minRange}–${spell.range}`;
-      addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`);
-      const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
-      // Тип выстрела дополняет форму АОЕ, не меняя её и остальные строки тултипа.
-      addLine('АОЕ', `${areaLabel}${spell.isShot ? ' [тип: Выстрел]' : ''}`);
-      addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг' }[spell.target] ?? 'нет');
-      addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
-      const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет' };
-      if (spell.damage > 0) addLine('Урон', `${spell.damage} ${elements[spell.damageType] ?? spell.damageType}`);
-      if (spell.isHeal) addLine('Лечение', spell.healAmount);
-      const effects = [];
-      if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
-      if (spell.burnDuration) effects.push(stateTypes.get('burning').name);
-      if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
-      if (spell.isSkyShot || spell.isWeaknessVigor) effects.push(spell.effectDescription);
-      if (spell.isMembrane) effects.push(`+${spell.esAmount} ES, +${spell.evaAmount}% уклонения`);
-      if (effects.length) {
-        effects.forEach((effect, index) => {
-          if (index === 0) addLine('Эффекты', effect);
-          else { const line = document.createElement('p'); line.textContent = effect; tooltip.appendChild(line); }
-        });
-        addLine('Длительность', spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(spell.stateDuration ?? spell.shieldDuration ?? spell.effectDuration ?? spell.burnDuration));
-      }
-      document.body.appendChild(tooltip);
-      // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.
-      const r = icon.getBoundingClientRect();
-      let t = tooltip.getBoundingClientRect(), left, top;
-      if (r.left >= t.width + 16) { left = r.left - t.width - 8; top = r.top; }
-      else if (innerWidth - r.right >= t.width + 16) { left = r.right + 8; top = r.top; }
-      else {
-        const below = innerHeight - r.bottom - 16, above = r.top - 16;
-        const useBelow = below >= above;
-        tooltip.style.maxHeight = `${Math.max(0, useBelow ? below : above)}px`;
-        t = tooltip.getBoundingClientRect();
-        left = r.left;
-        top = useBelow ? r.bottom + 8 : r.top - t.height - 8;
-      }
-      tooltip.style.left = `${Math.max(8, Math.min(left, innerWidth - t.width - 8))}px`;
-      tooltip.style.top = `${Math.max(8, Math.min(top, innerHeight - t.height - 8))}px`;
-      icon.setAttribute('aria-describedby', tooltip.id);
-      spellTooltip = tooltip;
-      spellTooltipIcon = icon;
-    }
-    window.addEventListener('resize', hideSpellTooltip);
-    window.addEventListener('scroll', hideSpellTooltip, true);
-
-    // Ключ — объект, поэтому одноимённые кубы разных владельцев не пересекаются.
-    function renderSpellPanel(resetPage = true) {
-      if (resetPage) gameState.currentSpellPage = 0;
-      hideSpellTooltip();
-      document.getElementById('spells').replaceChildren();
-      gameState.spellSlots.clear();
-      const pages = getSpellPages();
-      if (gameState.currentSpellPage >= pages.length) gameState.currentSpellPage = 0;
-      const currentSpells = pages[gameState.currentSpellPage] ?? [];
-      for (const spell of currentSpells) {
-        const slot = document.createElement('button');
-        slot.type = 'button';
-        slot.className = 'spell-slot';
-        slot.innerHTML = spell.svg;
-        slot.setAttribute('aria-label', spell.name);
-        slot.addEventListener('mouseenter', () => showSpellTooltip(slot, spell));
-        slot.addEventListener('mouseleave', hideSpellTooltip);
-        slot.addEventListener('focus', () => showSpellTooltip(slot, spell));
-        slot.addEventListener('blur', hideSpellTooltip);
-        slot.addEventListener('click', () => {
-          if (gameState.isCasting) return;
-          if (!canPrepareSpell(spell)) return;
-          hideSpellTooltip();
-          gameState.preparedSpellId = spell.id;
-          highlightSpellRange();
-          updatePanel();
-        });
-        gameState.spellSlots.set(spell, slot);
-        document.getElementById('spells').appendChild(slot);
-      }
-      for (let i = currentSpells.length; i < 16; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'spell-slot';
-        document.getElementById('spells').appendChild(slot);
-      }
-
-    }
+    window.addEventListener('resize', window.hideSpellTooltip);
+    window.addEventListener('scroll', window.hideSpellTooltip, true);
 
     function canPrepareSpell(spell) {
       const caster = gameState.activeEntity();
@@ -425,7 +288,7 @@
     function cancelSpell() {
       gameState.preparedSpellId = null;
       clearHighlight();
-      updatePanel();
+      window.updatePanel();
     }
 
     function removeDefeatedEntities() {
@@ -451,7 +314,7 @@
         gameState.battlefield.classList.remove('moving');
         beginTurn(gameState.nextLivingEntity(gameState.activeEntityId)); // Смена активного участника происходит сразу.
       } else {
-        updatePanel();
+        window.updatePanel();
       }
     }
     // Проверка в консоли: gameState.entities.find(e => e.id === gameState.activeEntityId).hp = 0;
@@ -544,22 +407,22 @@
       slot.appendChild(entity.svg.cloneNode(true));
       slot.addEventListener('contextmenu', event => {
         event.preventDefault();
-        selectEntity(entity.id);
+        window.selectEntity(entity.id);
       });
       slot.addEventListener('mouseenter', () => {
         gameState.queueHoveredEntityId = entity.id;
-        updatePanel();
+        window.updatePanel();
       });
       slot.addEventListener('mouseleave', () => {
         gameState.queueHoveredEntityId = null;
-        updatePanel();
+        window.updatePanel();
       });
       gameState.turnSlots.set(entity.id, slot);
       gameState.turnOrder.appendChild(slot);
     }
     gameState.turnOrder.addEventListener('mouseleave', () => {
       gameState.queueHoveredEntityId = null;
-      updatePanel();
+      window.updatePanel();
     });
 
     for (let y = 0; y < gameState.SIZE; y++) {
@@ -623,97 +486,12 @@
       return null; // Свободная цель может быть отрезана препятствиями.
     }
 
-    let effectPanelKey = null;
-    let effectTooltip = null;
-    function hideEffectTooltip() {
-      effectTooltip?.remove();
-      effectTooltip = null;
-    }
+    window.addEventListener('resize', window.hideEffectTooltip);
+    window.addEventListener('scroll', window.hideEffectTooltip);
 
-    function showEffectTooltip(icon, effect, kind = 'spell') {
-      hideEffectTooltip();
-      const tooltip = document.createElement('div');
-      tooltip.className = 'effect-tooltip';
-      tooltip.setAttribute('role', 'tooltip');
-      const title = document.createElement('strong');
-      title.className = 'effect-title';
-      title.textContent = effect.name ?? icon.getAttribute('aria-label') ?? 'Эффект';
-      tooltip.appendChild(title);
-      const n = kind === 'state' ? effect.duration : (effect.duration ?? effect.turnsLeft);
-      const word = n % 10 === 1 && n % 100 !== 11 ? 'ход' :
-        n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? 'хода' : 'ходов';
-      // Для защиты выводим силу именно наложенного эффекта, а не шаблона заклинания.
-      const spellDescription = effect.amount !== undefined
-        ? effect.damageType === 'physical' ? `Блокирует ${effect.amount} ед. физического урона`
-          : `Блокирует ${effect.amount} ед. урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[effect.damageType]}` : effect.description;
-      const weaknessLocked = kind === 'state' && effect.id === 'weakness' && gameState.entities.some(entity =>
-        entity.states.includes(effect) && hasActiveState(entity, 'adrenaline-crash'));
-      const lines = kind === 'state'
-        ? [effect.description, `Длительность: ${n} ${word}`,
-          ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable || weaknessLocked ? [effect.id === 'weakness' ? 'Неснимаемая' : 'Неснимаемое'] : [])]
-        : [spellDescription, `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
-          `Источник: ${effect.casterName ?? 'Неизвестно'}`];
-      for (const text of lines) {
-        const line = document.createElement('p');
-        line.textContent = text;
-        tooltip.appendChild(line);
-      }
-      document.body.appendChild(tooltip);
-      // Сначала пробуем сбоку от иконки, на узком экране — снизу или сверху.
-      const r = icon.getBoundingClientRect(), t = tooltip.getBoundingClientRect();
-      let left, top;
-      if (r.left - t.width >= 16) { left = r.left - t.width - 8; top = r.top; }
-      else if (r.right + t.width + 16 <= innerWidth) { left = r.right + 8; top = r.top; }
-      else { left = r.left; top = r.bottom + 8 + t.height <= innerHeight - 8 ? r.bottom + 8 : r.top - t.height - 8; }
-      tooltip.style.left = `${scrollX + Math.max(8, Math.min(left, innerWidth - t.width - 8))}px`;
-      tooltip.style.top = `${scrollY + Math.max(8, Math.min(top, innerHeight - t.height - 8))}px`;
-      effectTooltip = tooltip;
-    }
-    window.addEventListener('resize', hideEffectTooltip);
-    window.addEventListener('scroll', hideEffectTooltip);
-
-    function renderEffectPanel() {
-      const entity = gameState.entities.find(item => item.id === gameState.selectedEntityId);
-      if (!entity) return;
-      const effects = [...elementalShieldEffects(entity), ...entity.spellsOnMe]
-        .sort((a, b) => (a.appliedOrder ?? 0) - (b.appliedOrder ?? 0));
-      const key = JSON.stringify([entity.id, effects, entity.states]);
-      // Не пересоздаём иконки на каждом mousemove: тултип остаётся стабильным.
-      if (effectPanelKey === key) return;
-      effectPanelKey = key;
-      hideEffectTooltip();
-      const spellEffects = document.getElementById('spell-effects');
-      spellEffects.replaceChildren();
-      const stateEffects = document.getElementById('state-effects');
-      stateEffects.replaceChildren();
-      for (const { effect, kind } of [
-        ...effects.filter(item => item.sourceId).map(effect => ({ effect, kind: 'spell' })),
-        ...entity.states.filter(state => !state.suppressed).map(effect => ({ effect, kind: 'state' }))
-      ]) {
-        const icon = document.createElement('button');
-        icon.type = 'button';
-        icon.className = 'spell-slot effect-icon';
-        const sourceSpell = gameState.entities.flatMap(item => item.spells).find(item => item.id === effect.sourceId);
-        const svg = effect.icon ?? effect.svg ?? sourceSpell?.svg;
-        if (svg) icon.innerHTML = svg;
-        else icon.textContent = '?';
-        icon.setAttribute('aria-label', effect.name ?? sourceSpell?.name ?? effect.sourceId);
-        icon.addEventListener('mouseenter', () => showEffectTooltip(icon, effect, kind));
-        icon.addEventListener('mouseleave', hideEffectTooltip);
-        icon.addEventListener('focus', () => showEffectTooltip(icon, effect, kind));
-        icon.addEventListener('blur', hideEffectTooltip);
-        (kind === 'state' ? stateEffects : spellEffects).appendChild(icon);
-      }
-    }
-
-    function selectEntity(id) {
-      if (!gameState.entities.some(entity => entity.id === id && entity.hp > 0)) return;
-      gameState.selectedEntityId = id;
-      updatePanel();
-    }
     document.getElementById('close-effects').addEventListener('click', () => {
       gameState.selectedEntityId = null;
-      updatePanel();
+      window.updatePanel();
     });
     gameState.battlefield.addEventListener('contextmenu', event => {
       event.preventDefault();
@@ -721,69 +499,14 @@
       if (!cell || !gameState.battlefield.contains(cell)) return;
       const entity = gameState.entities.find(item => item.hp > 0 && item.position.x === Number(cell.dataset.x)
         && item.position.y === Number(cell.dataset.y));
-      if (entity) selectEntity(entity.id);
+      if (entity) window.selectEntity(entity.id);
     });
-
-    function updatePanel() {
-      gameState.hoveredEntityId = gameState.queueHoveredEntityId ?? gameState.fieldHoveredEntityId;
-      if (gameState.selectedEntityId !== null && !gameState.entities.some(entity => entity.id === gameState.selectedEntityId)) gameState.selectedEntityId = null;
-      const displayed = gameState.entities.find(entity => entity.id === (gameState.selectedEntityId ?? gameState.hoveredEntityId ?? gameState.activeEntityId));
-      const viewingEffects = gameState.selectedEntityId !== null;
-      if (viewingEffects) hideSpellTooltip();
-      const pages = getSpellPages();
-      const hasSpells = pages.some(page => page.length > 0);
-      document.getElementById('spells').hidden = viewingEffects || !hasSpells;
-      gameState.spellPageControls.hidden = viewingEffects || !hasSpells;
-      gameState.previousSpellPageButton.disabled = gameState.nextSpellPageButton.disabled = pages.length < 2 || gameState.isCasting || gameState.isMoving;
-      document.getElementById('effects-panel').hidden = !viewingEffects;
-      if (viewingEffects) renderEffectPanel();
-      else { effectPanelKey = null; hideEffectTooltip(); }
-      document.getElementById('character-name').textContent = displayed?.name ?? '—';
-      document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp} / ${displayed.maxHP}` : '—';
-      document.getElementById('ap').textContent = displayed ? `AP: ${displayed.ap} / ${displayed.maxAP}` : '—';
-      document.getElementById('mp').textContent = displayed ? `MP: ${displayed.mp} / ${displayed.maxMP}` : '—';
-      const attributes = displayed?.attributes;
-      const writeAttribute = (id, text) => { document.getElementById(id).textContent = attributes ? text : '—'; };
-      for (const key of ['ra', 'vs', 'es', 'vit', 'str', 'att', 'int', 'wis', 'cha', 'luc', 'ini']) {
-        writeAttribute(key, `${key.toUpperCase()}: ${getEffectiveStat(displayed, key)}`);
-      }
-      writeAttribute('wp', `WP: ${getEffectiveStat(displayed, 'wp')} / ${getEffectiveStat(displayed, 'maxWP')}`);
-      writeAttribute('acc', `ACC: ${getEffectiveStat(displayed, 'acc')}%`);
-      writeAttribute('eva', `EVA: ${getEffectiveStat(displayed, 'eva')}% / ${attributes?.eva}`);
-      writeAttribute('blo', `BLO: ${getEffectiveStat(displayed, 'blo')}% / ${getEffectiveStat(displayed, 'blo')}`);
-      for (const [key, label] of Object.entries({ ac: 'Броня', physical: 'Физика', fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля', mind: 'Разум', poison: 'Яд' })) {
-        const id = key === 'ac' ? 'ac' : `res-${key}`;
-        // Броня и Физика — отдельные характеристики; физические защиты входят в physical.
-        const value = getEffectiveStat(displayed, key === 'ac' || key === 'physical' ? key : `resistances.${key}`);
-        writeAttribute(id, String(value));
-        document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);
-      }
-      gameState.endTurnButton.disabled = !displayed || gameState.isMoving || gameState.isCasting || gameState.isSkippingTurn || isFrozen(gameState.activeEntity()) || ![character.id, monk.id].includes(gameState.activeEntityId);
-      // Характеристики учитывают наведение, заклинания — только активного участника.
-      for (const spell of gameState.activeEntity()?.spells ?? []) {
-        const slot = gameState.spellSlots.get(spell);
-        if (!slot) continue; // Доступность обновляем только у слотов открытой страницы.
-        slot.disabled = !displayed || gameState.isCasting || !canPrepareSpell(spell);
-        slot.classList.toggle('prepared', gameState.activeEntity()?.spells.includes(spell) && gameState.preparedSpellId === spell.id);
-        slot.setAttribute('aria-pressed', gameState.activeEntity()?.spells.includes(spell) && gameState.preparedSpellId === spell.id ? 'true' : 'false');
-      }
-      for (const cell of gameState.cells) cell.classList.remove('entity-hover');
-      for (const entity of gameState.entities) {
-        const active = entity.id === gameState.activeEntityId;
-        gameState.turnSlots.get(entity.id).classList.toggle('active', active);
-        gameState.turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');
-        if (gameState.queueHoveredEntityId === entity.id) {
-          gameState.cells[entity.position.y * gameState.SIZE + entity.position.x].classList.add('entity-hover');
-        }
-      }
-    }
-    window.updatePanel = updatePanel;
 
     // Будущие действия используют эту проверку, чтобы не уйти в минус.
     function spendAP(amount) {
       if (gameState.isSkippingTurn || isFrozen(gameState.activeEntity()) || gameState.isCasting || gameState.isMoving || gameState.activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
       character.ap -= amount;
-      updatePanel();
+      window.updatePanel();
       return true;
     }
 
@@ -797,9 +520,9 @@
       gameState.preparedSpellId = null;
       if (!entity) {
         gameState.activeEntityId = null;
-        renderSpellPanel();
+        window.renderSpellPanel();
         clearHighlight();
-        updatePanel();
+        window.updatePanel();
         return;
       }
       // Урон Горения срабатывает только у цели, без отсчёта длительности.
@@ -825,11 +548,11 @@
         spell.cooldown = Math.max(0, spell.cooldown - 1);
       }
       gameState.activeEntityId = entity.id;
-      renderSpellPanel();
+      window.renderSpellPanel();
       entity.ap = entity.maxAP;
       entity.mp = entity.maxMP;
       clearHighlight();
-      updatePanel(); // HP не является ресурсом хода.
+      window.updatePanel(); // HP не является ресурсом хода.
       if (gameState.isSkippingTurn) {
         // Волк или замороженный участник виден 100 мс, но действовать не может.
 
@@ -870,7 +593,7 @@
         gameState.stepQueue = [];
         gameState.isMoving = false;
         gameState.battlefield.classList.remove('moving');
-        updatePanel();
+        window.updatePanel();
         return;
       }
       mover.position = gameState.stepQueue.shift();
@@ -882,7 +605,7 @@
         gameState.isMoving = false;
         gameState.battlefield.classList.remove('moving');
       }
-      updatePanel();
+      window.updatePanel();
     }
 
     gameState.battlefield.addEventListener('mousemove', (event) => {
@@ -890,14 +613,14 @@
       const cell = event.target.closest('.cell');
       if (!cell || !gameState.battlefield.contains(cell)) {
         gameState.fieldHoveredEntityId = null;
-        updatePanel();
+        window.updatePanel();
         if (gameState.preparedSpellId) highlightSpellRange();
         else clearHighlight(); // В том числе при наведении на промежуток сетки.
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
       gameState.fieldHoveredEntityId = gameState.entities.find(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))?.id ?? null;
-      updatePanel();
+      window.updatePanel();
       const mover = activeMover();
       if (gameState.isMoving || !mover) return;
       if (gameState.preparedSpellId) {
@@ -933,7 +656,7 @@
       if (gameState.preparedSpellId) highlightSpellRange();
       else clearHighlight();
       gameState.fieldHoveredEntityId = null;
-      updatePanel();
+      window.updatePanel();
     });
 
     gameState.battlefield.addEventListener('click', (event) => {
@@ -958,7 +681,7 @@
       gameState.stepQueue = path;
       gameState.isMoving = true;
       gameState.battlefield.classList.add('moving');
-      updatePanel();
+      window.updatePanel();
       setTimeout(takeStep, gameState.STEP_MS);
     });
 
@@ -971,7 +694,7 @@
       isFrozen: window.isFrozen, shotHits: window.shotHits, spellDamage: window.spellDamage,
       addElementalShield: window.addElementalShield,
       resolveStateSuppression: window.resolveStateSuppression, recalculateStateStats: window.recalculateStateStats,
-      updatePanel, removeDefeatedEntities, renderPosition, cancelSpell, clearHighlight,
+      updatePanel: window.updatePanel, removeDefeatedEntities, renderPosition, cancelSpell, clearHighlight,
       playMissAnimation: window.playMissAnimation,
       playProjectileAnimation: window.playProjectileAnimation,
       playSparksAnimation: window.playSparksAnimation,
@@ -995,8 +718,8 @@
     };
 
     renderPosition();
-    renderSpellPanel();
-    updatePanel();
+    window.renderSpellPanel();
+    window.updatePanel();
     // На мобильном остаток высоты отдаётся полю; длинная панель прокручивается сама.
     new ResizeObserver(([entry]) => {
       document.documentElement.style.setProperty('--panel-height', `${Math.ceil(entry.target.getBoundingClientRect().height)}px`);

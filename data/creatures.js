@@ -86,7 +86,7 @@
     const entity = {
       attributes: window.createAttributes(template.attributes),
       id, name: template.name, type: template.type, baseHP: template.baseHP, hp: template.baseHP, maxHP: template.baseHP,
-      spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [],
+      availableSpells: [], elementalShields: [], states: [], appliedEffects: [], baseES: 0, esBonuses: [], evaBonuses: [],
       baseInitiative: 0, initiative: 0,
       baseAP: template.baseAP, maxAP: template.baseAP, ap: template.baseAP,
       baseMP: template.baseMP, maxMP: template.baseMP, mp: template.baseMP,
@@ -94,10 +94,10 @@
     };
     entity.svg.setAttribute('aria-label', entity.name);
     if (template.spellsKey) {
-      entity.spells = template.spellsKey === 'wizard' ? WIZARD_SPELLS : MONK_SPELLS;
+      entity.availableSpells = template.spellsKey === 'wizard' ? WIZARD_SPELLS : MONK_SPELLS;
       entity.spellPages = template.spellPagesSplit
-        ? [entity.spells.filter(spell => !spell.isElementalShield), entity.spells.filter(spell => spell.isElementalShield)]
-        : [entity.spells];
+        ? [entity.availableSpells.filter(spell => !spell.isElementalShield), entity.availableSpells.filter(spell => spell.isElementalShield)]
+        : [entity.availableSpells];
     }
     return entity;
   };

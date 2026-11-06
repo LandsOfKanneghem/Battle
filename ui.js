@@ -8,7 +8,7 @@ let effectPanelKey = null;
 let effectTooltip = null;
 
 window.getSpellPages = function(entity = window.gameState.activeEntity()) {
-  return entity?.spellPages ?? [entity?.spells ?? []];
+  return entity?.spellPages ?? [entity?.availableSpells ?? []];
 };
 
 window.changeSpellPage = function(offset) {
@@ -233,7 +233,7 @@ window.showEffectTooltip = function(icon, effect, kind = 'spell') {
 window.renderEffectPanel = function() {
   const entity = window.gameState.entities.find(item => item.id === window.gameState.selectedEntityId);
   if (!entity) return;
-  const effects = [...window.elementalShieldEffects(entity), ...entity.spellsOnMe]
+  const effects = [...window.elementalShieldEffects(entity), ...entity.appliedEffects]
     .sort((a, b) => (a.appliedOrder ?? 0) - (b.appliedOrder ?? 0));
   const key = JSON.stringify([entity.id, effects, entity.states]);
   // Не пересоздаём иконки на каждом mousemove: тултип остаётся стабильным.
@@ -251,7 +251,7 @@ window.renderEffectPanel = function() {
     const icon = document.createElement('button');
     icon.type = 'button';
     icon.className = 'spell-slot effect-icon';
-    const sourceSpell = window.gameState.entities.flatMap(item => item.spells).find(item => item.id === effect.sourceId);
+    const sourceSpell = window.gameState.entities.flatMap(item => item.availableSpells).find(item => item.id === effect.sourceId);
     const svg = effect.icon ?? effect.svg ?? sourceSpell?.svg;
     if (svg) icon.innerHTML = svg;
     else icon.textContent = '?';
@@ -307,14 +307,14 @@ window.updatePanel = function() {
   }
   window.gameState.endTurnButton.disabled = !displayed || window.gameState.isMoving || window.gameState.isCasting || window.gameState.isSkippingTurn || window.isFrozen(window.gameState.activeEntity()) || ![character.id, monk.id].includes(window.gameState.activeEntityId);
   // Характеристики учитывают наведение, заклинания — только активного участника.
-  for (const spell of window.gameState.activeEntity()?.spells ?? []) {
+  for (const spell of window.gameState.activeEntity()?.availableSpells ?? []) {
     const slot = window.gameState.spellSlots.get(spell);
     if (!slot) continue; // Доступность обновляем только у слотов открытой страницы.
     updateCooldownBadge(slot, spell);
     updateUsesBadge(slot, spell);
     slot.disabled = !displayed || window.gameState.isCasting || !canPrepareSpell(spell);
-    slot.classList.toggle('prepared', window.gameState.activeEntity()?.spells.includes(spell) && window.gameState.preparedSpellId === spell.id);
-    slot.setAttribute('aria-pressed', window.gameState.activeEntity()?.spells.includes(spell) && window.gameState.preparedSpellId === spell.id ? 'true' : 'false');
+    slot.classList.toggle('prepared', window.gameState.activeEntity()?.availableSpells.includes(spell) && window.gameState.preparedSpellId === spell.id);
+    slot.setAttribute('aria-pressed', window.gameState.activeEntity()?.availableSpells.includes(spell) && window.gameState.preparedSpellId === spell.id ? 'true' : 'false');
   }
   for (const cell of window.gameState.cells) cell.classList.remove('entity-hover');
   for (const entity of window.gameState.entities) {

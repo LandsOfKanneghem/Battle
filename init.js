@@ -52,12 +52,12 @@ window.gameState.costLabel.className = 'path-cost';
 
 // Стабильная сортировка сохраняет исходный порядок заклинаний внутри каждой школы.
 const SCHOOL_ORDER = { fire: 0, water: 1, air: 2, earth: 3, body: 4, light: 5 };
-character.spells.sort((a, b) => SCHOOL_ORDER[a.magicSchool] - SCHOOL_ORDER[b.magicSchool]);
-monk.spells.sort((a, b) => SCHOOL_ORDER[a.magicSchool] - SCHOOL_ORDER[b.magicSchool]);
+character.availableSpells.sort((a, b) => SCHOOL_ORDER[a.magicSchool] - SCHOOL_ORDER[b.magicSchool]);
+monk.availableSpells.sort((a, b) => SCHOOL_ORDER[a.magicSchool] - SCHOOL_ORDER[b.magicSchool]);
 // Страницы содержат те же объекты: кулдауны и лимиты не зависят от открытой страницы.
-character.spellPages = [character.spells.filter(spell => !spell.isElementalShield),
-  character.spells.filter(spell => spell.isElementalShield)];
-monk.spellPages = [monk.spells];
+character.spellPages = [character.availableSpells.filter(spell => !spell.isElementalShield),
+  character.availableSpells.filter(spell => spell.isElementalShield)];
+monk.spellPages = [monk.availableSpells];
 
 for (const id of window.gameState.turnOrderIds) {
   const entity = window.gameState.entities.find(item => item.id === id);

@@ -342,7 +342,7 @@ window.castSpell = function(targetCell, deps) {
   } = deps;
   if (gameState.isCasting) return false;
   const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
-  const spell = activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
+  const spell = activeEntity()?.availableSpells.find(item => item.id === gameState.preparedSpellId);
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
   // Лечение и защита требуют живого союзника до оплаты.
   if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
@@ -368,7 +368,7 @@ window.castSpell = function(targetCell, deps) {
   spell.cooldown = spell.maxCooldown;
   // Расходуем бафф после проверки цели и оплаты, даже при промахе или провале SFC.
   // Срок и смерть источника обслуживаются общим механизмом spellsOnMe.
-  if (spell.isShot) caster.spellsOnMe = caster.spellsOnMe.filter(effect => !effect.isSkyShot);
+  if (spell.isShot) caster.appliedEffects = caster.appliedEffects.filter(effect => !effect.isSkyShot);
   if (failed) {
     // Оплата общая с успешным кастом; провал не запускает эффект, уклонение и блокировку действий.
     playFailureAnimation(targetCell);

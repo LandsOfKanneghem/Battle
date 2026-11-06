@@ -178,7 +178,7 @@ window.tickCasterEffects = function(casterId) {
     resolveStateSuppression(target);
     recalculateStateStats(target);
     // Срок заклинания независим от срока созданного им состояния.
-    target.spellsOnMe = target.spellsOnMe.map(effect => effect.casterId === casterId
+    target.appliedEffects = target.appliedEffects.map(effect => effect.casterId === casterId
       ? { ...effect, duration: effect.duration - 1 } : effect)
       .filter(effect => effect.duration > 0);
     tickTemporaryBonuses(target, casterId);
@@ -198,7 +198,7 @@ window.removeCasterEffects = function(casterId) {
     if (lostAdrenaline) restoreSuspendedWeakness(target);
     resolveStateSuppression(target);
     recalculateStateStats(target);
-    target.spellsOnMe = target.spellsOnMe.filter(effect => effect.casterId !== casterId);
+    target.appliedEffects = target.appliedEffects.filter(effect => effect.casterId !== casterId);
     target.esBonuses = target.esBonuses.filter(bonus => bonus.casterId !== casterId);
     target.evaBonuses = target.evaBonuses.filter(bonus => bonus.casterId !== casterId);
     const oldMpCount = (target.mpBonuses ?? []).length;
@@ -216,13 +216,13 @@ window.applySpellOnEntity = function(entity, spellOnMe) {
   // Отсутствующий stackable равнозначен false; правила состояний не меняем.
   if (spellOnMe.stackable !== true) {
     // Пересчитываем MP один раз после замены, чтобы не вернуть потраченные очки.
-    for (const old of entity.spellsOnMe.filter(effect => effect.name === spellOnMe.name)) removeSpellBonuses(entity, old, false);
-    entity.spellsOnMe = entity.spellsOnMe.filter(effect => effect.name !== spellOnMe.name);
+    for (const old of entity.appliedEffects.filter(effect => effect.name === spellOnMe.name)) removeSpellBonuses(entity, old, false);
+    entity.appliedEffects = entity.appliedEffects.filter(effect => effect.name !== spellOnMe.name);
   }
   const applied = { ...spellOnMe, casterId: spellOnMe.casterId ?? window.gameState.activeEntity()?.id,
     stackable: spellOnMe.stackable === true,
     sourceId: spellOnMe.sourceId ?? spellOnMe.id, appliedOrder: ++window.gameState.effectOrder };
-  entity.spellsOnMe.push(applied);
+  entity.appliedEffects.push(applied);
   const bonus = { sourceId: applied.sourceId, name: applied.name, turnsLeft: applied.duration,
     casterId: applied.casterId, casterName: applied.casterName, icon: applied.icon, instanceId: applied.appliedOrder };
   if (applied.esAmount) {
@@ -315,7 +315,7 @@ window.getEffectiveStat = function(entity, statName) {
   // Не берём entity.initiative: там уже есть бонус, который иначе учёлся бы дважды.
   const effects = [
     ...entity.states.filter(state => !state.suppressed && (state.duration > 0 || state.permanent || state.innate)),
-    ...entity.spellsOnMe.filter(effect => effect.duration > 0 && !effect.suppressed),
+    ...entity.appliedEffects.filter(effect => effect.duration > 0 && !effect.suppressed),
     ...elementalShieldEffects(entity)
   ];
   // Физическая и стихийные защиты добавляются только к своей характеристике.

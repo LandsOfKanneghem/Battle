@@ -112,7 +112,7 @@ window.beginTurn = function(entity) {
   // Длительности меняются только по casterId, один раз даже для caster = target.
   window.tickCasterEffects(entity.id);
   // Начало личного хода обновляет только заклинания этого участника.
-  for (const spell of entity.spells) {
+  for (const spell of entity.availableSpells) {
     spell.usesThisTurn = 0;
     spell.cooldown = Math.max(0, spell.cooldown - 1);
   }

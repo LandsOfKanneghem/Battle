@@ -156,7 +156,7 @@
       const mover = window.activeMover();
       if (gameState.isMoving || !mover) return;
       if (gameState.preparedSpellId) {
-        const spell = gameState.activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
+        const spell = gameState.activeEntity()?.availableSpells.find(item => item.id === gameState.preparedSpellId);
         if (spell) {
           const key = `spell:${gameState.keyOf(target)}`;
           if (gameState.previewKey !== key) {

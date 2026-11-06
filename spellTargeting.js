@@ -3,7 +3,7 @@
 
 window.canPrepareSpell = function(spell) {
   const caster = window.gameState.activeEntity();
-  return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !window.gameState.isMoving && !window.gameState.isCasting && !window.gameState.isSkippingTurn && !window.isFrozen(caster)
+  return !!spell && !!caster && caster.hp > 0 && caster.availableSpells.includes(spell) && !window.gameState.isMoving && !window.gameState.isCasting && !window.gameState.isSkippingTurn && !window.isFrozen(caster)
     && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
     && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
     && spell.cooldown === 0;
@@ -49,7 +49,7 @@ window.checkLOS = function(from, to) {
 };
 
 window.hasSkyShotBuff = function(entity) {
-  return !!entity?.spellsOnMe.some(effect => effect.isSkyShot && effect.duration > 0 && !effect.suppressed);
+  return !!entity?.appliedEffects.some(effect => effect.isSkyShot && effect.duration > 0 && !effect.suppressed);
 };
 
 window.effectiveSpellRange = function(spell, caster = window.gameState.activeEntity()) {
@@ -62,7 +62,7 @@ window.effectiveSpellRange = function(spell, caster = window.gameState.activeEnt
 
 window.inSpellReach = function(target, spell) {
   const caster = window.gameState.activeEntity();
-  if (!caster || !spell || !caster.spells.includes(spell)) return false;
+  if (!caster || !spell || !caster.availableSpells.includes(spell)) return false;
   const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
   return target.x >= 0 && target.x < window.gameState.SIZE && target.y >= 0 && target.y < window.gameState.SIZE
     // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
@@ -74,7 +74,7 @@ window.inSpellReach = function(target, spell) {
 window.canTarget = function(target, spell) {
   if (spell?.isGlobal) {
     const caster = window.gameState.activeEntity();
-    return !!caster && caster.spells.includes(spell) && window.gameState.keyOf(target) === window.gameState.keyOf(caster.position);
+    return !!caster && caster.availableSpells.includes(spell) && window.gameState.keyOf(target) === window.gameState.keyOf(caster.position);
   }
   // Доступность клетки не зависит от наличия существа: эффект
   // определяется отдельно при касте (в том числе лечение в пустоту).
@@ -83,7 +83,7 @@ window.canTarget = function(target, spell) {
 
 window.highlightSpellRange = function(center = null) {
   window.clearHighlight();
-  const spell = window.gameState.activeEntity()?.spells.find(item => item.id === window.gameState.preparedSpellId);
+  const spell = window.gameState.activeEntity()?.availableSpells.find(item => item.id === window.gameState.preparedSpellId);
   if (!spell) return;
   // Зелёный фон — допустимые центры; голубая обводка — зона удара.
   for (let y = 0; y < window.gameState.SIZE; y++) for (let x = 0; x < window.gameState.SIZE; x++) {

@@ -1335,212 +1335,6 @@
       setTimeout(() => gust.remove(), 500);
     }
 
-    // Только эффект: ресурсы уже оплачены в первой фазе каста.
-    function applySpellEffect(spell, target, caster, sparkTargets = null, shotHit = null) {
-      const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
-      // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
-      if (spell.isShot && !directTarget) return;
-      // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
-      if (spell.isShot && directTarget && !(shotHit ?? shotHits(caster, directTarget))) {
-        // Общая точка промаха, включая готовый результат Искр: надпись появляется один раз.
-        playMissAnimation(cells[target.y * SIZE + target.x]);
-        return;
-      }
-      if (spell.isWeaknessVigor) {
-        // Общие правила иммунитета, снятия Слабости и обновления срока остаются в applyState.
-        if (directTarget) applyState(directTarget, {
-          id: isAlly(directTarget) ? 'vigor' : 'weakness', duration: spell.stateDuration,
-          casterId: caster.id, casterName: caster.name
-        });
-      } else if (spell.isSkyShot) {
-        if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
-          id: spell.id, name: spell.name, icon: spell.svg, isSkyShot: true,
-          description: spell.effectDescription, duration: spell.effectDuration,
-          casterId: caster.id, casterName: caster.name
-        });
-      } else if (spell.isSparks) {
-        if (directTarget) {
-          // Выбираем отскоки до урона: смерть основной цели не меняет уже выбранную цепь.
-          const targets = sparkTargets ?? findSparkTargets(directTarget, spell.sparkRadius, spell.sparkCount, entities);
-          applyDamage(spell, directTarget);
-          for (const secondary of targets) {
-            if (secondary.hp > 0) applyDamage({ damage: Math.floor(spell.damage / 2), damageType: spell.damageType }, secondary);
-          }
-        }
-      } else if (spell.id === 'ice-arrow') {
-        if (directTarget) {
-          // Сначала сопротивление → ES → HP, затем Охлаждение у выжившей цели.
-          // Общая проверка попадания выше не допускает состояния при промахе.
-          applyDamage(spell, directTarget);
-          if (directTarget.hp > 0) applyState(directTarget, {
-            id: spell.stateId, duration: spell.stateDuration, casterId: caster.id, casterName: caster.name
-          });
-        }
-      } else if (spell.isWindRose) {
-        // Принудительное перемещение: не расходуем MP и не запускаем очередь шагов.
-        for (const direction of [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }]) {
-          const source = { x: target.x + direction.x, y: target.y + direction.y };
-          const destination = { x: target.x + 2 * direction.x, y: target.y + 2 * direction.y };
-          const victim = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(source));
-          // Тяжесть блокирует только толчок: обычная ходьба остаётся доступной.
-          if (!victim || victim.states.some(state => state.id === 'heavy' && !state.suppressed
-            && (state.duration > 0 || state.permanent || state.innate)) || destination.x < 0 || destination.x >= SIZE || destination.y < 0 || destination.y >= SIZE
-            || obstacles.get(keyOf(destination)) === 'crate' || terrain.get(keyOf(destination)) === 'deep-water'
-            || entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(destination))) continue;
-          victim.position = destination;
-        }
-        renderPosition();
-      } else if (spell.isRain) {
-        // Влага действует на всех живых существ в квадрате, включая самого кастера.
-        const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
-        for (const victim of entities) {
-          if (victim.hp > 0 && area.has(keyOf(victim.position))) applyState(victim, {
-            id: spell.stateId, duration: spell.stateDuration, casterId: caster.id, casterName: caster.name
-          });
-        }
-      } else if (spell.isMembrane) {
-        if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
-          id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
-          duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
-          esAmount: spell.esAmount, evaAmount: spell.evaAmount,
-          description: `+${spell.esAmount} ES, +${spell.evaAmount} EVA`
-        });
-      } else if (spell.stateId) {
-        const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
-          && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)));
-        if (recipient) applySpellOnEntity(recipient, {
-          id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
-          description: stateTypes.get(spell.stateId).name,
-          duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
-          stateId: spell.stateId, stateDuration: spell.stateDuration, stackable: spell.stackable
-        });
-      } else if (spell.isElementalShield) {
-        const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
-          && keyOf(entity.position) === keyOf(target));
-        if (ally) addElementalShield(ally, spell, caster);
-      } else if (spell.isHeal) {
-        const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
-          && keyOf(entity.position) === keyOf(target));
-        if (ally) ally.hp = Math.min(ally.maxHP ?? ally.hp, ally.hp + spell.healAmount);
-      } else {
-        const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
-        for (const victim of entities) {
-          if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)
-            && (!spell.enemyOnly || !isAlly(victim))) {
-            applyDamage(spell, victim);
-            if (spell.id === 'burning-hands') {
-              // Сначала урон: Влага и Заморозка ещё защищают от текущего удара.
-              // Затем прямое снятие у всех задетых целей, даже при поглощении/иммунитете.
-              // Заблокированные клетки сюда не попадают; нейтрализацию не вызываем.
-              victim.states = victim.states.filter(state => !['wet', 'chill', 'freeze'].includes(state.id));
-              resolveStateSuppression(victim);
-              recalculateStateStats(victim);
-            }
-            // Горение по-прежнему накладывают заклинания с burnDuration (например, куб).
-            if (spell.burnDuration && victim.hp > 0) applyState(victim, {
-              id: 'burning', duration: spell.burnDuration, casterId: caster.id, casterName: caster.name
-            });
-          }
-        }
-      }
-    }
-
-    function castSpell(targetCell) {
-      if (isCasting) return false;
-      const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
-      const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
-      if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
-      // Лечение и защита требуют живого союзника до оплаты.
-      if ((spell.isHeal || spell.isElementalShield || spell.isMembrane || spell.isSkyShot) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
-        && keyOf(entity.position) === keyOf(target))) return false;
-      if (spell.stateId && !spell.isRain && !spell.isShot && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
-        && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;
-      if (spell.enemyOnly && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
-        && keyOf(entity.position) === keyOf(target))) return false;
-      if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
-      const caster = activeEntity();
-      const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
-      // Этот же снимок целей используется для анимации и последующего урона.
-      const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount, entities) : null;
-      let shotHit = null; // Для Искр один результат используется и анимацией, и уроном.
-      const fromCell = cells[caster.position.y * SIZE + caster.position.x];
-
-      // Фаза 1: фиксируем цель, оплачиваем каст и блокируем любые новые действия.
-      caster.ap -= spell.apCost;
-      spell.usesThisTurn++;
-      if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
-      spell.cooldown = spell.maxCooldown;
-      // Расходуем бафф только после успешной проверки цели и оплаты, даже при будущем промахе.
-      // Срок и смерть источника обслуживаются общим механизмом spellsOnMe.
-      if (spell.isShot) caster.spellsOnMe = caster.spellsOnMe.filter(effect => !effect.isSkyShot);
-      isCasting = true;
-      cancelSpell(); // Также очищает превью и обновляет disabled у кнопок.
-
-      function finishCast() {
-        // Фаза 2: HP и очередь меняются лишь после завершения анимации.
-        applySpellEffect(spell, target, caster, sparkTargets, shotHit);
-        removeDefeatedEntities();
-        // Обновление UI выполнится сразу после callback, уже со снятой блокировкой.
-        queueMicrotask(updatePanel);
-        isCasting = false;
-      }
-
-      if (spell.isWeaknessVigor) {
-        const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
-        playWeaknessVigorAnimation(targetCell, isAlly(recipient));
-        setTimeout(finishCast, 500);
-      } else if (spell.isSkyShot) {
-        playSkyShotAnimation(targetCell, spell);
-        setTimeout(finishCast, 500);
-      } else if (spell.isSparks) {
-        const sparkCells = sparkTargets.map(entity => cells[entity.position.y * SIZE + entity.position.x]);
-        playSparksAnimation(fromCell, targetCell, sparkCells, () => setTimeout(finishCast, 0), () => {
-          if (!primaryTarget) return false; // Выстрел в пустоту: без броска и отскоков.
-          shotHit = shotHits(caster, primaryTarget);
-          return shotHit;
-        });
-      } else if (spell.id === 'ice-arrow') {
-        playProjectileAnimation(fromCell, targetCell, 'ice', () => setTimeout(finishCast, 0));
-      } else if (spell.isCone) {
-        playBurningHandsAnimation(fromCell, { x: target.x - caster.position.x, y: target.y - caster.position.y });
-        setTimeout(finishCast, 500);
-      } else if (spell.isWindRose) {
-        playWindRoseAnimation(targetCell);
-        setTimeout(finishCast, 500);
-      } else if (spell.isRain) {
-        playRainAnimation(target, spell);
-        setTimeout(finishCast, 900);
-      } else if (spell.isGlobal) {
-        playArmageddonAnimation();
-        setTimeout(finishCast, 900);
-      } else if (spell.isMembrane) {
-        playMembraneAnimation(targetCell);
-        setTimeout(finishCast, 500);
-      } else if (spell.id === 'light-flash') {
-        playLightFlashAnimation(targetCell);
-        setTimeout(finishCast, 400);
-      } else if (spell.stateId) {
-        playStateAnimation(targetCell, spell.stateId);
-        setTimeout(finishCast, 500);
-      } else if (spell.isElementalShield) {
-        playElementalShieldAnimation(targetCell, spell);
-        setTimeout(finishCast, 500);
-      } else if (spell.isHeal) {
-        playHealAnimation(targetCell);
-        // 500 мс плюс до 100 мс случайной задержки последнего плюсика.
-        setTimeout(finishCast, 600);
-      } else if (spell.id === 'fire-cube') {
-        playProjectileAnimation(fromCell, targetCell, 'fire-cube', () => {
-          playCubeExplosion(targetCell, spell);
-          // 350 мс полёта + 400 мс взрыва; отсчёт от реального прибытия.
-          setTimeout(finishCast, 400);
-        });
-      } else {
-        playProjectileAnimation(fromCell, targetCell, 'fire', () => setTimeout(finishCast, 0));
-      }
-      return true;
-    }
-
     function removeDefeatedEntities() {
       const activeIndex = entities.findIndex(entity => entity.id === activeEntityId);
       const activeDied = activeIndex !== -1 && entities[activeIndex].hp <= 0;
@@ -2077,7 +1871,7 @@
       const cell = event.target.closest('.cell');
       if (!cell || !battlefield.contains(cell)) return;
       if (preparedSpellId) {
-        castSpell(cell);
+        castSpell(cell, spellDeps);
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
@@ -2094,6 +1888,28 @@
       updatePanel();
       setTimeout(takeStep, STEP_MS);
     });
+
+    // Ссылки создаются после объявления всех обработчиков и до инициализации интерфейса.
+    const spellDeps = {
+      entities, cells, SIZE, keyOf, obstacles, terrain, stateTypes,
+      WIZARD_SPELLS, MONK_SPELLS, FREEZE, HEAVY, ADRENALINE, VIGOR, WEAKNESS,
+      applyState, applyDamage, applySpellOnEntity, hasActiveState, isFrozen, shotHits, spellDamage,
+      addElementalShield, resolveStateSuppression, recalculateStateStats,
+      updatePanel, removeDefeatedEntities, renderPosition, cancelSpell, clearHighlight,
+      playMissAnimation, playProjectileAnimation, playSparksAnimation, playCubeExplosion,
+      playArmageddonAnimation, playRainAnimation, playWeaknessVigorAnimation,
+      playSkyShotAnimation, playHeavyAnimation, playStateAnimation, playLightFlashAnimation,
+      playMembraneAnimation, playBurningHandsAnimation, playWindRoseAnimation,
+      playElementalShieldAnimation, playFreezeAnimation, playHealAnimation,
+      activeEntity, isAlly, hasSkyShotBuff, effectiveSpellRange, inSpellReach, canTarget, canPrepareSpell,
+      getConeCells, getBlockedConeCells, findSparkTargets, affectedCells, applySpellEffect,
+      setTimeout, queueMicrotask,
+      // Геттеры/сеттеры сохраняют связь с живым состоянием, в том числе в async-callback.
+      get isCasting() { return isCasting; },
+      set isCasting(value) { isCasting = value; },
+      get preparedSpellId() { return preparedSpellId; },
+      set preparedSpellId(value) { preparedSpellId = value; }
+    };
 
     renderPosition();
     renderSpellPanel();

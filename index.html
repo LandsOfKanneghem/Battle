@@ -65,33 +65,23 @@
   </main>
   <script src="data/states.js"></script>
   <script src="data/spellData.js"></script>
+  <script src="gameState.js"></script>
   <script src="spellLogic.js"></script>
   <script>
-    const SIZE = 16;
-    const STEP_MS = 90;
-    const battlefield = document.getElementById('battlefield');
-    const cells = [];
     // Полная карта поверхностей независима от ящиков.
-    const terrain = new Map();
-    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
-      terrain.set(`${x},${y}`, x >= 9 && x <= 12 && y >= 5 && y <= 11 ? 'sand' : 'grass');
+    for (let y = 0; y < gameState.SIZE; y++) for (let x = 0; x < gameState.SIZE; x++) {
+      gameState.terrain.set(`${x},${y}`, x >= 9 && x <= 12 && y >= 5 && y <= 11 ? 'sand' : 'grass');
     }
     const waterCells = [[5,7], [5,8], [6,8], [10,12], [11,12]];
     // Остров (14,14): восемь водных клеток делают его недоступным пешком.
     for (let y = 13; y <= 15; y++) for (let x = 13; x <= 15; x++) {
       if (x !== 14 || y !== 14) waterCells.push([x, y]);
     }
-    for (const [x,y] of waterCells) terrain.set(`${x},${y}`, 'deep-water');
-    const obstacles = new Map([
+    for (const [x,y] of waterCells) gameState.terrain.set(`${x},${y}`, 'deep-water');
+    gameState.obstacles = new Map([
       ['3,3', 'crate'], ['4,4', 'crate'], ['7,6', 'crate'],
       ['11,10', 'crate'], ['12,4', 'crate'], ['4,12', 'crate'], ['15,15', 'crate']
     ]);
-    const keyOf = ({ x, y }) => `${x},${y}`;
-    const entryCost = point => ({ grass: 1, sand: 2, 'deep-water': Infinity })[terrain.get(keyOf(point))] ?? Infinity;
-    const pathCost = path => path.reduce((cost, point) => cost + entryCost(point), 0);
-    const isFree = ({ x, y }) => x >= 0 && x < SIZE && y >= 0 && y < SIZE
-      && Number.isFinite(entryCost({ x, y })) && obstacles.get(`${x},${y}`) !== 'crate'
-      && !entities.some(entity => entity.id !== activeEntityId && entity.position.x === x && entity.position.y === y);
 
     const terrainArt = {
       grass: `<rect width="40" height="40" fill="#304c36"/><path d="M7 15 L5 10 M7 15 L9 8 M27 32 L25 26 M27 32 L30 24 M19 12 V7" stroke="#62825a" fill="none"/>`,
@@ -151,44 +141,12 @@
       baseMaxAP: 6, maxAP: 6, ap: 6, baseMaxMP: 4, maxMP: 4, mp: 4,
       position: { x: 7, y: 8 }
     };
-    const entities = [character, wolf1, wolf2, wolf3, monk];
+    gameState.entities = [character, wolf1, wolf2, wolf3, monk];
     // Порядок ходов не зависит от порядка хранения и удаления существ.
-    const turnOrderIds = ['wizard', 'wolf-1', 'monk', 'wolf-2', 'wolf-3'];
+    gameState.turnOrderIds = ['wizard', 'wolf-1', 'monk', 'wolf-2', 'wolf-3'];
 
-    function nextLivingEntity(afterId) {
-      const index = turnOrderIds.indexOf(afterId);
-      for (let offset = 1; offset <= turnOrderIds.length; offset++) {
-        const id = turnOrderIds[(index + offset) % turnOrderIds.length];
-        const entity = entities.find(item => item.id === id && item.hp > 0);
-        if (entity) return entity;
-      }
-      return null;
-    }
-    let activeEntityId = character.id;
-    let turnVersion = 0; // Защита от таймеров предыдущего хода.
-    let hoveredEntityId = null;
-    let selectedEntityId = null;
-    // Источники наведения разделены: очередь имеет приоритет над полем.
-    let fieldHoveredEntityId = null;
-    let queueHoveredEntityId = null;
-    const turnOrder = document.getElementById('turn-order');
-    const turnSlots = new Map();
-    const endTurnButton = document.getElementById('end-turn');
-    let stepQueue = [];
-    let isMoving = false;
-    let isSkippingTurn = false; // В том числе последний ход самоналоженной Заморозки после тика до нуля.
-    let isCasting = false; // Игра заблокирована до завершения визуального эффекта.
-    let highlightedCells = [];
-    let rangeHighlightedCells = [];
-    let effectBadges = [];
-    let previewKey = null;
-    const costLabel = document.createElement('span');
-    costLabel.className = 'path-cost';
-
-
-
-    let effectOrder = 0; // Порядок наложения, независимый от номера хода.
-
+    gameState.activeEntityId = character.id;
+    gameState.costLabel.className = 'path-cost';
 
     function hasActiveState(entity, id) {
       return entity.states.some(state => state.id === id && !state.suppressed
@@ -271,19 +229,19 @@
       // Откат снимает Бодрость до создания Слабости, чтобы иммунитет уже не действовал.
       if (input.id === 'adrenaline-crash') entity.states = entity.states.filter(state => state.id !== 'vigor');
       entity.states = entity.states.filter(state => !sameInstance(state));
-      entity.states.push({ ...template, ...input, duration: stateDuration, casterId: input.casterId ?? activeEntity()?.id,
-        suppressed: false, appliedOrder: ++effectOrder,
+      entity.states.push({ ...template, ...input, duration: stateDuration, casterId: input.casterId ?? gameState.activeEntity()?.id,
+        suppressed: false, appliedOrder: ++gameState.effectOrder,
         overrides: [...(input.overrides ?? template.overrides)],
         neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
       resolveStateSuppression(entity);
       recalculateStateStats(entity, true);
       if (input.id === 'adrenaline') applyState(entity, {
-        id: 'vigor', duration: 2, casterId: input.casterId ?? activeEntity()?.id, casterName: input.casterName
+        id: 'vigor', duration: 2, casterId: input.casterId ?? gameState.activeEntity()?.id, casterName: input.casterName
       });
       if (input.id === 'adrenaline-crash') applyState(entity, {
         // Неснимаемость временно даёт сам откат; родной флаг Слабости не меняем.
         id: 'weakness', duration: 1, crashWeakness: true,
-        casterId: input.casterId ?? activeEntity()?.id, casterName: input.casterName
+        casterId: input.casterId ?? gameState.activeEntity()?.id, casterName: input.casterName
       });
       updatePanel();
       return true;
@@ -337,7 +295,7 @@
 
     function tickCasterEffects(casterId) {
       // Единственное место отсчёта: эффекты источника на ВСЕХ целях, включая его самого.
-      for (const target of entities) {
+      for (const target of gameState.entities) {
         // Сначала тикают старые состояния. Новый откат не теряет ход в этом же проходе.
         const expiredAdrenaline = target.states.filter(state => state.id === 'adrenaline'
           && state.casterId === casterId && !state.permanent && !state.innate && state.duration <= 1);
@@ -368,7 +326,7 @@
 
     function removeCasterEffects(casterId) {
       // Смерть источника снимает его эффекты сразу, даже если сейчас ход другой цели.
-      for (const target of entities) {
+      for (const target of gameState.entities) {
         const lostAdrenaline = target.states.some(state => state.id === 'adrenaline' && state.casterId === casterId);
         target.suspendedWeakness = (target.suspendedWeakness ?? []).filter(state => state.casterId !== casterId);
         target.states = target.states.filter(state => state.casterId !== casterId);
@@ -392,9 +350,9 @@
         for (const old of entity.spellsOnMe.filter(effect => effect.name === spellOnMe.name)) removeSpellBonuses(entity, old);
         entity.spellsOnMe = entity.spellsOnMe.filter(effect => effect.name !== spellOnMe.name);
       }
-      const applied = { ...spellOnMe, casterId: spellOnMe.casterId ?? activeEntity()?.id,
+      const applied = { ...spellOnMe, casterId: spellOnMe.casterId ?? gameState.activeEntity()?.id,
         stackable: spellOnMe.stackable === true,
-        sourceId: spellOnMe.sourceId ?? spellOnMe.id, appliedOrder: ++effectOrder };
+        sourceId: spellOnMe.sourceId ?? spellOnMe.id, appliedOrder: ++gameState.effectOrder };
       entity.spellsOnMe.push(applied);
       const bonus = { sourceId: applied.sourceId, name: applied.name, turnsLeft: applied.duration,
         casterId: applied.casterId, casterName: applied.casterName, icon: applied.icon, instanceId: applied.appliedOrder };
@@ -419,33 +377,22 @@
       character.spells.filter(spell => spell.isElementalShield)];
     monk.spellPages = [monk.spells];
 
-    function activeEntity() {
-      return entities.find(entity => entity.id === activeEntityId);
-    }
-
-    let preparedSpellId = null;
-    let currentSpellPage = 0;
-    const spellPageControls = document.getElementById('spell-pages');
-    const previousSpellPageButton = document.getElementById('spell-page-prev');
-    const nextSpellPageButton = document.getElementById('spell-page-next');
-
-    function getSpellPages(entity = activeEntity()) {
+    function getSpellPages(entity = gameState.activeEntity()) {
       return entity?.spellPages ?? [entity?.spells ?? []];
     }
 
     function changeSpellPage(offset) {
       const pages = getSpellPages();
-      if (isCasting || isMoving || selectedEntityId !== null || pages.length < 2) return;
-      currentSpellPage = (currentSpellPage + offset + pages.length) % pages.length;
+      if (gameState.isCasting || gameState.isMoving || gameState.selectedEntityId !== null || pages.length < 2) return;
+      gameState.currentSpellPage = (gameState.currentSpellPage + offset + pages.length) % pages.length;
       // Подготовка и подсветка предыдущей страницы не должны оставаться после переключения.
-      preparedSpellId = null;
+      gameState.preparedSpellId = null;
       clearHighlight();
       renderSpellPanel(false);
       updatePanel();
     }
-    previousSpellPageButton.addEventListener('click', () => changeSpellPage(-1));
-    nextSpellPageButton.addEventListener('click', () => changeSpellPage(1));
-    const spellSlots = new Map();
+    gameState.previousSpellPageButton.addEventListener('click', () => changeSpellPage(-1));
+    gameState.nextSpellPageButton.addEventListener('click', () => changeSpellPage(1));
     let spellTooltip = null;
     let spellTooltipIcon = null;
 
@@ -538,13 +485,13 @@
 
     // Ключ — объект, поэтому одноимённые кубы разных владельцев не пересекаются.
     function renderSpellPanel(resetPage = true) {
-      if (resetPage) currentSpellPage = 0;
+      if (resetPage) gameState.currentSpellPage = 0;
       hideSpellTooltip();
       document.getElementById('spells').replaceChildren();
-      spellSlots.clear();
+      gameState.spellSlots.clear();
       const pages = getSpellPages();
-      if (currentSpellPage >= pages.length) currentSpellPage = 0;
-      const currentSpells = pages[currentSpellPage] ?? [];
+      if (gameState.currentSpellPage >= pages.length) gameState.currentSpellPage = 0;
+      const currentSpells = pages[gameState.currentSpellPage] ?? [];
       for (const spell of currentSpells) {
         const slot = document.createElement('button');
         slot.type = 'button';
@@ -556,14 +503,14 @@
         slot.addEventListener('focus', () => showSpellTooltip(slot, spell));
         slot.addEventListener('blur', hideSpellTooltip);
         slot.addEventListener('click', () => {
-          if (isCasting) return;
+          if (gameState.isCasting) return;
           if (!canPrepareSpell(spell)) return;
           hideSpellTooltip();
-          preparedSpellId = spell.id;
+          gameState.preparedSpellId = spell.id;
           highlightSpellRange();
           updatePanel();
         });
-        spellSlots.set(spell, slot);
+        gameState.spellSlots.set(spell, slot);
         document.getElementById('spells').appendChild(slot);
       }
       for (let i = currentSpells.length; i < 16; i++) {
@@ -580,8 +527,8 @@
     }
 
     function canPrepareSpell(spell) {
-      const caster = activeEntity();
-      return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !isMoving && !isCasting && !isSkippingTurn && !isFrozen(caster)
+      const caster = gameState.activeEntity();
+      return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !gameState.isMoving && !gameState.isCasting && !gameState.isSkippingTurn && !isFrozen(caster)
         && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
         && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
         && spell.cooldown === 0;
@@ -596,10 +543,10 @@
       let crossedX = 0, crossedY = 0;
 
       function blocked(cx, cy) {
-        if (obstacles.get(`${cx},${cy}`) === 'crate') return true;
+        if (gameState.obstacles.get(`${cx},${cy}`) === 'crate') return true;
         // Существо в исходной или целевой клетке не закрывает выстрел.
         if ((cx === from.x && cy === from.y) || (cx === to.x && cy === to.y)) return false;
-        return entities.some(entity => entity.position.x === cx && entity.position.y === cy);
+        return gameState.entities.some(entity => entity.position.x === cx && entity.position.y === cy);
       }
 
       if (blocked(x, y)) return false;
@@ -630,7 +577,7 @@
       return !!entity?.spellsOnMe.some(effect => effect.isSkyShot && effect.duration > 0 && !effect.suppressed);
     }
 
-    function effectiveSpellRange(spell, caster = activeEntity()) {
+    function effectiveSpellRange(spell, caster = gameState.activeEntity()) {
       // RANGE и бонус следующего выстрела меняют только модифицируемую верхнюю границу.
       const skyBonus = spell.isShot && hasSkyShotBuff(caster) ? 2 : 0;
       return spell.modifiable
@@ -639,22 +586,21 @@
     }
 
     function inSpellReach(target, spell) {
-      const caster = activeEntity();
+      const caster = gameState.activeEntity();
       if (!caster || !spell || !caster.spells.includes(spell)) return false;
       const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
-      return target.x >= 0 && target.x < SIZE && target.y >= 0 && target.y < SIZE
+      return target.x >= 0 && target.x < gameState.SIZE && target.y >= 0 && target.y < gameState.SIZE
         // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
-        && (spell.isHeal || !obstacles.has(keyOf(target)))
+        && (spell.isHeal || !gameState.obstacles.has(gameState.keyOf(target)))
         && distance >= (spell.isHeal ? 0 : (spell.minRange ?? 1)) && distance <= effectiveSpellRange(spell, caster)
         && (distance === 0 || spell.noLOS === true || (spell.isShot && hasSkyShotBuff(caster)) || checkLOS(caster.position, target));
     }
 
-    const isAlly = entity => entity.type === 'wizard' || entity.type === 'monk';
 
     function canTarget(target, spell) {
       if (spell?.isGlobal) {
-        const caster = activeEntity();
-        return !!caster && caster.spells.includes(spell) && keyOf(target) === keyOf(caster.position);
+        const caster = gameState.activeEntity();
+        return !!caster && caster.spells.includes(spell) && gameState.keyOf(target) === gameState.keyOf(caster.position);
       }
       // Доступность клетки не зависит от наличия существа: эффект
       // определяется отдельно при касте (в том числе лечение в пустоту).
@@ -663,22 +609,22 @@
 
     function highlightSpellRange(center = null) {
       clearHighlight();
-      const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
+      const spell = gameState.activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
       if (!spell) return;
       // Зелёный фон — допустимые центры; голубая обводка — зона удара.
-      for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
+      for (let y = 0; y < gameState.SIZE; y++) for (let x = 0; x < gameState.SIZE; x++) {
         if (!canTarget({ x, y }, spell)) continue;
-        const cell = cells[y * SIZE + x];
+        const cell = gameState.cells[y * gameState.SIZE + x];
         // Дальность одинакова для всех заклинаний; размер зоны задаёт aoeSize.
         cell.classList.add('spell-range');
-        rangeHighlightedCells.push(cell);
+        gameState.rangeHighlightedCells.push(cell);
       }
       if (center && canTarget(center, spell)) {
-        const area = affectedCells(center, spell, activeEntity(), entities, obstacles, terrain, keyOf, SIZE);
+        const area = affectedCells(center, spell, gameState.activeEntity(), gameState.entities, gameState.obstacles, gameState.terrain, gameState.keyOf, gameState.SIZE);
         for (const point of area) {
-          const cell = cells[point.y * SIZE + point.x];
+          const cell = gameState.cells[point.y * gameState.SIZE + point.x];
           cell.classList.add('spell-aoe');
-          highlightedCells.push(cell);
+          gameState.highlightedCells.push(cell);
         }
         showEffectPreview(area, spell, center);
       }
@@ -687,23 +633,23 @@
     function showEffectPreview(area, spell, center = area[0]) {
       // Бейдж нужен только для урона; дальность и зона подсвечиваются отдельно.
       if (!(spell.damage > 0)) return;
-      const keys = new Set(area.map(keyOf));
-      const primary = spell.isSparks ? entities.find(entity => keyOf(entity.position) === keyOf(center)) : null;
-      for (const entity of entities) {
-        if (entity.hp <= 0 || !keys.has(keyOf(entity.position))) continue;
-        if (spell.enemyOnly && isAlly(entity)) continue;
+      const keys = new Set(area.map(gameState.keyOf));
+      const primary = spell.isSparks ? gameState.entities.find(entity => gameState.keyOf(entity.position) === gameState.keyOf(center)) : null;
+      for (const entity of gameState.entities) {
+        if (entity.hp <= 0 || !keys.has(gameState.keyOf(entity.position))) continue;
+        if (spell.enemyOnly && gameState.isAlly(entity)) continue;
         // Защита учитывается как в настоящем уроне; текущий HP не ограничивает превью.
         const badge = document.createElement('span');
         badge.className = 'effect-preview damage';
         const previewSpell = spell.isSparks && entity !== primary ? { ...spell, damage: Math.floor(spell.damage / 2) } : spell;
         badge.textContent = `-${spellDamage(previewSpell, entity)}`;
-        cells[entity.position.y * SIZE + entity.position.x].appendChild(badge);
-        effectBadges.push(badge);
+        gameState.cells[entity.position.y * gameState.SIZE + entity.position.x].appendChild(badge);
+        gameState.effectBadges.push(badge);
       }
     }
 
     function cancelSpell() {
-      preparedSpellId = null;
+      gameState.preparedSpellId = null;
       clearHighlight();
       updatePanel();
     }
@@ -782,11 +728,11 @@
       const center = { x: Number(centerCell.dataset.x), y: Number(centerCell.dataset.y) };
       const flashes = [];
       // Зона берётся из той же функции, что и для урона, включая обрезку краёв.
-      for (const point of affectedCells(center, spell, activeEntity(), entities, obstacles, terrain, keyOf, SIZE)) {
+      for (const point of affectedCells(center, spell, gameState.activeEntity(), gameState.entities, gameState.obstacles, gameState.terrain, gameState.keyOf, gameState.SIZE)) {
         const flash = document.createElement('span');
         flash.className = 'cube-explosion';
         flash.setAttribute('aria-hidden', 'true');
-        cells[point.y * SIZE + point.x].appendChild(flash);
+        gameState.cells[point.y * gameState.SIZE + point.x].appendChild(flash);
         flashes.push(flash);
       }
       setTimeout(() => flashes.forEach(flash => flash.remove()), 500);
@@ -807,15 +753,15 @@
         drop.style.animationDelay = `${Math.random() * 100}ms`;
         rain.appendChild(drop);
       }
-      battlefield.appendChild(rain);
+      gameState.battlefield.appendChild(rain);
       setTimeout(() => rain.remove(), 900);
     }
 
     function playRainAnimation(center, spell) {
-      const area = affectedCells(center, spell, activeEntity(), entities, obstacles, terrain, keyOf, SIZE);
+      const area = affectedCells(center, spell, gameState.activeEntity(), gameState.entities, gameState.obstacles, gameState.terrain, gameState.keyOf, gameState.SIZE);
       const layers = [];
       for (const point of area) {
-        const cell = cells[point.y * SIZE + point.x];
+        const cell = gameState.cells[point.y * gameState.SIZE + point.x];
         const { width, height } = cell.getBoundingClientRect();
         const layer = document.createElement('span');
         layer.className = 'rain-cell';
@@ -846,11 +792,11 @@
       entity.elementalShields = effects;
     }
 
-    function addElementalShield(entity, spell, caster = activeEntity()) {
+    function addElementalShield(entity, spell, caster = gameState.activeEntity()) {
       const effects = elementalShieldEffects(entity);
       const fresh = { damageType: spell.damageType, amount: spell.shieldAmount, turnsLeft: spell.shieldDuration, sourceId: spell.id,
         casterId: caster?.id, casterName: caster?.name ?? 'Неизвестно', name: spell.name,
-        svg: spell.svg, appliedOrder: ++effectOrder };
+        svg: spell.svg, appliedOrder: ++gameState.effectOrder };
       const index = effects.findIndex(effect => effect.sourceId === spell.id);
       if (index === -1) effects.push(fresh);
       else effects[index] = fresh; // Тот же источник заменяется даже более слабой защитой.
@@ -988,16 +934,16 @@
 
     function playBurningHandsAnimation(centerCell, direction) {
       const origin = { x: Number(centerCell.dataset.x), y: Number(centerCell.dataset.y) };
-      const cone = getConeCells(origin, direction, SIZE);
-      const blocked = getBlockedConeCells(cone, direction, entities, obstacles, keyOf);
+      const cone = getConeCells(origin, direction, gameState.SIZE);
+      const blocked = getBlockedConeCells(cone, direction, gameState.entities, gameState.obstacles, gameState.keyOf);
       const flames = [];
       for (const point of cone) {
-        if (blocked.has(keyOf(point))) continue;
+        if (blocked.has(gameState.keyOf(point))) continue;
         const flame = document.createElement('span');
         flame.className = 'burning-hands-flame';
         flame.setAttribute('aria-hidden', 'true');
         flame.style.animationDelay = `${point.depth * 40}ms`;
-        cells[point.y * SIZE + point.x].appendChild(flame);
+        gameState.cells[point.y * gameState.SIZE + point.x].appendChild(flame);
         flames.push(flame);
       }
       setTimeout(() => flames.forEach(flame => flame.remove()), 500);
@@ -1013,59 +959,59 @@
     }
 
     function removeDefeatedEntities() {
-      const activeIndex = entities.findIndex(entity => entity.id === activeEntityId);
-      const activeDied = activeIndex !== -1 && entities[activeIndex].hp <= 0;
+      const activeIndex = gameState.entities.findIndex(entity => entity.id === gameState.activeEntityId);
+      const activeDied = activeIndex !== -1 && gameState.entities[activeIndex].hp <= 0;
       // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
-      for (let i = entities.length - 1; i >= 0; i--) {
-        const entity = entities[i];
+      for (let i = gameState.entities.length - 1; i >= 0; i--) {
+        const entity = gameState.entities[i];
         if (entity.hp > 0) continue;
         removeCasterEffects(entity.id);
         entity.svg.remove();
-        turnSlots.get(entity.id).remove();
-        turnSlots.delete(entity.id);
-        if (selectedEntityId === entity.id) selectedEntityId = null;
-        if (hoveredEntityId === entity.id) hoveredEntityId = null;
-        if (fieldHoveredEntityId === entity.id) fieldHoveredEntityId = null;
-        if (queueHoveredEntityId === entity.id) queueHoveredEntityId = null;
-        entities.splice(i, 1);
+        gameState.turnSlots.get(entity.id).remove();
+        gameState.turnSlots.delete(entity.id);
+        if (gameState.selectedEntityId === entity.id) gameState.selectedEntityId = null;
+        if (gameState.hoveredEntityId === entity.id) gameState.hoveredEntityId = null;
+        if (gameState.fieldHoveredEntityId === entity.id) gameState.fieldHoveredEntityId = null;
+        if (gameState.queueHoveredEntityId === entity.id) gameState.queueHoveredEntityId = null;
+        gameState.entities.splice(i, 1);
       }
-      if (activeDied || entities.length === 0) {
-        isMoving = false;
-        stepQueue = [];
-        battlefield.classList.remove('moving');
-        beginTurn(nextLivingEntity(activeEntityId)); // Смена активного участника происходит сразу.
+      if (activeDied || gameState.entities.length === 0) {
+        gameState.isMoving = false;
+        gameState.stepQueue = [];
+        gameState.battlefield.classList.remove('moving');
+        beginTurn(gameState.nextLivingEntity(gameState.activeEntityId)); // Смена активного участника происходит сразу.
       } else {
         updatePanel();
       }
     }
-    // Проверка в консоли: entities.find(e => e.id === activeEntityId).hp = 0;
+    // Проверка в консоли: gameState.entities.find(e => e.id === gameState.activeEntityId).hp = 0;
     // removeDefeatedEntities(); // Следующий участник должен стать активным сразу.
 
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && preparedSpellId) cancelSpell();
+      if (event.key === 'Escape' && gameState.preparedSpellId) cancelSpell();
     });
 
     function clearHighlight() {
-      for (const badge of effectBadges) badge.remove();
-      effectBadges = [];
-      for (const cell of highlightedCells) {
+      for (const badge of gameState.effectBadges) badge.remove();
+      gameState.effectBadges = [];
+      for (const cell of gameState.highlightedCells) {
         cell.classList.remove('path-reachable', 'path-over-budget', 'spell-aoe');
       }
-      highlightedCells = [];
-      for (const cell of rangeHighlightedCells) cell.classList.remove('spell-range');
-      rangeHighlightedCells = [];
-      previewKey = null;
-      costLabel.remove();
+      gameState.highlightedCells = [];
+      for (const cell of gameState.rangeHighlightedCells) cell.classList.remove('spell-range');
+      gameState.rangeHighlightedCells = [];
+      gameState.previewKey = null;
+      gameState.costLabel.remove();
     }
 
     function highlightPath(path, mp) {
       clearHighlight();
       let cost = 0;
       path.forEach(point => {
-        cost += entryCost(point);
-        const cell = cells[point.y * SIZE + point.x];
+        cost += gameState.entryCost(point);
+        const cell = gameState.cells[point.y * gameState.SIZE + point.x];
         cell.classList.add(cost <= mp ? 'path-reachable' : 'path-over-budget');
-        highlightedCells.push(cell);
+        gameState.highlightedCells.push(cell);
       });
     }
 
@@ -1119,8 +1065,8 @@
       <path d="M12 27 L20 29 L28 27" fill="none" stroke="#f1be8d" stroke-width="3"/>
       <path d="M33 36 V10" stroke="#bc9159" stroke-width="2"/>`;
 
-    for (const id of turnOrderIds) {
-      const entity = entities.find(item => item.id === id);
+    for (const id of gameState.turnOrderIds) {
+      const entity = gameState.entities.find(item => item.id === id);
       if (!entity) continue;
       const slot = document.createElement('div');
       slot.className = 'turn-slot';
@@ -1131,52 +1077,52 @@
         selectEntity(entity.id);
       });
       slot.addEventListener('mouseenter', () => {
-        queueHoveredEntityId = entity.id;
+        gameState.queueHoveredEntityId = entity.id;
         updatePanel();
       });
       slot.addEventListener('mouseleave', () => {
-        queueHoveredEntityId = null;
+        gameState.queueHoveredEntityId = null;
         updatePanel();
       });
-      turnSlots.set(entity.id, slot);
-      turnOrder.appendChild(slot);
+      gameState.turnSlots.set(entity.id, slot);
+      gameState.turnOrder.appendChild(slot);
     }
-    turnOrder.addEventListener('mouseleave', () => {
-      queueHoveredEntityId = null;
+    gameState.turnOrder.addEventListener('mouseleave', () => {
+      gameState.queueHoveredEntityId = null;
       updatePanel();
     });
 
-    for (let y = 0; y < SIZE; y++) {
-      for (let x = 0; x < SIZE; x++) {
+    for (let y = 0; y < gameState.SIZE; y++) {
+      for (let x = 0; x < gameState.SIZE; x++) {
         const cell = document.createElement('div');
         cell.className = 'cell';
         cell.dataset.x = x;
         cell.dataset.y = y;
-        cell.dataset.terrain = terrain.get(`${x},${y}`);
+        cell.dataset.terrain = gameState.terrain.get(`${x},${y}`);
         cell.appendChild(createTerrain(cell.dataset.terrain));
         if (cell.dataset.terrain === 'deep-water') cell.classList.add('blocked');
-        const type = obstacles.get(`${x},${y}`);
+        const type = gameState.obstacles.get(`${x},${y}`);
         if (type) {
           cell.classList.add('blocked');
           cell.appendChild(createObstacle(type));
         }
-        battlefield.appendChild(cell);
-        cells.push(cell);
+        gameState.battlefield.appendChild(cell);
+        gameState.cells.push(cell);
       }
     }
 
     function renderPosition() {
       // Перенос DOM-элемента мгновенный: никаких CSS-переходов.
-      for (const entity of entities) {
-        cells[entity.position.y * SIZE + entity.position.x].appendChild(entity.svg);
+      for (const entity of gameState.entities) {
+        gameState.cells[entity.position.y * gameState.SIZE + entity.position.x].appendChild(entity.svg);
       }
     }
 
     function buildPath(start, target) {
-      if (!isFree(start) || !isFree(target)) return null;
+      if (!gameState.isFree(start) || !gameState.isFree(target)) return null;
       const heuristic = (point) => Math.abs(point.x - target.x) + Math.abs(point.y - target.y);
       const open = [{ ...start, g: 0, h: heuristic(start), parent: null, axis: null, turn: 0 }];
-      const bestCost = new Map([[keyOf(start), 0]]);
+      const bestCost = new Map([[gameState.keyOf(start), 0]]);
       const directions = [[1, 0], [0, 1], [-1, 0], [0, -1]];
 
       // A*: g учитывает вход на поверхность, h — Манхэттен (минимальная цена шага 1).
@@ -1185,7 +1131,7 @@
       while (open.length > 0) {
         open.sort((a, b) => (a.g + a.h) - (b.g + b.h) || a.h - b.h || a.turn - b.turn);
         const current = open.shift();
-        if (current.g !== bestCost.get(keyOf(current))) continue;
+        if (current.g !== bestCost.get(gameState.keyOf(current))) continue;
         if (current.x === target.x && current.y === target.y) {
           const path = [];
           for (let node = current; node.parent; node = node.parent) {
@@ -1195,10 +1141,10 @@
         }
         for (const [dx, dy] of directions) {
           const next = { x: current.x + dx, y: current.y + dy };
-          if (!isFree(next)) continue;
-          const g = current.g + entryCost(next);
-          if (g >= (bestCost.get(keyOf(next)) ?? Infinity)) continue;
-          bestCost.set(keyOf(next), g);
+          if (!gameState.isFree(next)) continue;
+          const g = current.g + gameState.entryCost(next);
+          if (g >= (bestCost.get(gameState.keyOf(next)) ?? Infinity)) continue;
+          bestCost.set(gameState.keyOf(next), g);
           const axis = dx ? 'x' : 'y';
           open.push({ ...next, g, h: heuristic(next), parent: current, axis,
             turn: axis === current.axis ? 1 : 0 });
@@ -1230,7 +1176,7 @@
       const spellDescription = effect.amount !== undefined
         ? effect.damageType === 'physical' ? `Блокирует ${effect.amount} ед. физического урона`
           : `Блокирует ${effect.amount} ед. урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[effect.damageType]}` : effect.description;
-      const weaknessLocked = kind === 'state' && effect.id === 'weakness' && entities.some(entity =>
+      const weaknessLocked = kind === 'state' && effect.id === 'weakness' && gameState.entities.some(entity =>
         entity.states.includes(effect) && hasActiveState(entity, 'adrenaline-crash'));
       const lines = kind === 'state'
         ? [effect.description, `Длительность: ${n} ${word}`,
@@ -1257,7 +1203,7 @@
     window.addEventListener('scroll', hideEffectTooltip);
 
     function renderEffectPanel() {
-      const entity = entities.find(item => item.id === selectedEntityId);
+      const entity = gameState.entities.find(item => item.id === gameState.selectedEntityId);
       if (!entity) return;
       const effects = [...elementalShieldEffects(entity), ...entity.spellsOnMe]
         .sort((a, b) => (a.appliedOrder ?? 0) - (b.appliedOrder ?? 0));
@@ -1277,7 +1223,7 @@
         const icon = document.createElement('button');
         icon.type = 'button';
         icon.className = 'spell-slot effect-icon';
-        const sourceSpell = entities.flatMap(item => item.spells).find(item => item.id === effect.sourceId);
+        const sourceSpell = gameState.entities.flatMap(item => item.spells).find(item => item.id === effect.sourceId);
         const svg = effect.icon ?? effect.svg ?? sourceSpell?.svg;
         if (svg) icon.innerHTML = svg;
         else icon.textContent = '?';
@@ -1291,19 +1237,19 @@
     }
 
     function selectEntity(id) {
-      if (!entities.some(entity => entity.id === id && entity.hp > 0)) return;
-      selectedEntityId = id;
+      if (!gameState.entities.some(entity => entity.id === id && entity.hp > 0)) return;
+      gameState.selectedEntityId = id;
       updatePanel();
     }
     document.getElementById('close-effects').addEventListener('click', () => {
-      selectedEntityId = null;
+      gameState.selectedEntityId = null;
       updatePanel();
     });
-    battlefield.addEventListener('contextmenu', event => {
+    gameState.battlefield.addEventListener('contextmenu', event => {
       event.preventDefault();
       const cell = event.target.closest('.cell');
-      if (!cell || !battlefield.contains(cell)) return;
-      const entity = entities.find(item => item.hp > 0 && item.position.x === Number(cell.dataset.x)
+      if (!cell || !gameState.battlefield.contains(cell)) return;
+      const entity = gameState.entities.find(item => item.hp > 0 && item.position.x === Number(cell.dataset.x)
         && item.position.y === Number(cell.dataset.y));
       if (entity) selectEntity(entity.id);
     });
@@ -1330,16 +1276,16 @@
     }
 
     function updatePanel() {
-      hoveredEntityId = queueHoveredEntityId ?? fieldHoveredEntityId;
-      if (selectedEntityId !== null && !entities.some(entity => entity.id === selectedEntityId)) selectedEntityId = null;
-      const displayed = entities.find(entity => entity.id === (selectedEntityId ?? hoveredEntityId ?? activeEntityId));
-      const viewingEffects = selectedEntityId !== null;
+      gameState.hoveredEntityId = gameState.queueHoveredEntityId ?? gameState.fieldHoveredEntityId;
+      if (gameState.selectedEntityId !== null && !gameState.entities.some(entity => entity.id === gameState.selectedEntityId)) gameState.selectedEntityId = null;
+      const displayed = gameState.entities.find(entity => entity.id === (gameState.selectedEntityId ?? gameState.hoveredEntityId ?? gameState.activeEntityId));
+      const viewingEffects = gameState.selectedEntityId !== null;
       if (viewingEffects) hideSpellTooltip();
       const pages = getSpellPages();
       const hasSpells = pages.some(page => page.length > 0);
       document.getElementById('spells').hidden = viewingEffects || !hasSpells;
-      spellPageControls.hidden = viewingEffects || !hasSpells;
-      previousSpellPageButton.disabled = nextSpellPageButton.disabled = pages.length < 2 || isCasting || isMoving;
+      gameState.spellPageControls.hidden = viewingEffects || !hasSpells;
+      gameState.previousSpellPageButton.disabled = gameState.nextSpellPageButton.disabled = pages.length < 2 || gameState.isCasting || gameState.isMoving;
       document.getElementById('effects-panel').hidden = !viewingEffects;
       if (viewingEffects) renderEffectPanel();
       else { effectPanelKey = null; hideEffectTooltip(); }
@@ -1363,44 +1309,44 @@
         writeAttribute(id, String(value));
         document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);
       }
-      endTurnButton.disabled = !displayed || isMoving || isCasting || isSkippingTurn || isFrozen(activeEntity()) || ![character.id, monk.id].includes(activeEntityId);
+      gameState.endTurnButton.disabled = !displayed || gameState.isMoving || gameState.isCasting || gameState.isSkippingTurn || isFrozen(gameState.activeEntity()) || ![character.id, monk.id].includes(gameState.activeEntityId);
       // Характеристики учитывают наведение, заклинания — только активного участника.
-      for (const spell of activeEntity()?.spells ?? []) {
-        const slot = spellSlots.get(spell);
+      for (const spell of gameState.activeEntity()?.spells ?? []) {
+        const slot = gameState.spellSlots.get(spell);
         if (!slot) continue; // Доступность обновляем только у слотов открытой страницы.
-        slot.disabled = !displayed || isCasting || !canPrepareSpell(spell);
-        slot.classList.toggle('prepared', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id);
-        slot.setAttribute('aria-pressed', activeEntity()?.spells.includes(spell) && preparedSpellId === spell.id ? 'true' : 'false');
+        slot.disabled = !displayed || gameState.isCasting || !canPrepareSpell(spell);
+        slot.classList.toggle('prepared', gameState.activeEntity()?.spells.includes(spell) && gameState.preparedSpellId === spell.id);
+        slot.setAttribute('aria-pressed', gameState.activeEntity()?.spells.includes(spell) && gameState.preparedSpellId === spell.id ? 'true' : 'false');
       }
-      for (const cell of cells) cell.classList.remove('entity-hover');
-      for (const entity of entities) {
-        const active = entity.id === activeEntityId;
-        turnSlots.get(entity.id).classList.toggle('active', active);
-        turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');
-        if (queueHoveredEntityId === entity.id) {
-          cells[entity.position.y * SIZE + entity.position.x].classList.add('entity-hover');
+      for (const cell of gameState.cells) cell.classList.remove('entity-hover');
+      for (const entity of gameState.entities) {
+        const active = entity.id === gameState.activeEntityId;
+        gameState.turnSlots.get(entity.id).classList.toggle('active', active);
+        gameState.turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');
+        if (gameState.queueHoveredEntityId === entity.id) {
+          gameState.cells[entity.position.y * gameState.SIZE + entity.position.x].classList.add('entity-hover');
         }
       }
     }
 
     // Будущие действия используют эту проверку, чтобы не уйти в минус.
     function spendAP(amount) {
-      if (isSkippingTurn || isFrozen(activeEntity()) || isCasting || isMoving || activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
+      if (gameState.isSkippingTurn || isFrozen(gameState.activeEntity()) || gameState.isCasting || gameState.isMoving || gameState.activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
       character.ap -= amount;
       updatePanel();
       return true;
     }
 
     function beginTurn(entity) {
-      isSkippingTurn = false;
+      gameState.isSkippingTurn = false;
       // Если участник удалён, выбираем следующего живого по фиксированной очереди.
-      if (entities.indexOf(entity) === -1) {
-        entity = nextLivingEntity(activeEntityId);
+      if (gameState.entities.indexOf(entity) === -1) {
+        entity = gameState.nextLivingEntity(gameState.activeEntityId);
       }
-      const version = ++turnVersion;
-      preparedSpellId = null;
+      const version = ++gameState.turnVersion;
+      gameState.preparedSpellId = null;
       if (!entity) {
-        activeEntityId = null;
+        gameState.activeEntityId = null;
         renderSpellPanel();
         clearHighlight();
         updatePanel();
@@ -1409,7 +1355,7 @@
       // Урон Горения срабатывает только у цели, без отсчёта длительности.
       // При самоналожении сохраняем урон до истечения защит/ES и самого Горения.
       // Активируем получателя хода заранее, чтобы его смерть сразу передала ход после него.
-      activeEntityId = entity.id;
+      gameState.activeEntityId = entity.id;
       const burning = entity.states.find(state => state.id === 'burning' && !state.suppressed
         && (state.duration > 0 || state.permanent || state.innate));
       if (burning) {
@@ -1420,7 +1366,7 @@
         }
       }
       // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
-      isSkippingTurn = entity.type === 'wolf' || isFrozen(entity);
+      gameState.isSkippingTurn = entity.type === 'wolf' || isFrozen(entity);
       // Длительности меняются только по casterId, один раз даже для caster = target.
       tickCasterEffects(entity.id);
       // Начало личного хода обновляет только заклинания этого участника.
@@ -1428,147 +1374,147 @@
         spell.usesThisTurn = 0;
         spell.cooldown = Math.max(0, spell.cooldown - 1);
       }
-      activeEntityId = entity.id;
+      gameState.activeEntityId = entity.id;
       renderSpellPanel();
       entity.ap = entity.maxAP;
       entity.mp = entity.maxMP;
       clearHighlight();
       updatePanel(); // HP не является ресурсом хода.
-      if (isSkippingTurn) {
+      if (gameState.isSkippingTurn) {
         // Волк или замороженный участник виден 100 мс, но действовать не может.
 
         setTimeout(() => {
           // Смерть или новая передача уже завершили этот ход: старый таймер не действует.
-          if (version !== turnVersion) return;
-          const index = entities.indexOf(entity);
+          if (version !== gameState.turnVersion) return;
+          const index = gameState.entities.indexOf(entity);
           if (index === -1) {
-            beginTurn(nextLivingEntity(activeEntityId));
+            beginTurn(gameState.nextLivingEntity(gameState.activeEntityId));
             return;
           }
           entity.ap = entity.maxAP;
           entity.mp = entity.maxMP;
-          beginTurn(nextLivingEntity(entity.id));
+          beginTurn(gameState.nextLivingEntity(entity.id));
         }, 100);
       }
     }
 
-    endTurnButton.addEventListener('click', () => {
-      if (isCasting || isSkippingTurn || isFrozen(activeEntity())) return;
-      if (isMoving || ![character.id, monk.id].includes(activeEntityId)) return;
-      beginTurn(nextLivingEntity(activeEntityId));
+    gameState.endTurnButton.addEventListener('click', () => {
+      if (gameState.isCasting || gameState.isSkippingTurn || isFrozen(gameState.activeEntity())) return;
+      if (gameState.isMoving || ![character.id, monk.id].includes(gameState.activeEntityId)) return;
+      beginTurn(gameState.nextLivingEntity(gameState.activeEntityId));
     });
 
     // Двигаться могут союзники; волки пока только пропускают ход.
     function activeMover() {
-      if (isSkippingTurn) return undefined;
-      return entities.find(entity => entity.id === activeEntityId && entity.hp > 0 && !isFrozen(entity)
+      if (gameState.isSkippingTurn) return undefined;
+      return gameState.entities.find(entity => entity.id === gameState.activeEntityId && entity.hp > 0 && !isFrozen(entity)
         && (entity.type === 'wizard' || entity.type === 'monk'));
     }
 
     function takeStep() {
-      if (isCasting) return;
+      if (gameState.isCasting) return;
       const mover = activeMover();
-      if (!isMoving || !mover || stepQueue.length === 0) return;
-      const next = stepQueue[0];
-      if (entryCost(next) > mover.mp) {
-        stepQueue = [];
-        isMoving = false;
-        battlefield.classList.remove('moving');
+      if (!gameState.isMoving || !mover || gameState.stepQueue.length === 0) return;
+      const next = gameState.stepQueue[0];
+      if (gameState.entryCost(next) > mover.mp) {
+        gameState.stepQueue = [];
+        gameState.isMoving = false;
+        gameState.battlefield.classList.remove('moving');
         updatePanel();
         return;
       }
-      mover.position = stepQueue.shift();
-      mover.mp -= entryCost(mover.position);
+      mover.position = gameState.stepQueue.shift();
+      mover.mp -= gameState.entryCost(mover.position);
       renderPosition();
-      if (stepQueue.length > 0) {
-        setTimeout(takeStep, STEP_MS);
+      if (gameState.stepQueue.length > 0) {
+        setTimeout(takeStep, gameState.STEP_MS);
       } else {
-        isMoving = false;
-        battlefield.classList.remove('moving');
+        gameState.isMoving = false;
+        gameState.battlefield.classList.remove('moving');
       }
       updatePanel();
     }
 
-    battlefield.addEventListener('mousemove', (event) => {
-      if (isCasting) return;
+    gameState.battlefield.addEventListener('mousemove', (event) => {
+      if (gameState.isCasting) return;
       const cell = event.target.closest('.cell');
-      if (!cell || !battlefield.contains(cell)) {
-        fieldHoveredEntityId = null;
+      if (!cell || !gameState.battlefield.contains(cell)) {
+        gameState.fieldHoveredEntityId = null;
         updatePanel();
-        if (preparedSpellId) highlightSpellRange();
+        if (gameState.preparedSpellId) highlightSpellRange();
         else clearHighlight(); // В том числе при наведении на промежуток сетки.
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
-      fieldHoveredEntityId = entities.find(entity => keyOf(entity.position) === keyOf(target))?.id ?? null;
+      gameState.fieldHoveredEntityId = gameState.entities.find(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))?.id ?? null;
       updatePanel();
       const mover = activeMover();
-      if (isMoving || !mover) return;
-      if (preparedSpellId) {
-        const spell = activeEntity()?.spells.find(item => item.id === preparedSpellId);
+      if (gameState.isMoving || !mover) return;
+      if (gameState.preparedSpellId) {
+        const spell = gameState.activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
         if (spell) {
-          const key = `spell:${keyOf(target)}`;
-          if (previewKey !== key) {
+          const key = `spell:${gameState.keyOf(target)}`;
+          if (gameState.previewKey !== key) {
             highlightSpellRange(canTarget(target, spell) ? target : null);
-            previewKey = key;
+            gameState.previewKey = key;
           }
         }
         return;
       }
       // Повторные события в одной клетке не запускают A* заново.
       // Позиция и MP включены в ключ, чтобы не использовать устаревшее превью.
-      const key = `${mover.id}:${keyOf(target)}:${keyOf(mover.position)}:${mover.mp}`;
-      if (previewKey === key) return;
+      const key = `${mover.id}:${gameState.keyOf(target)}:${gameState.keyOf(mover.position)}:${mover.mp}`;
+      if (gameState.previewKey === key) return;
       clearHighlight();
       // Стоимость нужна только для свободного места назначения.
       // Даже свой персонаж занимает клетку: число под ним не показываем.
-      if (!isFree(target) || entities.some(entity => keyOf(entity.position) === keyOf(target))) {
-        previewKey = key;
+      if (!gameState.isFree(target) || gameState.entities.some(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))) {
+        gameState.previewKey = key;
         return;
       }
       const path = buildPath(mover.position, target);
       if (path) highlightPath(path, mover.mp);
-      costLabel.textContent = path === null ? '∞' : String(pathCost(path));
-      cell.appendChild(costLabel);
-      previewKey = key;
+      gameState.costLabel.textContent = path === null ? '∞' : String(gameState.pathCost(path));
+      cell.appendChild(gameState.costLabel);
+      gameState.previewKey = key;
     });
 
-    battlefield.addEventListener('mouseleave', () => {
-      if (preparedSpellId) highlightSpellRange();
+    gameState.battlefield.addEventListener('mouseleave', () => {
+      if (gameState.preparedSpellId) highlightSpellRange();
       else clearHighlight();
-      fieldHoveredEntityId = null;
+      gameState.fieldHoveredEntityId = null;
       updatePanel();
     });
 
-    battlefield.addEventListener('click', (event) => {
-      if (isCasting) return;
+    gameState.battlefield.addEventListener('click', (event) => {
+      if (gameState.isCasting) return;
       // Новая цель не прерывает уже начатый маршрут.
       const mover = activeMover();
-      if (isMoving || !mover) return;
+      if (gameState.isMoving || !mover) return;
       const cell = event.target.closest('.cell');
-      if (!cell || !battlefield.contains(cell)) return;
-      if (preparedSpellId) {
+      if (!cell || !gameState.battlefield.contains(cell)) return;
+      if (gameState.preparedSpellId) {
         castSpell(cell, spellDeps);
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
-      if (!isFree(target)) return;
+      if (!gameState.isFree(target)) return;
       const path = buildPath(mover.position, target);
       // Недоступный маршрут игнорируем, сохраняя текущее превью.
-      if (mover.mp <= 0 || path === null || pathCost(path) > mover.mp) return;
+      if (mover.mp <= 0 || path === null || gameState.pathCost(path) > mover.mp) return;
       if (path.length === 0) return;
       clearHighlight();
-      fieldHoveredEntityId = null;
-      stepQueue = path;
-      isMoving = true;
-      battlefield.classList.add('moving');
+      gameState.fieldHoveredEntityId = null;
+      gameState.stepQueue = path;
+      gameState.isMoving = true;
+      gameState.battlefield.classList.add('moving');
       updatePanel();
-      setTimeout(takeStep, STEP_MS);
+      setTimeout(takeStep, gameState.STEP_MS);
     });
 
     // Ссылки создаются после объявления всех обработчиков и до инициализации интерфейса.
     const spellDeps = {
-      entities, cells, SIZE, keyOf, obstacles, terrain, stateTypes,
+      stateTypes,
       WIZARD_SPELLS, MONK_SPELLS, FREEZE, HEAVY, ADRENALINE, VIGOR, WEAKNESS,
       applyState, applyDamage, applySpellOnEntity, hasActiveState, isFrozen, shotHits, spellDamage,
       addElementalShield, resolveStateSuppression, recalculateStateStats,
@@ -1578,14 +1524,9 @@
       playSkyShotAnimation, playHeavyAnimation, playStateAnimation, playLightFlashAnimation,
       playMembraneAnimation, playBurningHandsAnimation, playWindRoseAnimation,
       playElementalShieldAnimation, playFreezeAnimation, playHealAnimation,
-      activeEntity, isAlly, hasSkyShotBuff, effectiveSpellRange, inSpellReach, canTarget, canPrepareSpell,
+      hasSkyShotBuff, effectiveSpellRange, inSpellReach, canTarget, canPrepareSpell,
       getConeCells, getBlockedConeCells, findSparkTargets, affectedCells, applySpellEffect,
       setTimeout, queueMicrotask,
-      // Геттеры/сеттеры сохраняют связь с живым состоянием, в том числе в async-callback.
-      get isCasting() { return isCasting; },
-      set isCasting(value) { isCasting = value; },
-      get preparedSpellId() { return preparedSpellId; },
-      set preparedSpellId(value) { preparedSpellId = value; }
     };
 
     renderPosition();

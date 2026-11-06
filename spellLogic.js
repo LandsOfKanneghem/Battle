@@ -84,12 +84,12 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
   return points;
 };
 
-// Оркестрация каста получает данные, UI и анимации через переданный объект зависимостей.
+// Данные берём из общего gameState; функции эффектов, UI и анимаций — из deps.
 // Только эффект: ресурсы уже оплачены в первой фазе каста.
 window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = null, shotHit = null) {
+  const { entities, cells, SIZE, keyOf, obstacles, terrain, isAlly } = window.gameState;
   const {
-    entities, cells, SIZE, keyOf, obstacles, terrain, stateTypes,
-    applyState, applyDamage, applySpellOnEntity, shotHits, isAlly, playMissAnimation,
+    stateTypes, applyState, applyDamage, applySpellOnEntity, shotHits, playMissAnimation,
     renderPosition, findSparkTargets, affectedCells, addElementalShield,
     resolveStateSuppression, recalculateStateStats
   } = deps;
@@ -210,7 +210,8 @@ const spellAnimationHandlers = {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'ice', () => ctx.setTimeout(ctx.finishCast, 0));
   },
   'sparks': ctx => {
-    const { cells, SIZE, playSparksAnimation, shotHits } = ctx.deps;
+    const { cells, SIZE } = window.gameState;
+    const { playSparksAnimation, shotHits } = ctx.deps;
     const sparkCells = ctx.sparkTargets.map(entity => cells[entity.position.y * SIZE + entity.position.x]);
     playSparksAnimation(ctx.fromCell, ctx.targetCell, sparkCells, () => ctx.setTimeout(ctx.finishCast, 0), () => {
       if (!ctx.primaryTarget) return false;
@@ -220,7 +221,8 @@ const spellAnimationHandlers = {
     });
   },
   'weakness-vigor': ctx => {
-    const { entities, keyOf, isAlly, playWeaknessVigorAnimation } = ctx.deps;
+    const { entities, keyOf, isAlly } = window.gameState;
+    const { playWeaknessVigorAnimation } = ctx.deps;
     const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(ctx.target));
     playWeaknessVigorAnimation(ctx.targetCell, isAlly(recipient));
     ctx.setTimeout(ctx.finishCast, 500);
@@ -309,14 +311,16 @@ const spellAnimationHandlers = {
 };
 
 window.castSpell = function(targetCell, deps) {
+  const gameState = window.gameState;
+  const { entities, cells, SIZE, keyOf, activeEntity, isAlly } = gameState;
   const {
-    entities, cells, SIZE, keyOf, activeEntity, canPrepareSpell, canTarget, isAlly,
+    canPrepareSpell, canTarget,
     findSparkTargets, applySpellEffect, updatePanel, removeDefeatedEntities,
     cancelSpell, setTimeout, queueMicrotask
   } = deps;
-  if (deps.isCasting) return false;
+  if (gameState.isCasting) return false;
   const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
-  const spell = activeEntity()?.spells.find(item => item.id === deps.preparedSpellId);
+  const spell = activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
   // Лечение и защита требуют живого союзника до оплаты.
   if ((spell.isHeal || spell.isElementalShield || spell.isMembrane || spell.isSkyShot) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
@@ -340,7 +344,7 @@ window.castSpell = function(targetCell, deps) {
   // Расходуем бафф только после успешной проверки цели и оплаты, даже при будущем промахе.
   // Срок и смерть источника обслуживаются общим механизмом spellsOnMe.
   if (spell.isShot) caster.spellsOnMe = caster.spellsOnMe.filter(effect => !effect.isSkyShot);
-  deps.isCasting = true;
+  gameState.isCasting = true;
   cancelSpell(); // Также очищает превью и обновляет disabled у кнопок.
 
   const ctx = { spell, target, caster, targetCell, fromCell, sparkTargets, primaryTarget,
@@ -354,7 +358,7 @@ window.castSpell = function(targetCell, deps) {
     removeDefeatedEntities();
     // Обновление UI выполнится сразу после callback, уже со снятой блокировкой.
     queueMicrotask(updatePanel);
-    deps.isCasting = false;
+    gameState.isCasting = false;
   }
 
   const handler = spellAnimationHandlers[spell.id];

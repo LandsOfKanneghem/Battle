@@ -23,7 +23,7 @@ window.recalculateStateStats = function(entity, allowNegativeMP = false) {
   const tempMpBonus = (entity.mpBonuses ?? []).filter(bonus => bonus.turnsLeft > 0)
     .reduce((sum, bonus) => sum + bonus.amount, 0);
   entity.maxMP = Math.max(1, entity.baseMP + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.mpBonus, 0) + tempMpBonus);
-  entity.initiative = entity.baseInitiative + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.initiativeBonus, 0);
+  entity.ini = entity.baseINI + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.initiativeBonus, 0);
   // Берём фактическую дельту после ограничения maxMP >= 1, а не сумму бонусов.
   // Перекрытие Скорости Медлительностью, например, даёт сразу -4 MP.
   const delta = entity.maxMP - oldMaxMP;
@@ -313,9 +313,7 @@ window.getEffectiveStat = function(entity, statName) {
   const valueAt = object => statName.split('.').reduce((value, key) => value?.[key], object);
   const innate = ['vit', 'str', 'att', 'int', 'wis', 'cha', 'luc'];
   const protectionStats = ['ac', 'physical', 'fire', 'water', 'air', 'earth', 'mind', 'poison'];
-  // ini — имя строки UI; initiative уже содержит бонусы состояний.
-  const base = (statName === 'ini' ? entity.baseInitiative
-    : innate.includes(statName) ? entity.attributes?.[statName] : entity[statName]) ?? 0;
+  const base = (innate.includes(statName) ? entity.attributes?.[statName] : entity[statName]) ?? 0;
   const effects = [
     ...entity.states.filter(state => !state.suppressed && (state.duration > 0 || state.permanent || state.innate)),
     ...entity.appliedEffects.filter(effect => effect.duration > 0 && !effect.suppressed),
@@ -329,6 +327,7 @@ window.getEffectiveStat = function(entity, statName) {
   return base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
     // Данные состояний сохраняют прежний формат вложенных модификаторов защиты.
     ?? (protectionStats.includes(statName) ? effect.modifiers?.resistances?.[statName] : undefined)
-    ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : statName === 'eva' ? effect.evaBonus ?? 0
+    // ini уже включает initiativeBonus состояний после recalculateStateStats.
+    ?? (statName === 'ini' ? (entity.states.includes(effect) ? 0 : effect.initiativeBonus ?? 0) : statName === 'eva' ? effect.evaBonus ?? 0
       : statName === 'acc' ? effect.accuracyBonus ?? 0 : statName === 'sfc' ? effect.sfcBonus ?? 0 : 0)), 0);
 };

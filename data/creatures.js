@@ -7,22 +7,25 @@
 
   const CREATURE_TEMPLATES = {
     wizard: {
-      name: 'Волшебник', type: 'wizard', baseHP: 12, baseAP: 6, baseMP: 4,
-      baseWP: 10, baseVS: 0, baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseRA: 0,
+      name: 'Волшебник', type: 'wizard',
+      baseHP: 12, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
+      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'wizard', spellPagesSplit: true
     },
     monk: {
-      name: 'Монах', type: 'monk', baseHP: 12, baseAP: 6, baseMP: 4,
-      baseWP: 10, baseVS: 0, baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseRA: 0,
+      name: 'Монах', type: 'monk',
+      baseHP: 12, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
+      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'monk', spellPagesSplit: false
     },
     wolf: {
-      name: 'Волк', type: 'wolf', baseHP: 6, baseAP: 6, baseMP: 5,
-      baseWP: 4, baseVS: 0, baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseRA: 0,
+      name: 'Волк', type: 'wolf',
+      baseHP: 6, baseWP: 4, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
+      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
@@ -88,9 +91,9 @@
       baseWP: template.baseWP, wp: template.baseWP, maxWP: template.baseWP,
       baseAP: template.baseAP, ap: template.baseAP, maxAP: template.baseAP,
       baseMP: template.baseMP, mp: template.baseMP, maxMP: template.baseMP,
-      baseES: 0, esBonuses: [], evaBonuses: [],
+      baseES: template.baseES, esBonuses: [], evaBonuses: [],
       baseVS: template.baseVS, vs: template.baseVS, maxVS: template.baseVS,
-      baseInitiative: 0, initiative: 0,
+      baseINI: template.baseINI, ini: template.baseINI,
       baseACC: template.baseACC, acc: template.baseACC,
       baseEVA: template.baseEVA, eva: template.baseEVA,
       baseSFC: template.baseSFC, sfc: template.baseSFC,
@@ -104,7 +107,10 @@
       baseEarth: template.baseEarth, earth: template.baseEarth,
       baseMind: template.baseMind, mind: template.baseMind,
       basePoison: template.basePoison, poison: template.basePoison,
-      elementalShields: [], appliedEffects: [], states: [], availableSpells: [],
+      elementalShields: [],
+      appliedEffects: [],
+      states: [],
+      availableSpells: [],
       attributes: window.createAttributes(template.attributes),
       position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };

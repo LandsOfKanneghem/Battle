@@ -123,6 +123,25 @@ function updateCooldownBadge(slot, spell) {
   badge.textContent = String(spell.cooldown);
 }
 
+// Лимит за бой имеет приоритет над лимитом за ход; данные заклинания не меняем.
+function updateUsesBadge(slot, spell) {
+  const perBattle = spell.maxUsesPerBattle !== undefined;
+  const maximum = perBattle ? spell.maxUsesPerBattle : spell.maxUsesPerTurn;
+  let badge = slot.querySelector('.uses-badge');
+  if (maximum === undefined) {
+    badge?.remove();
+    return;
+  }
+  const used = perBattle ? (spell.usesTotal ?? 0) : (spell.usesThisTurn ?? 0);
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'uses-badge';
+    badge.setAttribute('aria-hidden', 'true');
+    slot.appendChild(badge);
+  }
+  badge.textContent = `${maximum - used}/${maximum}`;
+}
+
 // Ключ — объект, поэтому одноимённые кубы разных владельцев не пересекаются.
 window.renderSpellPanel = function(resetPage = true) {
   if (resetPage) window.gameState.currentSpellPage = 0;
@@ -138,6 +157,7 @@ window.renderSpellPanel = function(resetPage = true) {
     slot.className = 'spell-slot';
     slot.innerHTML = spell.svg;
     updateCooldownBadge(slot, spell);
+    updateUsesBadge(slot, spell);
     slot.setAttribute('aria-label', spell.name);
     slot.addEventListener('mouseenter', () => showSpellTooltip(slot, spell));
     slot.addEventListener('mouseleave', hideSpellTooltip);
@@ -288,6 +308,7 @@ window.updatePanel = function() {
     const slot = window.gameState.spellSlots.get(spell);
     if (!slot) continue; // Доступность обновляем только у слотов открытой страницы.
     updateCooldownBadge(slot, spell);
+    updateUsesBadge(slot, spell);
     slot.disabled = !displayed || window.gameState.isCasting || !canPrepareSpell(spell);
     slot.classList.toggle('prepared', window.gameState.activeEntity()?.spells.includes(spell) && window.gameState.preparedSpellId === spell.id);
     slot.setAttribute('aria-pressed', window.gameState.activeEntity()?.spells.includes(spell) && window.gameState.preparedSpellId === spell.id ? 'true' : 'false');

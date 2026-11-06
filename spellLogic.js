@@ -1,5 +1,6 @@
+// Обычный скрипт: глобальные точки входа; данные по-прежнему передаются аргументами.
 // Чистая геометрия и выбор целей: все данные поля и существ передаются явно.
-export function getConeCells(center, direction, SIZE) {
+window.getConeCells = function(center, direction, SIZE) {
   const points = [];
   if (Math.abs(direction.x) + Math.abs(direction.y) !== 1) return points;
   for (let depth = 1; depth <= 3; depth++) {
@@ -10,9 +11,9 @@ export function getConeCells(center, direction, SIZE) {
     }
   }
   return points;
-}
+};
 
-export function getBlockedConeCells(coneCells, direction, entities, obstacles, keyOf) {
+window.getBlockedConeCells = function(coneCells, direction, entities, obstacles, keyOf) {
   const blocked = new Set();
   const axis = coneCells.find(point => point.depth === 1);
   if (!axis) return blocked;
@@ -40,9 +41,9 @@ export function getBlockedConeCells(coneCells, direction, entities, obstacles, k
     if (point.depth === 3 && shadows.has(offsetOf(point))) blocked.add(keyOf(point));
   }
   return blocked;
-}
+};
 
-export function findSparkTargets(primaryTarget, radius, count, entities) {
+window.findSparkTargets = function(primaryTarget, radius, count, entities) {
   if (!primaryTarget) return [];
   // Манхэттенская дистанция, затем угол по часовой стрелке: право → вниз → лево → верх.
   // LOS для отскоков не проверяется; источник тоже может оказаться среди целей.
@@ -55,9 +56,9 @@ export function findSparkTargets(primaryTarget, radius, count, entities) {
     .filter(candidate => candidate.distance <= radius)
     .sort((a, b) => a.distance - b.distance || a.angle - b.angle || a.entity.id.localeCompare(b.entity.id))
     .slice(0, count).map(candidate => candidate.entity);
-}
+};
 
-export function affectedCells(center, spell, caster, entities, obstacles, terrain, keyOf, SIZE) {
+window.affectedCells = function(center, spell, caster, entities, obstacles, terrain, keyOf, SIZE) {
   if (spell.isSparks) {
     const primary = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(center));
     return primary ? [primary, ...findSparkTargets(primary, spell.sparkRadius, spell.sparkCount, entities)].map(entity => entity.position) : [center];
@@ -81,4 +82,4 @@ export function affectedCells(center, spell, caster, entities, obstacles, terrai
     }
   }
   return points;
-}
+};

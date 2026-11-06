@@ -388,9 +388,8 @@
   </main>
   <script src="data/states.js"></script>
   <script src="data/spellData.js"></script>
-  <script type="module">
-    import { getConeCells, getBlockedConeCells, findSparkTargets, affectedCells } from './spellLogic.js';
-
+  <script src="spellLogic.js"></script>
+  <script>
     const SIZE = 16;
     const STEP_MS = 90;
     const battlefield = document.getElementById('battlefield');

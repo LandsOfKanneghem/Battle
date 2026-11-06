@@ -155,4 +155,11 @@ const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cub
   apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 5 V33 M4 25 L11 33 L18 25" fill="none" stroke="#ef777f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 35 V7 M22 15 L29 7 L36 15" fill="none" stroke="#82e9a5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+}, {
+  id: 'sprint', name: 'Спринт', stackable: false, isMpBuff: true, allyOnly: true, target: 'ally',
+  description: 'Добавляет заклинателю несколько ОП на 1 ход.',
+  mpAmount: 3, effectDuration: 1, minRange: 0, range: 0, modifiable: false, noLOS: true,
+  apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 4,
+  isAOE: false, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 10 H17 M1 20 H13 M3 30 H17" stroke="#a7eced" stroke-width="3" stroke-linecap="round"/><path d="M21 6 L35 20 L21 34 V25 H12 V15 H21 Z" fill="#74ef9e" stroke="#d9ffdf" stroke-width="2"/></svg>`
 }];

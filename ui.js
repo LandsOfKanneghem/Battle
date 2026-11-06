@@ -79,6 +79,7 @@ window.showSpellTooltip = function(icon, spell) {
   if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
   if (spell.isSkyShot || spell.isWeaknessVigor) effects.push(spell.effectDescription);
   if (spell.isMembrane) effects.push(`+${spell.esAmount} ES, +${spell.evaAmount}% уклонения`);
+  if (spell.isMpBuff) effects.push(`+${spell.mpAmount} MP`);
   if (effects.length) {
     effects.forEach((effect, index) => {
       if (index === 0) addLine('Эффекты', effect);

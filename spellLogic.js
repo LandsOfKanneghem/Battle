@@ -108,6 +108,12 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       id: isAlly(directTarget) ? 'vigor' : 'weakness', duration: spell.stateDuration,
       casterId: caster.id, casterName: caster.name
     });
+  } else if (spell.isMpBuff) {
+    if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
+      id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
+      duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
+      mpAmount: spell.mpAmount, description: `+${spell.mpAmount} MP`
+    });
   } else if (spell.isSkyShot) {
     if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
       id: spell.id, name: spell.name, icon: spell.svg, isSkyShot: true,
@@ -203,6 +209,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'sprint': ctx => {
+    ctx.deps.playSprintAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
   'fire-shot': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'fire', () => ctx.setTimeout(ctx.finishCast, 0));
   },
@@ -323,7 +333,7 @@ window.castSpell = function(targetCell, deps) {
   const spell = activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
   // Лечение и защита требуют живого союзника до оплаты.
-  if ((spell.isHeal || spell.isElementalShield || spell.isMembrane || spell.isSkyShot) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
+  if ((spell.isHeal || spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.stateId && !spell.isRain && !spell.isShot && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
     && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;

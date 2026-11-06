@@ -20,7 +20,9 @@ window.recalculateStateStats = function(entity, allowNegativeMP = false) {
   // Изменяется именно остаток AP: потраченные действия не возвращаем; долг AP допустим.
   entity.ap += entity.maxAP - oldMaxAP;
   const oldMaxMP = entity.maxMP;
-  entity.maxMP = Math.max(1, entity.baseMaxMP + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.mpBonus, 0));
+  const tempMpBonus = (entity.mpBonuses ?? []).filter(bonus => bonus.turnsLeft > 0)
+    .reduce((sum, bonus) => sum + bonus.amount, 0);
+  entity.maxMP = Math.max(1, entity.baseMaxMP + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.mpBonus, 0) + tempMpBonus);
   entity.initiative = entity.baseInitiative + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.initiativeBonus, 0);
   // Берём фактическую дельту после ограничения maxMP >= 1, а не сумму бонусов.
   // Перекрытие Скорости Медлительностью, например, даёт сразу -4 MP.
@@ -126,14 +128,21 @@ window.consumeES = function(entity, amount) {
   entity.baseES = Math.max(0, entity.baseES - left);
 };
 
-window.removeSpellBonuses = function(entity, applied) {
+window.removeSpellBonuses = function(entity, applied, recalculate = true) {
   // Удаление бонуса убирает только его remaining из суммы, не затрагивая базу.
   entity.esBonuses = entity.esBonuses.filter(bonus => bonus.instanceId !== applied.appliedOrder);
   // EVA остаётся отдельным нерасходуемым бонусом с тем же сроком заклинания.
   entity.evaBonuses = entity.evaBonuses.filter(bonus => bonus.instanceId !== applied.appliedOrder);
+  const oldMpCount = (entity.mpBonuses ?? []).length;
+  entity.mpBonuses = (entity.mpBonuses ?? []).filter(bonus => bonus.instanceId !== applied.appliedOrder);
+  if (recalculate && entity.mpBonuses.length !== oldMpCount) recalculateStateStats(entity);
 };
 
 window.tickTemporaryBonuses = function(entity, casterId) {
+  const oldMpCount = (entity.mpBonuses ?? []).length;
+  entity.mpBonuses = (entity.mpBonuses ?? []).map(bonus => bonus.casterId === casterId
+    ? { ...bonus, turnsLeft: bonus.turnsLeft - 1 } : bonus).filter(bonus => bonus.turnsLeft > 0);
+  if (entity.mpBonuses.length !== oldMpCount) recalculateStateStats(entity);
   entity.esBonuses = entity.esBonuses.map(bonus => bonus.casterId === casterId
     ? { ...bonus, turnsLeft: bonus.turnsLeft - 1 } : bonus)
     .filter(bonus => bonus.turnsLeft > 0);
@@ -186,17 +195,22 @@ window.removeCasterEffects = function(casterId) {
     target.spellsOnMe = target.spellsOnMe.filter(effect => effect.casterId !== casterId);
     target.esBonuses = target.esBonuses.filter(bonus => bonus.casterId !== casterId);
     target.evaBonuses = target.evaBonuses.filter(bonus => bonus.casterId !== casterId);
+    const oldMpCount = (target.mpBonuses ?? []).length;
+    target.mpBonuses = (target.mpBonuses ?? []).filter(bonus => bonus.casterId !== casterId);
+    if (target.mpBonuses.length !== oldMpCount) recalculateStateStats(target);
     storeElementalShields(target, elementalShieldEffects(target).filter(effect => effect.casterId !== casterId));
   }
 };
 
 window.applySpellOnEntity = function(entity, spellOnMe) {
+  const hadMpBonus = (entity.mpBonuses ?? []).some(bonus => bonus.turnsLeft > 0);
   // Каждый наложенный бафф имеет собственный срок и источник.
   // Его истечение не снимает состояние: оба таймера живут независимо.
   // По умолчанию заменяем ВСЕ одноимённые заклинания, независимо от id и силы.
   // Отсутствующий stackable равнозначен false; правила состояний не меняем.
   if (spellOnMe.stackable !== true) {
-    for (const old of entity.spellsOnMe.filter(effect => effect.name === spellOnMe.name)) removeSpellBonuses(entity, old);
+    // Пересчитываем MP один раз после замены, чтобы не вернуть потраченные очки.
+    for (const old of entity.spellsOnMe.filter(effect => effect.name === spellOnMe.name)) removeSpellBonuses(entity, old, false);
     entity.spellsOnMe = entity.spellsOnMe.filter(effect => effect.name !== spellOnMe.name);
   }
   const applied = { ...spellOnMe, casterId: spellOnMe.casterId ?? window.gameState.activeEntity()?.id,
@@ -212,6 +226,11 @@ window.applySpellOnEntity = function(entity, spellOnMe) {
     entity.esBonuses.push({ ...bonus, amount: applied.esAmount, remaining: applied.esAmount });
   }
   if (applied.evaAmount) entity.evaBonuses.push({ ...bonus, amount: applied.evaAmount });
+  if (applied.mpAmount) {
+    entity.mpBonuses ??= [];
+    entity.mpBonuses.push({ ...bonus, amount: applied.mpAmount });
+  }
+  if (hadMpBonus || applied.mpAmount) recalculateStateStats(entity, true);
   if (applied.stateId) applyState(entity, {
     id: applied.stateId, duration: applied.stateDuration ?? applied.duration,
     casterId: applied.casterId, casterName: applied.casterName

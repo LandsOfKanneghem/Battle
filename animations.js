@@ -1,6 +1,15 @@
 // Визуальные эффекты игры: глобальные функции window.play* без изменения состояния боя.
 // Поле и клетки доступны через window.gameState; DOM создаётся только при вызове анимации.
 
+window.playSprintAnimation = function(cell) {
+  const arrows = document.createElement('span');
+  arrows.className = 'state-animation wind';
+  arrows.setAttribute('aria-hidden', 'true');
+  arrows.innerHTML = MONK_SPELLS.find(spell => spell.id === 'sprint').svg;
+  cell.appendChild(arrows);
+  setTimeout(() => arrows.remove(), 500);
+};
+
 window.playHealAnimation = function(cell) {
   // Каждый каст владеет своим набором частиц и отдельным таймером очистки.
   const sparks = [];

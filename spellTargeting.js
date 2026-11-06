@@ -112,11 +112,17 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
   for (const entity of window.gameState.entities) {
     if (entity.hp <= 0 || !keys.has(window.gameState.keyOf(entity.position))) continue;
     if (spell.enemyOnly && window.gameState.isAlly(entity)) continue;
-    // Защита учитывается как в настоящем уроне; текущий HP не ограничивает превью.
     const badge = document.createElement('span');
-    badge.className = 'effect-preview damage';
-    const previewSpell = spell.isSparks && entity !== primary ? { ...spell, damage: Math.floor(spell.damage / 2) } : spell;
-    badge.textContent = `-${window.spellDamage(previewSpell, entity)}`;
+    if (spell.isHealHarm && window.gameState.isAlly(entity)) {
+      // Показываем только недостающее HP, включая +0 при полном здоровье.
+      badge.className = 'effect-preview heal';
+      badge.textContent = `+${Math.min(spell.healAmount, entity.maxHP - entity.hp)}`;
+    } else {
+      // Защита учитывается как в настоящем уроне; текущий HP не ограничивает превью.
+      badge.className = 'effect-preview damage';
+      const previewSpell = spell.isSparks && entity !== primary ? { ...spell, damage: Math.floor(spell.damage / 2) } : spell;
+      badge.textContent = `-${window.spellDamage(previewSpell, entity)}`;
+    }
     window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x].appendChild(badge);
     window.gameState.effectBadges.push(badge);
   }

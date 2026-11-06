@@ -1,32 +1,31 @@
 // Шаблоны существ и фабрика. Счётчики типов приватны; изменяемые данные не разделяются.
 (() => {
   window.createAttributes = function(overrides = {}) {
-    const { resistances, baseWP = 10, baseVS = 0, ...attributes } = overrides;
-    return {
-      ra: 0,
-      vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2,
-      // Частичный override сохраняет остальные стихии и всегда создаёт новый объект.
-      resistances: { ac: 0, physical: 0, fire: 0, water: 0, air: 0, earth: 0, mind: 0, poison: 0, ...resistances },
-      acc: 100, sfc: 0, eva: 0, blo: 0, ini: 0,
-      ...attributes,
-      // Текущие и максимальные ресурсы при создании выводятся только из базы.
-      baseWP, wp: baseWP, maxWP: baseWP,
-      baseVS, vs: baseVS, maxVS: baseVS
-    };
+    // Только врождённые атрибуты; боевые характеристики хранятся у существа.
+    return { vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2, ...overrides };
   };
 
   const CREATURE_TEMPLATES = {
     wizard: {
       name: 'Волшебник', type: 'wizard', baseHP: 12, baseAP: 6, baseMP: 4,
+      baseWP: 10, baseVS: 0, baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseRA: 0,
+      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+      baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'wizard', spellPagesSplit: true
     },
     monk: {
       name: 'Монах', type: 'monk', baseHP: 12, baseAP: 6, baseMP: 4,
+      baseWP: 10, baseVS: 0, baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseRA: 0,
+      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+      baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'monk', spellPagesSplit: false
     },
     wolf: {
       name: 'Волк', type: 'wolf', baseHP: 6, baseAP: 6, baseMP: 5,
-      attributes: { baseWP: 4, vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
+      baseWP: 4, baseVS: 0, baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseRA: 0,
+      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+      baseEarth: 0, baseMind: 0, basePoison: 0,
+      attributes: { vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
       spellsKey: null, spellPagesSplit: false
     }
   };
@@ -84,12 +83,29 @@
       id = `${template.type}-${next}`;
     }
     const creature = {
-      attributes: window.createAttributes(template.attributes),
-      id, name: template.name, type: template.type, baseHP: template.baseHP, hp: template.baseHP, maxHP: template.baseHP,
-      availableSpells: [], elementalShields: [], states: [], appliedEffects: [], baseES: 0, esBonuses: [], evaBonuses: [],
+      id, name: template.name, type: template.type,
+      baseHP: template.baseHP, hp: template.baseHP, maxHP: template.baseHP,
+      baseWP: template.baseWP, wp: template.baseWP, maxWP: template.baseWP,
+      baseAP: template.baseAP, ap: template.baseAP, maxAP: template.baseAP,
+      baseMP: template.baseMP, mp: template.baseMP, maxMP: template.baseMP,
+      baseES: 0, esBonuses: [], evaBonuses: [],
+      baseVS: template.baseVS, vs: template.baseVS, maxVS: template.baseVS,
       baseInitiative: 0, initiative: 0,
-      baseAP: template.baseAP, maxAP: template.baseAP, ap: template.baseAP,
-      baseMP: template.baseMP, maxMP: template.baseMP, mp: template.baseMP,
+      baseACC: template.baseACC, acc: template.baseACC,
+      baseEVA: template.baseEVA, eva: template.baseEVA,
+      baseSFC: template.baseSFC, sfc: template.baseSFC,
+      baseBLO: template.baseBLO, blo: template.baseBLO,
+      baseRA: template.baseRA, ra: template.baseRA,
+      baseAC: template.baseAC, ac: template.baseAC,
+      basePhysical: template.basePhysical, physical: template.basePhysical,
+      baseFire: template.baseFire, fire: template.baseFire,
+      baseWater: template.baseWater, water: template.baseWater,
+      baseAir: template.baseAir, air: template.baseAir,
+      baseEarth: template.baseEarth, earth: template.baseEarth,
+      baseMind: template.baseMind, mind: template.baseMind,
+      basePoison: template.basePoison, poison: template.basePoison,
+      elementalShields: [], appliedEffects: [], states: [], availableSpells: [],
+      attributes: window.createAttributes(template.attributes),
       position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };
     creature.svg.setAttribute('aria-label', creature.name);

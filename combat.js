@@ -278,7 +278,7 @@ window.isMagicalDamage = function(damageType) {
 window.damageBreakdown = function(spell, entity) {
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
   // Учитываем защиту нужного типа (включая physical) один раз, до ES/HP.
-  const resistance = getEffectiveStat(entity, `resistances.${spell.damageType}`);
+  const resistance = getEffectiveStat(entity, spell.damageType);
   const afterResistance = Math.max(0, spell.damage - resistance);
   const absorbed = isMagicalDamage(spell.damageType)
     ? Math.min(getCurrentES(entity), afterResistance) : 0;
@@ -311,19 +311,24 @@ window.getEffectiveStat = function(entity, statName) {
   if (!entity) return 0;
   if (statName === 'es') return getCurrentES(entity);
   const valueAt = object => statName.split('.').reduce((value, key) => value?.[key], object);
-  const base = valueAt(entity.attributes) ?? 0;
-  // Не берём entity.initiative: там уже есть бонус, который иначе учёлся бы дважды.
+  const innate = ['vit', 'str', 'att', 'int', 'wis', 'cha', 'luc'];
+  const protectionStats = ['ac', 'physical', 'fire', 'water', 'air', 'earth', 'mind', 'poison'];
+  // ini — имя строки UI; initiative уже содержит бонусы состояний.
+  const base = (statName === 'ini' ? entity.baseInitiative
+    : innate.includes(statName) ? entity.attributes?.[statName] : entity[statName]) ?? 0;
   const effects = [
     ...entity.states.filter(state => !state.suppressed && (state.duration > 0 || state.permanent || state.innate)),
     ...entity.appliedEffects.filter(effect => effect.duration > 0 && !effect.suppressed),
     ...elementalShieldEffects(entity)
   ];
   // Физическая и стихийные защиты добавляются только к своей характеристике.
-  const elementalProtection = statName.startsWith('resistances.')
-    ? elementalBlockAmount(entity, statName.split('.')[1]) : 0;
+  const elementalProtection = protectionStats.includes(statName)
+    ? elementalBlockAmount(entity, statName) : 0;
   const temporaryEvasion = statName === 'eva'
     ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
   return base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
+    // Данные состояний сохраняют прежний формат вложенных модификаторов защиты.
+    ?? (protectionStats.includes(statName) ? effect.modifiers?.resistances?.[statName] : undefined)
     ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : statName === 'eva' ? effect.evaBonus ?? 0
       : statName === 'acc' ? effect.accuracyBonus ?? 0 : statName === 'sfc' ? effect.sfcBonus ?? 0 : 0)), 0);
 };

@@ -123,12 +123,12 @@ function updateCooldownBadge(slot, spell) {
   badge.textContent = String(spell.cooldown);
 }
 
-// Лимит за бой имеет приоритет над лимитом за ход; данные заклинания не меняем.
+// Показываем лимит за бой или несколько применений за ход; одиночный лимит скрываем.
 function updateUsesBadge(slot, spell) {
-  const perBattle = spell.maxUsesPerBattle !== undefined;
+  const perBattle = spell.maxUsesPerBattle > 0;
   const maximum = perBattle ? spell.maxUsesPerBattle : spell.maxUsesPerTurn;
   let badge = slot.querySelector('.uses-badge');
-  if (maximum === undefined) {
+  if (!perBattle && !(spell.maxUsesPerTurn > 1)) {
     badge?.remove();
     return;
   }

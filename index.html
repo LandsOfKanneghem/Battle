@@ -71,133 +71,13 @@
   <script src="spellLogic.js"></script>
   <script src="animations.js"></script>
   <script src="ui.js"></script>
+  <script src="spellTargeting.js"></script>
   <script>
     gameState.previousSpellPageButton.addEventListener('click', () => window.changeSpellPage(-1));
     gameState.nextSpellPageButton.addEventListener('click', () => window.changeSpellPage(1));
 
     window.addEventListener('resize', window.hideSpellTooltip);
     window.addEventListener('scroll', window.hideSpellTooltip, true);
-
-    function canPrepareSpell(spell) {
-      const caster = gameState.activeEntity();
-      return !!spell && !!caster && caster.hp > 0 && caster.spells.includes(spell) && !gameState.isMoving && !gameState.isCasting && !gameState.isSkippingTurn && !isFrozen(caster)
-        && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
-        && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
-        && spell.cooldown === 0;
-    }
-
-    // Supercover от центра до центра с исключением для углов при 45°. Сравниваем моменты
-    // пересечения границ целыми числами, без погрешностей float.
-    function checkLOS(from, to) {
-      const dx = Math.abs(to.x - from.x), dy = Math.abs(to.y - from.y);
-      const sx = Math.sign(to.x - from.x), sy = Math.sign(to.y - from.y);
-      let x = from.x, y = from.y;
-      let crossedX = 0, crossedY = 0;
-
-      function blocked(cx, cy) {
-        if (gameState.obstacles.get(`${cx},${cy}`) === 'crate') return true;
-        // Существо в исходной или целевой клетке не закрывает выстрел.
-        if ((cx === from.x && cy === from.y) || (cx === to.x && cy === to.y)) return false;
-        return gameState.entities.some(entity => entity.position.x === cx && entity.position.y === cy);
-      }
-
-      if (blocked(x, y)) return false;
-      while (x !== to.x || y !== to.y) {
-        const nextX = (2 * crossedX + 1) * dy;
-        const nextY = (2 * crossedY + 1) * dx;
-        if (nextX === nextY) {
-          // Только при точных 45° разрешаем касание углов боковых клеток.
-          // Диагональную клетку по-прежнему проверяем на препятствия.
-          if (dx !== dy && (blocked(x + sx, y) || blocked(x, y + sy))) return false;
-          x += sx;
-          y += sy;
-          crossedX++;
-          crossedY++;
-        } else if (nextX < nextY) {
-          x += sx;
-          crossedX++;
-        } else {
-          y += sy;
-          crossedY++;
-        }
-        if (blocked(x, y)) return false;
-      }
-      return true;
-    }
-
-    function hasSkyShotBuff(entity) {
-      return !!entity?.spellsOnMe.some(effect => effect.isSkyShot && effect.duration > 0 && !effect.suppressed);
-    }
-
-    function effectiveSpellRange(spell, caster = gameState.activeEntity()) {
-      // RANGE и бонус следующего выстрела меняют только модифицируемую верхнюю границу.
-      const skyBonus = spell.isShot && hasSkyShotBuff(caster) ? 2 : 0;
-      return spell.modifiable
-        ? Math.max(spell.minRange ?? 0, spell.range + (caster?.attributes.ra ?? 0) + skyBonus)
-        : spell.range;
-    }
-
-    function inSpellReach(target, spell) {
-      const caster = gameState.activeEntity();
-      if (!caster || !spell || !caster.spells.includes(spell)) return false;
-      const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
-      return target.x >= 0 && target.x < gameState.SIZE && target.y >= 0 && target.y < gameState.SIZE
-        // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
-        && (spell.isHeal || !gameState.obstacles.has(gameState.keyOf(target)))
-        && distance >= (spell.isHeal ? 0 : (spell.minRange ?? 1)) && distance <= effectiveSpellRange(spell, caster)
-        && (distance === 0 || spell.noLOS === true || (spell.isShot && hasSkyShotBuff(caster)) || checkLOS(caster.position, target));
-    }
-
-    function canTarget(target, spell) {
-      if (spell?.isGlobal) {
-        const caster = gameState.activeEntity();
-        return !!caster && caster.spells.includes(spell) && gameState.keyOf(target) === gameState.keyOf(caster.position);
-      }
-      // Доступность клетки не зависит от наличия существа: эффект
-      // определяется отдельно при касте (в том числе лечение в пустоту).
-      return inSpellReach(target, spell);
-    }
-
-    function highlightSpellRange(center = null) {
-      clearHighlight();
-      const spell = gameState.activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
-      if (!spell) return;
-      // Зелёный фон — допустимые центры; голубая обводка — зона удара.
-      for (let y = 0; y < gameState.SIZE; y++) for (let x = 0; x < gameState.SIZE; x++) {
-        if (!canTarget({ x, y }, spell)) continue;
-        const cell = gameState.cells[y * gameState.SIZE + x];
-        // Дальность одинакова для всех заклинаний; размер зоны задаёт aoeSize.
-        cell.classList.add('spell-range');
-        gameState.rangeHighlightedCells.push(cell);
-      }
-      if (center && canTarget(center, spell)) {
-        const area = affectedCells(center, spell, gameState.activeEntity(), gameState.entities, gameState.obstacles, gameState.terrain, gameState.keyOf, gameState.SIZE);
-        for (const point of area) {
-          const cell = gameState.cells[point.y * gameState.SIZE + point.x];
-          cell.classList.add('spell-aoe');
-          gameState.highlightedCells.push(cell);
-        }
-        showEffectPreview(area, spell, center);
-      }
-    }
-
-    function showEffectPreview(area, spell, center = area[0]) {
-      // Бейдж нужен только для урона; дальность и зона подсвечиваются отдельно.
-      if (!(spell.damage > 0)) return;
-      const keys = new Set(area.map(gameState.keyOf));
-      const primary = spell.isSparks ? gameState.entities.find(entity => gameState.keyOf(entity.position) === gameState.keyOf(center)) : null;
-      for (const entity of gameState.entities) {
-        if (entity.hp <= 0 || !keys.has(gameState.keyOf(entity.position))) continue;
-        if (spell.enemyOnly && gameState.isAlly(entity)) continue;
-        // Защита учитывается как в настоящем уроне; текущий HP не ограничивает превью.
-        const badge = document.createElement('span');
-        badge.className = 'effect-preview damage';
-        const previewSpell = spell.isSparks && entity !== primary ? { ...spell, damage: Math.floor(spell.damage / 2) } : spell;
-        badge.textContent = `-${spellDamage(previewSpell, entity)}`;
-        gameState.cells[entity.position.y * gameState.SIZE + entity.position.x].appendChild(badge);
-        gameState.effectBadges.push(badge);
-      }
-    }
 
     function cancelSpell() {
       gameState.preparedSpellId = null;
@@ -250,6 +130,7 @@
       gameState.previewKey = null;
       gameState.costLabel.remove();
     }
+    window.clearHighlight = clearHighlight;
 
     function highlightPath(path, mp) {
       clearHighlight();
@@ -454,7 +335,7 @@
       if (!cell || !gameState.battlefield.contains(cell)) {
         gameState.fieldHoveredEntityId = null;
         window.updatePanel();
-        if (gameState.preparedSpellId) highlightSpellRange();
+        if (gameState.preparedSpellId) window.highlightSpellRange();
         else clearHighlight(); // В том числе при наведении на промежуток сетки.
         return;
       }
@@ -468,7 +349,7 @@
         if (spell) {
           const key = `spell:${gameState.keyOf(target)}`;
           if (gameState.previewKey !== key) {
-            highlightSpellRange(canTarget(target, spell) ? target : null);
+            window.highlightSpellRange(window.canTarget(target, spell) ? target : null);
             gameState.previewKey = key;
           }
         }
@@ -493,7 +374,7 @@
     });
 
     gameState.battlefield.addEventListener('mouseleave', () => {
-      if (gameState.preparedSpellId) highlightSpellRange();
+      if (gameState.preparedSpellId) window.highlightSpellRange();
       else clearHighlight();
       gameState.fieldHoveredEntityId = null;
       window.updatePanel();
@@ -552,7 +433,11 @@
       playElementalShieldAnimation: window.playElementalShieldAnimation,
       playFreezeAnimation: window.playFreezeAnimation,
       playHealAnimation: window.playHealAnimation,
-      hasSkyShotBuff, effectiveSpellRange, inSpellReach, canTarget, canPrepareSpell,
+      hasSkyShotBuff: window.hasSkyShotBuff,
+      effectiveSpellRange: window.effectiveSpellRange,
+      inSpellReach: window.inSpellReach,
+      canTarget: window.canTarget,
+      canPrepareSpell: window.canPrepareSpell,
       getConeCells, getBlockedConeCells, findSparkTargets, affectedCells, applySpellEffect,
       setTimeout, queueMicrotask,
     };

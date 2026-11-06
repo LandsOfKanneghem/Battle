@@ -278,7 +278,7 @@ window.isMagicalDamage = function(damageType) {
 window.damageBreakdown = function(spell, entity) {
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
   // Учитываем защиту нужного типа (включая physical) один раз, до ES/HP.
-  const resistance = getEffectiveStat(entity, spell.damageType === 'physical' ? 'physical' : `resistances.${spell.damageType}`);
+  const resistance = getEffectiveStat(entity, `resistances.${spell.damageType}`);
   const afterResistance = Math.max(0, spell.damage - resistance);
   const absorbed = isMagicalDamage(spell.damageType)
     ? Math.min(getCurrentES(entity), afterResistance) : 0;
@@ -319,8 +319,7 @@ window.getEffectiveStat = function(entity, statName) {
     ...elementalShieldEffects(entity)
   ];
   // Физическая и стихийные защиты добавляются только к своей характеристике.
-  const elementalProtection = statName === 'physical' ? elementalBlockAmount(entity, 'physical')
-    : statName.startsWith('resistances.')
+  const elementalProtection = statName.startsWith('resistances.')
     ? elementalBlockAmount(entity, statName.split('.')[1]) : 0;
   const temporaryEvasion = statName === 'eva'
     ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;

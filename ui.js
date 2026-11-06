@@ -299,9 +299,9 @@ window.updatePanel = function() {
   writeAttribute('eva', `EVA: ${window.getEffectiveStat(displayed, 'eva')}% / ${attributes?.eva}`);
   writeAttribute('blo', `BLO: ${window.getEffectiveStat(displayed, 'blo')}% / ${window.getEffectiveStat(displayed, 'blo')}`);
   for (const [key, label] of Object.entries({ ac: 'Броня', physical: 'Физика', fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля', mind: 'Разум', poison: 'Яд' })) {
-    const id = key === 'ac' ? 'ac' : `res-${key}`;
-    // Броня и Физика — отдельные характеристики; физические защиты входят в physical.
-    const value = window.getEffectiveStat(displayed, key === 'ac' || key === 'physical' ? key : `resistances.${key}`);
+    const id = `res-${key}`;
+    // Все защиты используют единый путь resistances, включая броню и физический урон.
+    const value = window.getEffectiveStat(displayed, `resistances.${key}`);
     writeAttribute(id, String(value));
     document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);
   }

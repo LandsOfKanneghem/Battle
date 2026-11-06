@@ -201,16 +201,118 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   }
 };
 
+// Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
+const spellAnimationHandlers = {
+  'fire-shot': ctx => {
+    ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'fire', () => ctx.setTimeout(ctx.finishCast, 0));
+  },
+  'ice-arrow': ctx => {
+    ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'ice', () => ctx.setTimeout(ctx.finishCast, 0));
+  },
+  'sparks': ctx => {
+    const { cells, SIZE, playSparksAnimation, shotHits } = ctx.deps;
+    const sparkCells = ctx.sparkTargets.map(entity => cells[entity.position.y * SIZE + entity.position.x]);
+    playSparksAnimation(ctx.fromCell, ctx.targetCell, sparkCells, () => ctx.setTimeout(ctx.finishCast, 0), () => {
+      if (!ctx.primaryTarget) return false;
+      // Один результат живёт в контексте и затем читается finishCast, без повторного броска.
+      ctx.shotHit = shotHits(ctx.caster, ctx.primaryTarget);
+      return ctx.shotHit;
+    });
+  },
+  'weakness-vigor': ctx => {
+    const { entities, keyOf, isAlly, playWeaknessVigorAnimation } = ctx.deps;
+    const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(ctx.target));
+    playWeaknessVigorAnimation(ctx.targetCell, isAlly(recipient));
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'fire-cube': ctx => {
+    ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'fire-cube', () => {
+      ctx.deps.playCubeExplosion(ctx.targetCell, ctx.spell);
+      // Отсчёт после прибытия: сохраняем снаряд 350 мс + взрыв 400 мс.
+      ctx.setTimeout(ctx.finishCast, 400);
+    });
+  },
+  'heal': ctx => {
+    ctx.deps.playHealAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 600);
+  },
+  'light-flash': ctx => {
+    ctx.deps.playLightFlashAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 400);
+  },
+  'haste': ctx => {
+    ctx.deps.playStateAnimation(ctx.targetCell, ctx.spell.stateId);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'slow': ctx => {
+    ctx.deps.playStateAnimation(ctx.targetCell, ctx.spell.stateId);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'deep-freeze': ctx => {
+    ctx.deps.playStateAnimation(ctx.targetCell, ctx.spell.stateId);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'liquid-membrane': ctx => {
+    ctx.deps.playMembraneAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'rain': ctx => {
+    ctx.deps.playRainAnimation(ctx.target, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 900);
+  },
+  'wind-rose': ctx => {
+    ctx.deps.playWindRoseAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'dead-weight': ctx => {
+    ctx.deps.playStateAnimation(ctx.targetCell, ctx.spell.stateId);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'burning-hands': ctx => {
+    ctx.deps.playBurningHandsAnimation(ctx.fromCell, {
+      x: ctx.target.x - ctx.caster.position.x, y: ctx.target.y - ctx.caster.position.y
+    });
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'reckless': ctx => {
+    ctx.deps.playStateAnimation(ctx.targetCell, ctx.spell.stateId);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'sky-shot': ctx => {
+    ctx.deps.playSkyShotAnimation(ctx.targetCell, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'armageddon': ctx => {
+    ctx.deps.playArmageddonAnimation();
+    ctx.setTimeout(ctx.finishCast, 900);
+  },
+  'fire-shield': ctx => {
+    ctx.deps.playElementalShieldAnimation(ctx.targetCell, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'water-shield': ctx => {
+    ctx.deps.playElementalShieldAnimation(ctx.targetCell, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'earth-shield': ctx => {
+    ctx.deps.playElementalShieldAnimation(ctx.targetCell, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'air-shield': ctx => {
+    ctx.deps.playElementalShieldAnimation(ctx.targetCell, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'stone-skin': ctx => {
+    ctx.deps.playElementalShieldAnimation(ctx.targetCell, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  }
+};
+
 window.castSpell = function(targetCell, deps) {
   const {
     entities, cells, SIZE, keyOf, activeEntity, canPrepareSpell, canTarget, isAlly,
-    findSparkTargets, shotHits, applySpellEffect, updatePanel, removeDefeatedEntities,
-    cancelSpell, setTimeout, queueMicrotask,
-    playWeaknessVigorAnimation, playSkyShotAnimation, playSparksAnimation,
-    playProjectileAnimation, playBurningHandsAnimation, playWindRoseAnimation,
-    playRainAnimation, playArmageddonAnimation, playMembraneAnimation,
-    playLightFlashAnimation, playStateAnimation, playElementalShieldAnimation,
-    playHealAnimation, playCubeExplosion
+    findSparkTargets, applySpellEffect, updatePanel, removeDefeatedEntities,
+    cancelSpell, setTimeout, queueMicrotask
   } = deps;
   if (deps.isCasting) return false;
   const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
@@ -228,7 +330,6 @@ window.castSpell = function(targetCell, deps) {
   const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
   // Этот же снимок целей используется для анимации и последующего урона.
   const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount, entities) : null;
-  let shotHit = null; // Для Искр один результат используется и анимацией, и уроном.
   const fromCell = cells[caster.position.y * SIZE + caster.position.x];
 
   // Фаза 1: фиксируем цель, оплачиваем каст и блокируем любые новые действия.
@@ -242,67 +343,26 @@ window.castSpell = function(targetCell, deps) {
   deps.isCasting = true;
   cancelSpell(); // Также очищает превью и обновляет disabled у кнопок.
 
+  const ctx = { spell, target, caster, targetCell, fromCell, sparkTargets, primaryTarget,
+    shotHit: null, finishCast, deps,
+    // Обёртка сохраняет обычный вызов браузерного таймера без привязки this к ctx.
+    setTimeout: (callback, delay) => setTimeout(callback, delay) };
+
   function finishCast() {
     // Фаза 2: HP и очередь меняются лишь после завершения анимации.
-    applySpellEffect(spell, target, caster, deps, sparkTargets, shotHit);
+    applySpellEffect(spell, target, caster, deps, sparkTargets, ctx.shotHit);
     removeDefeatedEntities();
     // Обновление UI выполнится сразу после callback, уже со снятой блокировкой.
     queueMicrotask(updatePanel);
     deps.isCasting = false;
   }
 
-  if (spell.isWeaknessVigor) {
-    const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
-    playWeaknessVigorAnimation(targetCell, isAlly(recipient));
-    setTimeout(finishCast, 500);
-  } else if (spell.isSkyShot) {
-    playSkyShotAnimation(targetCell, spell);
-    setTimeout(finishCast, 500);
-  } else if (spell.isSparks) {
-    const sparkCells = sparkTargets.map(entity => cells[entity.position.y * SIZE + entity.position.x]);
-    playSparksAnimation(fromCell, targetCell, sparkCells, () => setTimeout(finishCast, 0), () => {
-      if (!primaryTarget) return false; // Выстрел в пустоту: без броска и отскоков.
-      shotHit = shotHits(caster, primaryTarget);
-      return shotHit;
-    });
-  } else if (spell.id === 'ice-arrow') {
-    playProjectileAnimation(fromCell, targetCell, 'ice', () => setTimeout(finishCast, 0));
-  } else if (spell.isCone) {
-    playBurningHandsAnimation(fromCell, { x: target.x - caster.position.x, y: target.y - caster.position.y });
-    setTimeout(finishCast, 500);
-  } else if (spell.isWindRose) {
-    playWindRoseAnimation(targetCell);
-    setTimeout(finishCast, 500);
-  } else if (spell.isRain) {
-    playRainAnimation(target, spell);
-    setTimeout(finishCast, 900);
-  } else if (spell.isGlobal) {
-    playArmageddonAnimation();
-    setTimeout(finishCast, 900);
-  } else if (spell.isMembrane) {
-    playMembraneAnimation(targetCell);
-    setTimeout(finishCast, 500);
-  } else if (spell.id === 'light-flash') {
-    playLightFlashAnimation(targetCell);
-    setTimeout(finishCast, 400);
-  } else if (spell.stateId) {
-    playStateAnimation(targetCell, spell.stateId);
-    setTimeout(finishCast, 500);
-  } else if (spell.isElementalShield) {
-    playElementalShieldAnimation(targetCell, spell);
-    setTimeout(finishCast, 500);
-  } else if (spell.isHeal) {
-    playHealAnimation(targetCell);
-    // 500 мс плюс до 100 мс случайной задержки последнего плюсика.
-    setTimeout(finishCast, 600);
-  } else if (spell.id === 'fire-cube') {
-    playProjectileAnimation(fromCell, targetCell, 'fire-cube', () => {
-      playCubeExplosion(targetCell, spell);
-      // 350 мс полёта + 400 мс взрыва; отсчёт от реального прибытия.
-      setTimeout(finishCast, 400);
-    });
+  const handler = spellAnimationHandlers[spell.id];
+  if (handler) {
+    handler(ctx);
   } else {
-    playProjectileAnimation(fromCell, targetCell, 'fire', () => setTimeout(finishCast, 0));
+    // Защитный fallback для ещё не зарегистрированного заклинания.
+    deps.playProjectileAnimation(fromCell, targetCell, 'fire', () => setTimeout(finishCast, 0));
   }
   return true;
 };

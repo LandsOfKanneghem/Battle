@@ -15,7 +15,7 @@
     };
   };
 
-  const ENTITY_TEMPLATES = {
+  const CREATURE_TEMPLATES = {
     wizard: {
       name: 'Волшебник', type: 'wizard', baseHP: 12, baseAP: 6, baseMP: 4,
       attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'wizard', spellPagesSplit: true
@@ -62,43 +62,43 @@
       <path d="M33 36 V10" stroke="#bc9159" stroke-width="2"/>`
   };
 
-  window.createEntitySvg = function(kind) {
+  window.createCreatureSvg = function(kind) {
     if (!Object.hasOwn(SVG_ART, kind)) throw new Error(`Неизвестный спрайт существа: ${kind}`);
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 40 40');
     svg.setAttribute('class', kind);
     svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', ENTITY_TEMPLATES[kind].name);
+    svg.setAttribute('aria-label', CREATURE_TEMPLATES[kind].name);
     svg.innerHTML = SVG_ART[kind];
     return svg;
   };
 
   const typeCounters = new Map();
   window.createCreature = function(templateId, position) {
-    if (!Object.hasOwn(ENTITY_TEMPLATES, templateId)) throw new Error(`Неизвестный шаблон существа: ${templateId}`);
-    const template = ENTITY_TEMPLATES[templateId];
+    if (!Object.hasOwn(CREATURE_TEMPLATES, templateId)) throw new Error(`Неизвестный шаблон существа: ${templateId}`);
+    const template = CREATURE_TEMPLATES[templateId];
     let id = template.type;
     if (template.type !== 'wizard' && template.type !== 'monk') {
       const next = (typeCounters.get(template.type) ?? 0) + 1;
       typeCounters.set(template.type, next);
       id = `${template.type}-${next}`;
     }
-    const entity = {
+    const creature = {
       attributes: window.createAttributes(template.attributes),
       id, name: template.name, type: template.type, baseHP: template.baseHP, hp: template.baseHP, maxHP: template.baseHP,
       availableSpells: [], elementalShields: [], states: [], appliedEffects: [], baseES: 0, esBonuses: [], evaBonuses: [],
       baseInitiative: 0, initiative: 0,
       baseAP: template.baseAP, maxAP: template.baseAP, ap: template.baseAP,
       baseMP: template.baseMP, maxMP: template.baseMP, mp: template.baseMP,
-      position: { x: position.x, y: position.y }, svg: window.createEntitySvg(template.type)
+      position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };
-    entity.svg.setAttribute('aria-label', entity.name);
+    creature.svg.setAttribute('aria-label', creature.name);
     if (template.spellsKey) {
-      entity.availableSpells = template.spellsKey === 'wizard' ? WIZARD_SPELLS : MONK_SPELLS;
-      entity.spellPages = template.spellPagesSplit
-        ? [entity.availableSpells.filter(spell => !spell.isElementalShield), entity.availableSpells.filter(spell => spell.isElementalShield)]
-        : [entity.availableSpells];
+      creature.availableSpells = template.spellsKey === 'wizard' ? WIZARD_SPELLS : MONK_SPELLS;
+      creature.spellPages = template.spellPagesSplit
+        ? [creature.availableSpells.filter(spell => !spell.isElementalShield), creature.availableSpells.filter(spell => spell.isElementalShield)]
+        : [creature.availableSpells];
     }
-    return entity;
+    return creature;
   };
 })();

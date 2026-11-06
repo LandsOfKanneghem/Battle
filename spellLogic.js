@@ -167,6 +167,20 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       esAmount: spell.esAmount, evaAmount: spell.evaAmount,
       description: `+${spell.esAmount} ES, +${spell.evaAmount} EVA`
     });
+  } else if (spell.isHealHarm) {
+    if (directTarget && isAlly(directTarget)) {
+      directTarget.hp = Math.min(directTarget.maxHP ?? directTarget.hp, directTarget.hp + spell.healAmount);
+      const last = directTarget.states.filter(state => state.id === 'bleeding' && !state.suppressed)
+        .reduce((latest, state) => !latest || state.appliedOrder > latest.appliedOrder ? state : latest, null);
+      directTarget.states = directTarget.states.filter(state => state !== last);
+      resolveStateSuppression(directTarget);
+      recalculateStateStats(directTarget);
+    } else if (directTarget) {
+      applyDamage(spell, directTarget);
+      if (directTarget.hp > 0) applyState(directTarget, {
+        id: spell.stateId, duration: spell.bleedDuration, casterId: caster.id, casterName: caster.name
+      });
+    }
   } else if (spell.stateId) {
     const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
       && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)));
@@ -180,10 +194,6 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
       && keyOf(entity.position) === keyOf(target));
     if (ally) addElementalShield(ally, spell, caster);
-  } else if (spell.isHeal) {
-    const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
-      && keyOf(entity.position) === keyOf(target));
-    if (ally) ally.hp = Math.min(ally.maxHP ?? ally.hp, ally.hp + spell.healAmount);
   } else {
     const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
     for (const victim of entities) {
@@ -244,9 +254,11 @@ const spellAnimationHandlers = {
       ctx.setTimeout(ctx.finishCast, 400);
     });
   },
-  'heal': ctx => {
-    ctx.deps.playHealAnimation(ctx.targetCell);
-    ctx.setTimeout(ctx.finishCast, 600);
+  'heal-harm': ctx => {
+    const { entities, keyOf, isAlly } = window.gameState;
+    const target = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(ctx.target));
+    ctx.deps.playHealHarmAnimation(ctx.targetCell, target, isAlly(target) ? 'ally' : 'enemy');
+    ctx.setTimeout(ctx.finishCast, 500);
   },
   'light-flash': ctx => {
     ctx.deps.playLightFlashAnimation(ctx.targetCell);
@@ -333,7 +345,7 @@ window.castSpell = function(targetCell, deps) {
   const spell = activeEntity()?.spells.find(item => item.id === gameState.preparedSpellId);
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
   // Лечение и защита требуют живого союзника до оплаты.
-  if ((spell.isHeal || spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
+  if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.stateId && !spell.isRain && !spell.isShot && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
     && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;

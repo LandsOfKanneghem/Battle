@@ -69,8 +69,8 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     window.updatePanel?.();
     return false;
   }
-  // Слабость отката — отдельный экземпляр: не заменяет восстановленную постоянную.
-  const sameInstance = state => state.id === input.id;
+  // Стакающиеся состояния всегда создают отдельный экземпляр и собственный таймер.
+  const sameInstance = state => template.stackable !== true && state.id === input.id;
   const existing = entity.states.find(sameInstance);
   if (existing && (existing.unremovable || existing.permanent || existing.innate || existing.duration > stateDuration
     || (existing.duration === stateDuration && input.id !== 'burning'))) return false;
@@ -102,7 +102,13 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
 window.removeState = function(entity, stateId) {
   if (stateId === 'weakness' && hasActiveState(entity, 'adrenaline-crash')) return;
   const hadAdrenaline = entity.states.some(state => state.id === 'adrenaline');
-  entity.states = entity.states.filter(state => state.id !== stateId || state.unremovable || state.permanent || state.innate);
+  if (stateTypes.get(stateId)?.stackable === true) {
+    const latest = entity.states.filter(state => state.id === stateId && !state.unremovable && !state.permanent && !state.innate)
+      .reduce((last, state) => !last || state.appliedOrder > last.appliedOrder ? state : last, null);
+    entity.states = entity.states.filter(state => state !== latest);
+  } else {
+    entity.states = entity.states.filter(state => state.id !== stateId || state.unremovable || state.permanent || state.innate);
+  }
   if (hadAdrenaline && !entity.states.some(state => state.id === 'adrenaline')) {
     restoreSuspendedWeakness(entity);
   }

@@ -70,11 +70,12 @@ window.showSpellTooltip = function(icon, spell) {
   addLine('АОЕ', `${areaLabel}${spell.isShot ? ' [тип: Выстрел]' : ''}`);
   addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг' }[spell.target] ?? 'нет');
   addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
-  const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет' };
+  const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', physical: 'физический' };
   if (spell.damage > 0) addLine('Урон', `${spell.damage} ${elements[spell.damageType] ?? spell.damageType}`);
-  if (spell.isHeal) addLine('Лечение', spell.healAmount);
+  if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
   const effects = [];
-  if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
+  if (spell.isHealHarm) effects.push('Кровотечение [враг] / Снимает 1 стак кровотечения [союз]');
+  else if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
   if (spell.burnDuration) effects.push(stateTypes.get('burning').name);
   if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
   if (spell.isSkyShot || spell.isWeaknessVigor) effects.push(spell.effectDescription);
@@ -85,7 +86,7 @@ window.showSpellTooltip = function(icon, spell) {
       if (index === 0) addLine('Эффекты', effect);
       else { const line = document.createElement('p'); line.textContent = effect; tooltip.appendChild(line); }
     });
-    addLine('Длительность', spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(spell.stateDuration ?? spell.shieldDuration ?? spell.effectDuration ?? spell.burnDuration));
+    addLine('Длительность', spell.isHealHarm ? `${spell.bleedDuration} [враг]` : spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(spell.stateDuration ?? spell.shieldDuration ?? spell.effectDuration ?? spell.burnDuration));
   }
   document.body.appendChild(tooltip);
   // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.

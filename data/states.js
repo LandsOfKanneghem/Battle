@@ -73,4 +73,10 @@ const VIGOR = {
   overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#3e8768" stroke="#a5f1bd" stroke-width="2"/><path d="M20 31 V9 M11 18 L20 9 L29 18" fill="none" stroke="#e7ffce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 };
-const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR]]);
+const BLEEDING = {
+  id: 'bleeding', name: 'Кровотечение', duration: 2, mpBonus: 0, initiativeBonus: 0,
+  description: '2 урона в начале хода (не блокируется)', casterName: '', suppressed: false,
+  overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false, stackable: true,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 Q5 22 7 29 Q10 38 20 38 Q32 38 34 28 Q35 21 20 3 Z" fill="#c93650" stroke="#ffadb6" stroke-width="2"/><path d="M12 26 Q10 32 18 33" fill="none" stroke="#ffe1e5" stroke-width="2" stroke-linecap="round"/></svg>`
+};
+const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

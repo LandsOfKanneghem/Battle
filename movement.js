@@ -96,6 +96,17 @@ window.beginTurn = function(entity) {
       return;
     }
   }
+  // Каждый активный стак обходит защиты и ES, но Заморозка сохраняет иммунитет к урону.
+  if (!window.isFrozen(entity)) {
+    for (const bleed of entity.states.filter(state => state.id === 'bleeding' && !state.suppressed
+      && (state.duration > 0 || state.permanent || state.innate))) {
+      entity.hp = Math.max(0, entity.hp - 2);
+      if (entity.hp <= 0) {
+        window.removeDefeatedEntities();
+        return;
+      }
+    }
+  }
   // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
   window.gameState.isSkippingTurn = entity.type === 'wolf' || window.isFrozen(entity);
   // Длительности меняются только по casterId, один раз даже для caster = target.

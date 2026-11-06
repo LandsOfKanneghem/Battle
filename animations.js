@@ -10,6 +10,16 @@ window.playSprintAnimation = function(cell) {
   setTimeout(() => arrows.remove(), 500);
 };
 
+window.playHealHarmAnimation = function(cell, target, kind) {
+  if (kind === 'ally') { window.playHealAnimation(cell); return; }
+  const wound = document.createElement('span');
+  wound.className = 'state-animation adrenaline';
+  wound.setAttribute('aria-hidden', 'true');
+  wound.innerHTML = stateTypes.get('bleeding').icon;
+  cell.appendChild(wound);
+  setTimeout(() => wound.remove(), 500);
+};
+
 window.playHealAnimation = function(cell) {
   // Каждый каст владеет своим набором частиц и отдельным таймером очистки.
   const sparks = [];

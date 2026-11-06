@@ -137,11 +137,13 @@ const WIZARD_SPELLS = [
 // Все поля заклинания — примитивы, включая SVG-разметку, поэтому
 // копии куба и ускорения имеют независимые cooldown и usesThisTurn.
 const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cube') }, {
-  id: 'heal', name: 'Лечение', stackable: false, healAmount: 5, isHeal: true, target: 'ally',
-  range: 5, minRange: 0, modifiable: true, apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0,
-  // Одноклеточная зона использует те же два слоя подсветки, что и куб.
-  cooldown: 0, maxCooldown: 1, isAOE: true, aoeSize: 1,
-  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="#164a36" stroke="#83efac"/><path d="M15 8 H25 V15 H32 V25 H25 V32 H15 V25 H8 V15 H15 Z" fill="#74ef9e"/></svg>`
+  id: 'heal-harm', name: 'Исцелить/ранить', stackable: false, isHealHarm: true, target: 'any',
+  description: 'Исцеляет хп дружественной цели и снимает 1 стак кровотечения, либо наносит физический урон и накладывает 1 стак кровотечения.',
+  minRange: 0, range: 4, modifiable: false, noLOS: false, apCost: 2,
+  cooldown: 0, maxCooldown: 1, maxUsesPerTurn: 1, usesThisTurn: 0, isAOE: false, aoeSize: 1,
+  damage: 4, damageType: 'physical', healAmount: 4, bleedDuration: 2, stateId: 'bleeding',
+  effectDescription: 'Исцеляет 4 HP и снимает 1 стак кровотечения [союзник] / Наносит 4 физ. урона и накладывает 1 стак кровотечения [враг]',
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M15 3 H20 V37 H15 V25 H3 V15 H15 Z" fill="#74ef9e"/><path d="M20 3 H25 V15 H37 V25 H25 V37 H20 Z" fill="#ed5d70"/><path d="M20 3 V37" stroke="#fff1d2" stroke-width="1.5"/></svg>`
 }, {
   id: 'light-flash', name: 'Вспышка света', stackable: false, damage: 2, damageType: 'light', target: 'enemy',
   minRange: 1, range: 6, modifiable: true, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,

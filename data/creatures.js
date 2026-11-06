@@ -1,29 +1,32 @@
 // Шаблоны существ и фабрика. Счётчики типов приватны; изменяемые данные не разделяются.
 (() => {
   window.createAttributes = function(overrides = {}) {
-    const { resistances, ...attributes } = overrides;
+    const { resistances, baseWP = 10, baseVS = 0, ...attributes } = overrides;
     return {
-      ra: 0, wp: 10, maxWP: 10, vs: 0,
+      ra: 0,
       vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2,
       // Частичный override сохраняет остальные стихии и всегда создаёт новый объект.
       resistances: { ac: 0, physical: 0, fire: 0, water: 0, air: 0, earth: 0, mind: 0, poison: 0, ...resistances },
       acc: 100, sfc: 0, eva: 0, blo: 0, ini: 0,
-      ...attributes
+      ...attributes,
+      // Текущие и максимальные ресурсы при создании выводятся только из базы.
+      baseWP, wp: baseWP, maxWP: baseWP,
+      baseVS, vs: baseVS, maxVS: baseVS
     };
   };
 
   const ENTITY_TEMPLATES = {
     wizard: {
-      name: 'Волшебник', type: 'wizard', hp: 12, maxHP: 12, baseMaxAP: 6, baseMaxMP: 4,
+      name: 'Волшебник', type: 'wizard', baseHP: 12, baseAP: 6, baseMP: 4,
       attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'wizard', spellPagesSplit: true
     },
     monk: {
-      name: 'Монах', type: 'monk', hp: 12, maxHP: 12, baseMaxAP: 6, baseMaxMP: 4,
+      name: 'Монах', type: 'monk', baseHP: 12, baseAP: 6, baseMP: 4,
       attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'monk', spellPagesSplit: false
     },
     wolf: {
-      name: 'Волк', type: 'wolf', hp: 6, maxHP: 6, baseMaxAP: 6, baseMaxMP: 5,
-      attributes: { wp: 4, maxWP: 4, vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
+      name: 'Волк', type: 'wolf', baseHP: 6, baseAP: 6, baseMP: 5,
+      attributes: { baseWP: 4, vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
       spellsKey: null, spellPagesSplit: false
     }
   };
@@ -82,11 +85,11 @@
     }
     const entity = {
       attributes: window.createAttributes(template.attributes),
-      id, name: template.name, type: template.type, hp: template.hp, maxHP: template.maxHP,
+      id, name: template.name, type: template.type, baseHP: template.baseHP, hp: template.baseHP, maxHP: template.baseHP,
       spells: [], elementalShields: [], states: [], spellsOnMe: [], baseES: 0, esBonuses: [], evaBonuses: [],
       baseInitiative: 0, initiative: 0,
-      baseMaxAP: template.baseMaxAP, maxAP: template.baseMaxAP, ap: template.baseMaxAP,
-      baseMaxMP: template.baseMaxMP, maxMP: template.baseMaxMP, mp: template.baseMaxMP,
+      baseAP: template.baseAP, maxAP: template.baseAP, ap: template.baseAP,
+      baseMP: template.baseMP, maxMP: template.baseMP, mp: template.baseMP,
       position: { x: position.x, y: position.y }, svg: window.createEntitySvg(template.type)
     };
     entity.svg.setAttribute('aria-label', entity.name);

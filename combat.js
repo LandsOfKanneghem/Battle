@@ -15,14 +15,14 @@ window.restoreSuspendedWeakness = function(entity) {
 
 window.recalculateStateStats = function(entity, allowNegativeMP = false) {
   const oldMaxAP = entity.maxAP;
-  entity.maxAP = Math.max(1, entity.baseMaxAP + entity.states.filter(state => !state.suppressed)
+  entity.maxAP = Math.max(1, entity.baseAP + entity.states.filter(state => !state.suppressed)
     .reduce((sum, state) => sum + (state.apBonus ?? 0), 0));
   // Изменяется именно остаток AP: потраченные действия не возвращаем; долг AP допустим.
   entity.ap += entity.maxAP - oldMaxAP;
   const oldMaxMP = entity.maxMP;
   const tempMpBonus = (entity.mpBonuses ?? []).filter(bonus => bonus.turnsLeft > 0)
     .reduce((sum, bonus) => sum + bonus.amount, 0);
-  entity.maxMP = Math.max(1, entity.baseMaxMP + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.mpBonus, 0) + tempMpBonus);
+  entity.maxMP = Math.max(1, entity.baseMP + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.mpBonus, 0) + tempMpBonus);
   entity.initiative = entity.baseInitiative + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.initiativeBonus, 0);
   // Берём фактическую дельту после ограничения maxMP >= 1, а не сумму бонусов.
   // Перекрытие Скорости Медлительностью, например, даёт сразу -4 MP.

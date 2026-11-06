@@ -68,8 +68,7 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     return false;
   }
   // Слабость отката — отдельный экземпляр: не заменяет восстановленную постоянную.
-  const sameInstance = state => state.id === input.id && (input.id !== 'weakness'
-    || !!state.crashWeakness === !!input.crashWeakness);
+  const sameInstance = state => state.id === input.id;
   const existing = entity.states.find(sameInstance);
   if (existing && (existing.unremovable || existing.permanent || existing.innate || existing.duration > stateDuration
     || (existing.duration === stateDuration && input.id !== 'burning'))) return false;
@@ -94,11 +93,6 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
   resolveStateSuppression(entity);
   recalculateStateStats(entity, true);
-  if (input.id === 'adrenaline-crash') applyState(entity, {
-    // Неснимаемость временно даёт сам откат; родной флаг Слабости не меняем.
-    id: 'weakness', duration: 1, crashWeakness: true,
-    casterId: input.casterId ?? window.gameState.activeEntity()?.id, casterName: input.casterName
-  });
   window.updatePanel?.();
   return true;
 };

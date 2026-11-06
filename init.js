@@ -43,7 +43,7 @@ function createAttributes() {
     ra: 0, wp: 10, maxWP: 10, vs: 0,
     vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2, ac: 0, physical: 0,
     resistances: { fire: 0, water: 0, air: 0, earth: 0, mind: 0, poison: 0 },
-    acc: 100, eva: 0, blo: 0, ini: 0
+    acc: 100, sfc: 0, eva: 0, blo: 0, ini: 0
   };
 }
 

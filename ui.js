@@ -255,6 +255,7 @@ window.updatePanel = function() {
   }
   writeAttribute('wp', `WP: ${window.getEffectiveStat(displayed, 'wp')} / ${window.getEffectiveStat(displayed, 'maxWP')}`);
   writeAttribute('acc', `ACC: ${window.getEffectiveStat(displayed, 'acc')}%`);
+  writeAttribute('sfc', `SFC: ${window.getEffectiveStat(displayed, 'sfc')}%`);
   writeAttribute('eva', `EVA: ${window.getEffectiveStat(displayed, 'eva')}% / ${attributes?.eva}`);
   writeAttribute('blo', `BLO: ${window.getEffectiveStat(displayed, 'blo')}% / ${window.getEffectiveStat(displayed, 'blo')}`);
   for (const [key, label] of Object.entries({ ac: 'Броня', physical: 'Физика', fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля', mind: 'Разум', poison: 'Яд' })) {

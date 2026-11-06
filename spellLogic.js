@@ -316,7 +316,7 @@ window.castSpell = function(targetCell, deps) {
   const {
     canPrepareSpell, canTarget,
     findSparkTargets, applySpellEffect, updatePanel, removeDefeatedEntities,
-    cancelSpell, setTimeout, queueMicrotask
+    cancelSpell, getEffectiveStat, playFailureAnimation, setTimeout, queueMicrotask
   } = deps;
   if (gameState.isCasting) return false;
   const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
@@ -331,19 +331,28 @@ window.castSpell = function(targetCell, deps) {
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
   const caster = activeEntity();
+  // Отдельный бросок до оплаты: при SFC = 0 последовательность бросков выстрелов не меняется.
+  const sfc = getEffectiveStat(caster, 'sfc');
+  const failed = sfc > 0 && Math.random() * 100 < sfc;
   const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
   // Этот же снимок целей используется для анимации и последующего урона.
   const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount, entities) : null;
   const fromCell = cells[caster.position.y * SIZE + caster.position.x];
 
-  // Фаза 1: фиксируем цель, оплачиваем каст и блокируем любые новые действия.
+  // Фаза 1: фиксируем цель и оплачиваем попытку каста независимо от результата SFC.
   caster.ap -= spell.apCost;
   spell.usesThisTurn++;
   if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
   spell.cooldown = spell.maxCooldown;
-  // Расходуем бафф только после успешной проверки цели и оплаты, даже при будущем промахе.
+  // Расходуем бафф после проверки цели и оплаты, даже при промахе или провале SFC.
   // Срок и смерть источника обслуживаются общим механизмом spellsOnMe.
   if (spell.isShot) caster.spellsOnMe = caster.spellsOnMe.filter(effect => !effect.isSkyShot);
+  if (failed) {
+    // Оплата общая с успешным кастом; провал не запускает эффект, уклонение и блокировку действий.
+    playFailureAnimation(targetCell);
+    cancelSpell();
+    return true;
+  }
   gameState.isCasting = true;
   cancelSpell(); // Также очищает превью и обновляет disabled у кнопок.
 

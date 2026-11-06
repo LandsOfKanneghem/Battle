@@ -138,6 +138,15 @@ window.playMissAnimation = function(cell) {
   setTimeout(() => label.remove(), 500);
 };
 
+window.playFailureAnimation = function(cell) {
+  const label = document.createElement('span');
+  label.className = 'failure-label';
+  label.textContent = 'FAILURE';
+  label.setAttribute('aria-hidden', 'true');
+  cell.appendChild(label);
+  setTimeout(() => label.remove(), 500);
+};
+
 window.playElementalShieldAnimation = function(cell, spell) {
   const flash = document.createElement('span');
   flash.className = 'elemental-shield-flash';

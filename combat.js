@@ -54,6 +54,8 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
   if (!template) return false;
   const stateDuration = input.duration ?? template.duration;
   if (stateDuration <= 0) return false;
+  // Иммунитет Адреналина действует самостоятельно, без Бодрости.
+  if (['weakness', 'exhaustion'].includes(input.id) && hasActiveState(entity, 'adrenaline')) return false;
   if (input.id === 'weakness' && hasActiveState(entity, 'vigor')) return false;
   if (['adrenaline', 'vigor'].includes(input.id) && hasActiveState(entity, 'adrenaline-crash')) return false;
   const neutralizes = input.neutralizes ?? template.neutralizes;
@@ -75,7 +77,9 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
   if (input.id === 'adrenaline' || input.id === 'vigor') {
     entity.suspendedWeakness ??= [];
     entity.states = entity.states.filter(state => {
-      if (state.id !== 'weakness' || state.unremovable) return true;
+      if (state.unremovable) return true;
+      if (state.id === 'exhaustion' && input.id === 'adrenaline') return false;
+      if (state.id !== 'weakness') return true;
       // Адреналин сохраняет постоянную Слабость для возврата после своего спада.
       if (state.permanent && input.id === 'adrenaline') entity.suspendedWeakness.push(state);
       return false;
@@ -90,9 +94,6 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
   resolveStateSuppression(entity);
   recalculateStateStats(entity, true);
-  if (input.id === 'adrenaline') applyState(entity, {
-    id: 'vigor', duration: 2, casterId: input.casterId ?? window.gameState.activeEntity()?.id, casterName: input.casterName
-  });
   if (input.id === 'adrenaline-crash') applyState(entity, {
     // Неснимаемость временно даёт сам откат; родной флаг Слабости не меняем.
     id: 'weakness', duration: 1, crashWeakness: true,
@@ -107,7 +108,6 @@ window.removeState = function(entity, stateId) {
   const hadAdrenaline = entity.states.some(state => state.id === 'adrenaline');
   entity.states = entity.states.filter(state => state.id !== stateId || state.unremovable || state.permanent || state.innate);
   if (hadAdrenaline && !entity.states.some(state => state.id === 'adrenaline')) {
-    entity.states = entity.states.filter(state => state.id !== 'vigor');
     restoreSuspendedWeakness(entity);
   }
   resolveStateSuppression(entity);
@@ -306,5 +306,6 @@ window.getEffectiveStat = function(entity, statName) {
   const temporaryEvasion = statName === 'eva'
     ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
   return base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
-    ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : statName === 'eva' ? effect.evaBonus ?? 0 : 0)), 0);
+    ?? (statName === 'ini' ? effect.initiativeBonus ?? 0 : statName === 'eva' ? effect.evaBonus ?? 0
+      : statName === 'acc' ? effect.accuracyBonus ?? 0 : statName === 'sfc' ? effect.sfcBonus ?? 0 : 0)), 0);
 };

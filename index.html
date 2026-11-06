@@ -45,6 +45,7 @@
         </section>
         <section class="stat-column"><h2>Бой</h2>
           <span id="acc"></span>
+          <span id="sfc"></span>
           <span id="eva"></span>
           <span id="blo"></span>
           <span id="ini"></span>
@@ -222,12 +223,14 @@
       applyState: window.applyState, applyDamage: window.applyDamage,
       applySpellOnEntity: window.applySpellOnEntity, hasActiveState: window.hasActiveState,
       isFrozen: window.isFrozen, shotHits: window.shotHits, spellDamage: window.spellDamage,
+      getEffectiveStat: window.getEffectiveStat,
       addElementalShield: window.addElementalShield,
       resolveStateSuppression: window.resolveStateSuppression, recalculateStateStats: window.recalculateStateStats,
       updatePanel: window.updatePanel,
       removeDefeatedEntities: window.removeDefeatedEntities, renderPosition,
       cancelSpell: window.cancelSpell, clearHighlight: window.clearHighlight,
       playMissAnimation: window.playMissAnimation,
+      playFailureAnimation: window.playFailureAnimation,
       playProjectileAnimation: window.playProjectileAnimation,
       playSparksAnimation: window.playSparksAnimation,
       playCubeExplosion: window.playCubeExplosion,

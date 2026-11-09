@@ -33,7 +33,7 @@
       attributes: { str: 0, att: 1, cha: 1, luc: 0 },
       spellPages: [
         ['fire-cube', 'heal-harm', 'light-flash', 'haste',
-          'weakness-vigor', 'sprint', 'bite', null,
+          'weakness-vigor', 'sprint', null, null,
           null, null, null, null, null, null, null, null]
       ]
     },

@@ -143,6 +143,9 @@ window.beginTurn = function(entity) {
 window.removeDefeatedEntities = function() {
   const activeIndex = window.gameState.entities.findIndex(entity => entity.id === window.gameState.activeEntityId);
   const activeDied = activeIndex !== -1 && window.gameState.entities[activeIndex].hp <= 0;
+  // До удаления ID запоминаем следующего: после splice индекс погибшего духа потеряется.
+  const nextAfterSummon = activeDied && window.gameState.entities[activeIndex].isSummon
+    ? window.gameState.nextLivingEntity(window.gameState.activeEntityId) : null;
   // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
   for (let i = window.gameState.entities.length - 1; i >= 0; i--) {
     const entity = window.gameState.entities[i];
@@ -151,6 +154,9 @@ window.removeDefeatedEntities = function() {
     entity.svg.remove();
     window.gameState.turnSlots.get(entity.id).remove();
     window.gameState.turnSlots.delete(entity.id);
+    if (entity.isSummon) {
+      window.gameState.turnOrderIds = window.gameState.turnOrderIds.filter(id => id !== entity.id);
+    }
     if (window.gameState.selectedEntityId === entity.id) window.gameState.selectedEntityId = null;
     if (window.gameState.hoveredEntityId === entity.id) window.gameState.hoveredEntityId = null;
     if (window.gameState.fieldHoveredEntityId === entity.id) window.gameState.fieldHoveredEntityId = null;
@@ -161,7 +167,7 @@ window.removeDefeatedEntities = function() {
     window.gameState.isMoving = false;
     window.gameState.stepQueue = [];
     window.gameState.battlefield.classList.remove('moving');
-    window.beginTurn(window.gameState.nextLivingEntity(window.gameState.activeEntityId)); // Смена активного участника происходит сразу.
+    window.beginTurn(nextAfterSummon ?? window.gameState.nextLivingEntity(window.gameState.activeEntityId)); // Смена активного участника происходит сразу.
   } else {
     window.updatePanel();
   }

@@ -103,7 +103,40 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     return;
   }
   if (spell.isSummon) {
-    // Заглушка первого шага: создание и жизненный цикл духа появятся отдельно.
+    const spirit = window.createCreature('spirit', target);
+    spirit.ownerId = caster.id;
+    spirit.summonDuration = spell.summonDuration;
+    entities.push(spirit);
+    const gameState = window.gameState;
+    const casterIndex = gameState.turnOrderIds.indexOf(caster.id);
+    const existingSummons = gameState.turnOrderIds.filter(id => {
+      const creature = entities.find(item => item.id === id);
+      return creature?.isSummon && creature.ownerId === caster.id;
+    }).length;
+    const insertIndex = casterIndex + 1 + existingSummons;
+    gameState.turnOrderIds.splice(insertIndex, 0, spirit.id);
+    const slot = document.createElement('div');
+    slot.className = 'turn-slot';
+    slot.setAttribute('aria-label', spirit.name);
+    slot.appendChild(spirit.svg.cloneNode(true));
+    slot.addEventListener('contextmenu', event => {
+      event.preventDefault();
+      window.selectEntity(spirit.id);
+    });
+    slot.addEventListener('mouseenter', () => {
+      gameState.queueHoveredEntityId = spirit.id;
+      window.updatePanel();
+    });
+    slot.addEventListener('mouseleave', () => {
+      gameState.queueHoveredEntityId = null;
+      window.updatePanel();
+    });
+    gameState.turnSlots.set(spirit.id, slot);
+    // Визуальная очередь повторяет порядок ID, включая несколько духов владельца.
+    const nextSlot = gameState.turnOrderIds.slice(insertIndex + 1)
+      .map(id => gameState.turnSlots.get(id)).find(Boolean);
+    gameState.turnOrder.insertBefore(slot, nextSlot ?? null);
+    renderPosition();
     return;
   } else if (spell.isWeaknessVigor) {
     // Общие правила иммунитета, снятия Слабости и обновления срока остаются в applyState.
@@ -347,6 +380,9 @@ window.castSpell = function(targetCell, deps) {
   const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
   const spell = activeEntity()?.availableSpells.find(item => item.id === gameState.preparedSpellId);
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
+  // Занятая клетка не расходует ресурсы призыва и сохраняет подготовку.
+  if (spell.isSummon && entities.some(entity => entity.hp > 0
+    && keyOf(entity.position) === keyOf(target))) return false;
   // Лечение и защита требуют живого союзника до оплаты.
   if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;

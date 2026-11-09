@@ -21,7 +21,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
-  id: 'bite', abilityType: 'ability', magicSchool: 'body', name: 'Укус волка', stackable: false,
+  id: 'bite', abilityType: 'ability', magicSchool: null, name: 'Укус волка', stackable: false,
   damage: 4, damageType: 'physical', target: 'any',
   description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
   stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,

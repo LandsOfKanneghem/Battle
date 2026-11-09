@@ -220,7 +220,7 @@ window.showEffectTooltip = function(icon, effect, kind = 'spell') {
   const lines = kind === 'state'
     ? [...(effect.description === undefined ? [] : [effect.description]), `Длительность: ${n} ${word}`,
       ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable || weaknessLocked ? [effect.id === 'weakness' ? 'Неснимаемая' : 'Неснимаемое'] : [])]
-    : [spellDescription, `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
+    : [...(spellDescription === undefined ? [] : [spellDescription]), `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
       `Источник: ${effect.casterName ?? 'Неизвестно'}`];
   for (const text of lines) {
     const line = document.createElement('p');

@@ -141,8 +141,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     applySpellOnEntity(creature, {
       id: 'summon-time', sourceId: 'summon-time', name: 'Время жизни',
       icon: window.SUMMON_TIME_ICON, stackable: false,
-      duration: spell.summonDuration, casterId: caster.id, casterName: caster.name,
-      description: 'Время жизни призывного существа.'
+      duration: spell.summonDuration, casterId: caster.id, casterName: caster.name
     });
     return;
   } else if (spell.isWeaknessVigor) {

@@ -2,7 +2,7 @@
 // gameState и функции других скриптов используются только при вызове обработчиков.
 
 // Текущие тултипы и ключ кэша панели эффектов принадлежат UI.
-const SUMMON_TIME_ICON = `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#1a1e24" stroke="#a9b1bf" stroke-width="2"/><path d="M20 8 V20 L27 24" fill="none" stroke="#ffdc36" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="2" fill="#ffdc36"/></svg>`;
+window.SUMMON_TIME_ICON = `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#1a1e24" stroke="#a9b1bf" stroke-width="2"/><path d="M20 8 V20 L27 24" fill="none" stroke="#ffdc36" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="2" fill="#ffdc36"/></svg>`;
 
 let spellTooltip = null;
 let spellTooltipIcon = null;
@@ -244,7 +244,7 @@ window.renderEffectPanel = function() {
   if (!entity) return;
   const effects = [...window.elementalShieldEffects(entity), ...entity.appliedEffects]
     .sort((a, b) => (a.appliedOrder ?? 0) - (b.appliedOrder ?? 0));
-  const key = JSON.stringify([entity.id, effects, entity.states, entity.summonDuration]);
+  const key = JSON.stringify([entity.id, effects, entity.states]);
   // Не пересоздаём иконки на каждом mousemove: тултип остаётся стабильным.
   if (effectPanelKey === key) return;
   effectPanelKey = key;
@@ -271,20 +271,7 @@ window.renderEffectPanel = function() {
     icon.addEventListener('blur', hideEffectTooltip);
     (kind === 'state' ? stateEffects : spellEffects).appendChild(icon);
   }
-  // Только представление срока: псевдо-состояние не добавляется в entity.states.
-  if (entity.isSummon) {
-    const icon = document.createElement('button');
-    icon.type = 'button';
-    icon.className = 'spell-slot effect-icon';
-    icon.innerHTML = SUMMON_TIME_ICON;
-    icon.setAttribute('aria-label', 'Время жизни');
-    const data = { name: 'Время жизни', duration: entity.summonDuration };
-    icon.addEventListener('mouseenter', () => showEffectTooltip(icon, data, 'state'));
-    icon.addEventListener('mouseleave', hideEffectTooltip);
-    icon.addEventListener('focus', () => showEffectTooltip(icon, data, 'state'));
-    icon.addEventListener('blur', hideEffectTooltip);
-    stateEffects.appendChild(icon);
-  }
+
 };
 
 window.selectEntity = function(id) {

@@ -184,15 +184,16 @@ window.tickCasterEffects = function(casterId) {
     target.appliedEffects = target.appliedEffects.map(effect => effect.casterId === casterId
       ? { ...effect, duration: effect.duration - 1 } : effect)
       .filter(effect => effect.duration > 0);
+    // Единственный тик — у appliedEffect; поле для очереди лишь отражает его срок.
+    if (target.isSummon && target.ownerId === casterId) {
+      const timeEffect = target.appliedEffects.find(effect => effect.id === 'summon-time');
+      target.summonDuration = timeEffect?.duration ?? 0;
+      if (target.summonDuration <= 0) target.hp = 0;
+    }
     tickTemporaryBonuses(target, casterId);
     storeElementalShields(target, elementalShieldEffects(target)
       .map(effect => effect.casterId === casterId ? { ...effect, turnsLeft: effect.turnsLeft - 1 } : effect)
       .filter(effect => effect.turnsLeft > 0));
-    // Призыв живёт по ходам владельца; удаление выполняет управление очередью.
-    if (target.isSummon && target.ownerId === casterId) {
-      target.summonDuration = (target.summonDuration ?? 0) - 1;
-      if (target.summonDuration <= 0) target.hp = 0;
-    }
   }
 };
 

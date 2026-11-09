@@ -138,6 +138,12 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       .map(id => gameState.turnSlots.get(id)).find(Boolean);
     gameState.turnOrder.insertBefore(slot, nextSlot ?? null);
     renderPosition();
+    applySpellOnEntity(creature, {
+      id: 'summon-time', sourceId: 'summon-time', name: 'Время жизни',
+      icon: window.SUMMON_TIME_ICON, stackable: false,
+      duration: spell.summonDuration, casterId: caster.id, casterName: caster.name,
+      description: 'Время жизни призывного существа.'
+    });
     return;
   } else if (spell.isWeaknessVigor) {
     // Общие правила иммунитета, снятия Слабости и обновления срока остаются в applyState.

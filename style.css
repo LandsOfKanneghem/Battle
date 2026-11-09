@@ -363,3 +363,17 @@
     .cell.blocked { cursor: not-allowed; }
     .obstacle, .wizard, .wolf, .monk, .lake-spirit { display: block; width: 100%; height: 100%; pointer-events: none; }
   /* Стили игры. */
+
+/* Экран завершённого боя: до перезагрузки перекрывает игровые элементы. */
+#defeat-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.75); pointer-events: auto;
+}
+#defeat-overlay[hidden] { display: none; }
+.defeat-message {
+  font-size: clamp(32px, 8vmin, 96px); font-weight: 800; color: #ff4d4d;
+  text-shadow: 0 0 20px #000, 0 4px 8px #000; letter-spacing: 2px;
+}
+.defeat-hint { margin-top: 16px; font-size: clamp(14px, 2vmin, 20px); color: #ccc; }

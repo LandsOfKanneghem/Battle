@@ -69,6 +69,7 @@ window.takeStep = function() {
 };
 
 window.beginTurn = function(entity) {
+  if (document.getElementById('defeat-overlay')?.hidden === false) return;
   window.gameState.isSkippingTurn = false;
   // Если участник удалён, выбираем следующего живого по фиксированной очереди.
   if (window.gameState.entities.indexOf(entity) === -1) {
@@ -179,6 +180,11 @@ window.removeDefeatedEntities = function() {
     ? [...orderBefore.slice(activeOrderIndex + 1), ...orderBefore.slice(0, activeOrderIndex + 1)]
       .map(id => window.gameState.entities.find(entity => entity.id === id && entity.hp > 0)).find(Boolean)
     : null;
+  const alliesAlive = window.gameState.entities.some(entity => entity.hp > 0 && window.gameState.isAlly(entity));
+  if (!alliesAlive) {
+    window.showDefeatOverlay?.();
+    return;
+  }
   if (activeDied || window.gameState.entities.length === 0) {
     window.gameState.isMoving = false;
     window.gameState.stepQueue = [];

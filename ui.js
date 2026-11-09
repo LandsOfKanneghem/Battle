@@ -290,7 +290,25 @@ window.selectEntity = function(id) {
   updatePanel();
 };
 
+window.showDefeatOverlay = function() {
+  const overlay = document.getElementById('defeat-overlay');
+  if (overlay?.hidden) window.gameState.turnVersion++; // Старые таймеры ИИ/пропуска больше не действуют.
+  if (overlay) overlay.hidden = false;
+  window.gameState.isCasting = true;
+  window.gameState.isMoving = false;
+  window.gameState.stepQueue = [];
+  window.gameState.preparedSpellId = null;
+  window.gameState.activeEntityId = null;
+  window.gameState.battlefield.classList.remove('moving');
+  window.clearHighlight?.();
+  hideSpellTooltip();
+  hideEffectTooltip();
+  window.updatePanel();
+};
+
 window.updatePanel = function() {
+  // Завершение ранее начатого каста может сбросить isCasting; экран поражения сохраняет блокировку.
+  if (document.getElementById('defeat-overlay')?.hidden === false) window.gameState.isCasting = true;
   window.gameState.hoveredEntityId = window.gameState.queueHoveredEntityId ?? window.gameState.fieldHoveredEntityId;
   if (window.gameState.selectedEntityId !== null && !window.gameState.entities.some(entity => entity.id === window.gameState.selectedEntityId)) window.gameState.selectedEntityId = null;
   const displayed = window.gameState.entities.find(entity => entity.id === (window.gameState.selectedEntityId ?? window.gameState.hoveredEntityId ?? window.gameState.activeEntityId));

@@ -300,8 +300,10 @@ window.updatePanel = function() {
   // У управляемого призыва показываем и полностью пустую книгу.
   const hasSpells = pages.some(page => page.some(Boolean)
     || (window.gameState.activeEntity()?.isSummon === true && page.length > 0));
-  document.getElementById('spells').hidden = viewingEffects || !hasSpells;
-  window.gameState.spellPageControls.hidden = viewingEffects || !hasSpells;
+  const active = window.gameState.activeEntity();
+  const canShowSpells = !!active && window.gameState.isAlly(active);
+  document.getElementById('spells').hidden = viewingEffects || !hasSpells || !canShowSpells;
+  window.gameState.spellPageControls.hidden = viewingEffects || !hasSpells || !canShowSpells;
   window.gameState.previousSpellPageButton.disabled = window.gameState.nextSpellPageButton.disabled = pages.length < 2 || window.gameState.isCasting || window.gameState.isMoving;
   document.getElementById('effects-panel').hidden = !viewingEffects;
   if (viewingEffects) renderEffectPanel();

@@ -22,8 +22,7 @@
     #turn-order::-webkit-scrollbar-thumb { background: #515966; border-radius: 4px; }
     #turn-order::-webkit-scrollbar-thumb:hover { background: #606c80; }
     .turn-slot { position: relative; width: 35px; flex-shrink: 0; min-width: 0; height: auto; aspect-ratio: 1; padding: 3px; border: 2px solid transparent; border-radius: 5px; background: #343b46; }
-    .turn-slot.summon svg { display: block; width: 80%; height: 80%; margin: auto; transform: translateY(12.5%); }
-    .turn-slot.summon { margin-left: -4px; }
+    .turn-slot.summon { width: 28px; margin-left: -4px; }
     .summon-badge {
       position: absolute; top: 1px; right: 1px; z-index: 2;
       font-size: 9px; font-weight: 700; color: #fff;

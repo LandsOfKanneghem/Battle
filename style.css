@@ -162,7 +162,7 @@
     .terrain svg { display: block; width: 100%; height: 100%; }
     /* Поверх поверхности, но под существами: прозрачная заливка не скрывает SVG. */
     .cell::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-    #battlefield .obstacle, #battlefield .wizard, #battlefield .wolf, #battlefield .monk {
+    #battlefield .obstacle, #battlefield .wizard, #battlefield .wolf, #battlefield .monk, #battlefield .spirit {
       position: absolute; inset: 0; z-index: 3;
     }
     .path-cost {
@@ -349,5 +349,5 @@
     }
     #battlefield.moving .cell { cursor: wait; }
     .cell.blocked { cursor: not-allowed; }
-    .obstacle, .wizard, .wolf, .monk { display: block; width: 100%; height: 100%; pointer-events: none; }
+    .obstacle, .wizard, .wolf, .monk, .spirit { display: block; width: 100%; height: 100%; pointer-events: none; }
   /* Стили игры. */

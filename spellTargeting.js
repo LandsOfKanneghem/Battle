@@ -112,7 +112,7 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
   const primary = spell.isSparks ? window.gameState.entities.find(entity => window.gameState.keyOf(entity.position) === window.gameState.keyOf(center)) : null;
   for (const entity of window.gameState.entities) {
     if (entity.hp <= 0 || !keys.has(window.gameState.keyOf(entity.position))) continue;
-    if (spell.enemyOnly && window.gameState.isAlly(entity)) continue;
+    if (spell.target === 'enemy' && window.gameState.isAlly(entity)) continue;
     const badge = document.createElement('span');
     if (spell.isHealHarm && window.gameState.isAlly(entity)) {
       // Показываем только недостающее HP, включая +0 при полном здоровье.

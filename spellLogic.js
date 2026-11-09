@@ -225,7 +225,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     }
   } else if (spell.stateId) {
     const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
-      && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)));
+      && (spell.target !== 'ally' || isAlly(entity)) && (spell.target !== 'enemy' || !isAlly(entity)));
     if (recipient) applySpellOnEntity(recipient, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
       description: stateTypes.get(spell.stateId).name,
@@ -240,7 +240,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
     for (const victim of entities) {
       if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)
-        && (!spell.enemyOnly || !isAlly(victim))) {
+        && (spell.target !== 'enemy' || !isAlly(victim))) {
         applyDamage(spell, victim);
         if (spell.id === 'burning-hands') {
           // Сначала урон: Влага и Заморозка ещё защищают от текущего удара.
@@ -393,8 +393,8 @@ window.castSpell = function(targetCell, deps) {
   if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.stateId && !spell.isRain && !spell.isShot && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
-    && (!spell.allyOnly || isAlly(entity)) && (!spell.enemyOnly || !isAlly(entity)))) return false;
-  if (spell.enemyOnly && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
+    && (spell.target !== 'ally' || isAlly(entity)) && (spell.target !== 'enemy' || !isAlly(entity)))) return false;
+  if (spell.target === 'enemy' && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
   const caster = activeEntity();

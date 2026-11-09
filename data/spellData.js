@@ -14,7 +14,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
   id: `${element.damageType}-shield`, name: `Защита от ${element.name}`,
   stackable: false, isElementalShield: true, magicSchool: element.damageType, damageType: element.damageType, target: 'ally',
   description: `Союзная цель блокирует часть урона от ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[element.damageType]}.`,
-  shieldAmount: 2, shieldDuration: 3, minRange: 0, range: 4, modifiable: true, allyOnly: true,
+  shieldAmount: 2, shieldDuration: 3, minRange: 0, range: 4, modifiable: true,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: element.svg ?? `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 10 L20 3 L33 10 L31 27 Q28 34 20 38 Q12 34 9 27 Z" fill="${element.color}" stroke="${element.edge}" stroke-width="2"/>${element.symbol}</svg>`
@@ -45,23 +45,23 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, isGlobal: true, aoeSize: 16,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 16 Q0 10 8 8 Q10 1 17 6 Q24 0 28 7 Q37 5 38 12 Q40 18 32 18 H10 Z" fill="#f65a25"/><path d="M11 14 L14 8 L18 13 L23 6 L26 14" fill="#ffc04c"/><g stroke-linecap="round"><path d="M5 22 L10 29 M16 21 L22 30 M28 22 L34 31 M9 32 L13 38 M24 33 L28 38" stroke="#ff6425" stroke-width="4"/><path d="M9 27 L11 30 M21 28 L23 31 M33 29 L35 32 M12 36 L13 38 M27 36 L28 38" stroke="#ffdd75" stroke-width="2"/></g></svg>`
 }, {
-  id: 'haste', name: 'Ускорение', stackable: false, magicSchool: 'air', stateId: 'speed', stateDuration: 2, effectDuration: 2, allyOnly: true, target: 'ally',
+  id: 'haste', name: 'Ускорение', stackable: false, magicSchool: 'air', stateId: 'speed', stateDuration: 2, effectDuration: 2, target: 'ally',
   description: 'Накладывает на союзную цель Скорость.',
   minRange: 0, range: 4, modifiable: true, apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 2, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 12 H26 Q36 12 33 6 Q30 2 27 6 M4 20 H32 Q40 20 36 27 Q32 31 29 26 M6 29 H20 Q28 29 23 35" fill="none" stroke="#a7eced" stroke-width="3" stroke-linecap="round"/></svg>`
 }, {
-  id: 'slow', name: 'Замедление', stackable: false, magicSchool: 'earth', stateId: 'slowness', stateDuration: 2, effectDuration: 2, enemyOnly: true, target: 'enemy',
+  id: 'slow', name: 'Замедление', stackable: false, magicSchool: 'earth', stateId: 'slowness', stateDuration: 2, effectDuration: 2, target: 'enemy',
   description: 'Накладывает на вражескую цель Медлительность.',
   minRange: 0, range: 4, modifiable: true, apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 2, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 24 Q0 17 12 17 Q17 9 25 17 Q39 15 37 25 Q40 35 21 35 Q4 38 3 24" fill="#78522f" stroke="#bc8c50"/><ellipse cx="20" cy="24" rx="10" ry="4" fill="none" stroke="#c49e68"/><circle cx="29" cy="11" r="3" fill="#916337"/></svg>`
 }, {
-  id: 'deep-freeze', magicSchool: 'water', name: 'Глубокая заморозка', stackable: false, stateId: 'freeze', stateDuration: 2, effectDuration: 2, allyOnly: false, target: 'any',
+  id: 'deep-freeze', magicSchool: 'water', name: 'Глубокая заморозка', stackable: false, stateId: 'freeze', stateDuration: 2, effectDuration: 2, target: 'any',
   minRange: 1, range: 5, modifiable: true, apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 4, isAOE: false, aoeSize: 1, svg: FREEZE.icon
 }, ...ELEMENTAL_SHIELD_SPELLS, {
-  id: 'liquid-membrane', magicSchool: 'water', name: 'Жидкая мембрана', stackable: false, isMembrane: true, allyOnly: true, target: 'ally',
+  id: 'liquid-membrane', magicSchool: 'water', name: 'Жидкая мембрана', stackable: false, isMembrane: true, target: 'ally',
   description: 'Дает союзной цели бонусное уклонение и энергощит.',
   esAmount: 4, evaAmount: 10, effectDuration: 2, minRange: 0, range: 4, modifiable: true, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
@@ -104,7 +104,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 34 L29 12" stroke="#bcefff" stroke-width="4"/><path d="M19 11 L36 4 L29 21 L27 13 Z" fill="#80dcff" stroke="#e3faff" stroke-width="2"/><path d="M4 26 L12 28 L14 36 M7 22 L15 24 L18 33" fill="none" stroke="#5aaad6" stroke-width="3"/><path d="M28 4 V14 M23 9 H33" stroke="#f0fdff" stroke-width="1.5"/></svg>`
 }, {
-  id: 'stone-skin', magicSchool: 'earth', name: 'Каменная кожа', stackable: false, isElementalShield: true, damageType: 'physical', target: 'ally', allyOnly: true,
+  id: 'stone-skin', magicSchool: 'earth', name: 'Каменная кожа', stackable: false, isElementalShield: true, damageType: 'physical', target: 'ally',
   description: 'Союзная цель блокирует часть физического урона.',
   shieldAmount: 2, shieldDuration: 3, minRange: 0, range: 4, modifiable: true, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
@@ -119,7 +119,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M23 2 L9 22 H19 L15 38 L33 15 H23 Z" fill="#ffe36b" stroke="#fff5be" stroke-width="1.5"/><path d="M7 5 L3 12 L9 11 M34 28 L38 23 M32 35 L37 37 M8 30 L3 34" fill="none" stroke="#83eaff" stroke-width="2.5" stroke-linecap="round"/></svg>`
 }, {
-  id: 'sky-shot', magicSchool: 'air', name: 'Выстрел в небо', stackable: false, isSkyShot: true, allyOnly: true, target: 'ally',
+  id: 'sky-shot', magicSchool: 'air', name: 'Выстрел в небо', stackable: false, isSkyShot: true, target: 'ally',
   description: 'Следующая дальнобойная атака цели или заклинание с типом Выстрел не требует LOS, а дальность применения увеличивается (если дальность атаки или заклинания модифицируема).',
   effectDescription: 'Следующая дальнобойная атака цели или заклинание с типом Выстрел не требует LOS, а ее дальность увеличивается на 2 клетки.',
   effectDuration: 1, minRange: 0, range: 4, modifiable: true, noLOS: false,
@@ -127,7 +127,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 29 Q0 27 4 23 Q7 20 11 22 Q12 16 18 18 Q24 16 27 22 Q35 20 36 27 Q35 31 29 30 Z" fill="#729cbf" stroke="#c4e7ff"/><path d="M20 35 V6 M11 15 L20 5 L29 15" fill="none" stroke="#ffe7a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 3 V11 M28 7 H36" stroke="#d5f8ff" stroke-width="2"/></svg>`
 }, {
-  id: 'reckless', magicSchool: 'fire', name: 'Сорвиголова', stackable: false, allyOnly: true, target: 'ally',
+  id: 'reckless', magicSchool: 'fire', name: 'Сорвиголова', stackable: false, target: 'ally',
   description: 'Накладывает на союзную цель состояние Адреналин.',
   stateId: 'adrenaline', stateDuration: 2, effectDuration: 2,
   minRange: 0, range: 4, modifiable: true, noLOS: false,
@@ -154,7 +154,7 @@ const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cub
 }, {
   id: 'light-flash', magicSchool: 'light', name: 'Вспышка света', stackable: false, damage: 2, damageType: 'light', target: 'enemy',
   minRange: 1, range: 6, modifiable: true, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,
-  cooldown: 0, maxCooldown: 0, noLOS: true, enemyOnly: true, isAOE: true, aoeSize: 1,
+  cooldown: 0, maxCooldown: 0, noLOS: true, isAOE: true, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 1 L24 13 L35 5 L28 17 L39 20 L28 24 L35 35 L24 28 L20 39 L16 28 L5 35 L12 24 L1 20 L12 16 L5 5 L16 12 Z" fill="#ffdb62"/><path d="M20 9 L23 17 L31 20 L23 23 L20 31 L17 23 L9 20 L17 17 Z" fill="#fffbe2"/></svg>`
 }, { ...WIZARD_SPELLS.find(spell => spell.id === 'haste'), stateDuration: 2, effectDuration: 2 }, {
   id: 'weakness-vigor', magicSchool: 'body', name: 'Наложить слабость / бодрость', stackable: false, isWeaknessVigor: true, target: 'any',
@@ -165,7 +165,7 @@ const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cub
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 5 V33 M4 25 L11 33 L18 25" fill="none" stroke="#ef777f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 35 V7 M22 15 L29 7 L36 15" fill="none" stroke="#82e9a5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 }, {
-  id: 'sprint', magicSchool: 'body', name: 'Спринт', stackable: false, isMpBuff: true, allyOnly: true, target: 'ally',
+  id: 'sprint', magicSchool: 'body', name: 'Спринт', stackable: false, isMpBuff: true, target: 'ally',
   description: 'Добавляет заклинателю несколько ОП на 1 ход.',
   mpAmount: 3, effectDuration: 1, minRange: 0, range: 0, modifiable: false, noLOS: true,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 4,

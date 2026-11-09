@@ -398,6 +398,9 @@ window.castSpell = function(targetCell, deps) {
   const handler = spellAnimationHandlers[spell.id];
   if (handler) {
     handler(ctx);
+  } else if (spell.isSummon) {
+    // До реализации анимации призыва завершаем оплаченный каст без снаряда.
+    setTimeout(finishCast, 0);
   } else {
     // Защитный fallback для ещё не зарегистрированного заклинания.
     deps.playProjectileAnimation(fromCell, targetCell, 'fire', () => setTimeout(finishCast, 0));

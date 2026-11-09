@@ -21,7 +21,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
-  id: 'lake-spirit', name: 'Дух озера', stackable: false, isSummon: true, target: 'any',
+  id: 'lake-spirit', name: 'Дух озера', stackable: false, isSummon: true, target: 'none',
   description: 'Призывает левитирующий шар воды. Дух озера наносит слабый урон водой на небольшой дистанции. Исчезает, получив 1 атаку.',
   minRange: 1, range: 1, modifiable: false, noLOS: false,
   apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,

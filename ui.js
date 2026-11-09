@@ -279,7 +279,7 @@ window.renderEffectPanel = function() {
     icon.innerHTML = SUMMON_TIME_ICON;
     icon.setAttribute('aria-label', 'Время жизни');
     const data = { name: 'Время жизни', duration: entity.summonDuration,
-      description: 'Сколько ходов осталось жить призыву' };
+      description: 'Время жизни призывного существа.' };
     icon.addEventListener('mouseenter', () => showEffectTooltip(icon, data, 'state'));
     icon.addEventListener('mouseleave', hideEffectTooltip);
     icon.addEventListener('focus', () => showEffectTooltip(icon, data, 'state'));

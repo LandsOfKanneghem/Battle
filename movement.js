@@ -214,12 +214,3 @@ window.cancelSpell = function() {
   window.clearHighlight();
   window.updatePanel();
 };
-
-// Будущие действия используют эту проверку, чтобы не уйти в минус.
-window.spendAP = function(amount) {
-  const active = window.gameState.activeEntity();
-  if (window.gameState.isSkippingTurn || window.isFrozen(active) || window.gameState.isCasting || window.gameState.isMoving || !active || !Number.isInteger(amount) || amount < 0 || amount > active.ap) return false;
-  active.ap -= amount;
-  window.updatePanel();
-  return true;
-};

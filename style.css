@@ -22,6 +22,7 @@
     #turn-order::-webkit-scrollbar-thumb { background: #515966; border-radius: 4px; }
     #turn-order::-webkit-scrollbar-thumb:hover { background: #606c80; }
     .turn-slot { position: relative; width: 35px; flex-shrink: 0; min-width: 0; height: auto; aspect-ratio: 1; padding: 3px; border: 2px solid transparent; border-radius: 5px; background: #343b46; }
+    .turn-slot.summon svg { display: block; width: 80%; height: 80%; margin: auto; transform: translateY(12.5%); }
     .turn-slot.summon { margin-left: -4px; }
     .summon-badge {
       position: absolute; top: 1px; right: 1px; z-index: 2;
@@ -173,7 +174,6 @@
     #battlefield .obstacle, #battlefield .wizard, #battlefield .wolf, #battlefield .monk, #battlefield .lake-spirit {
       position: absolute; inset: 0; z-index: 3;
     }
-    #battlefield .lake-spirit { inset: auto 20% 0 0; width: 80%; height: 80%; }
     .path-cost {
       position: absolute; top: 1px; right: 1px; z-index: 2;
       color: #edb4ff; background: rgba(26, 12, 40, .85); border-radius: 3px;

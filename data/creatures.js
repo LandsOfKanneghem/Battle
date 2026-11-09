@@ -51,7 +51,7 @@
       ]
     },
     wolf: {
-      name: 'Волк', type: 'wolf',
+      name: 'Волк', type: 'wolf', ai: 'wolf',
       baseHP: 6, baseWP: 4, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
@@ -146,6 +146,7 @@
       attributes: window.createAttributes(template.attributes),
       position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };
+    if (template.ai) creature.ai = template.ai;
     if (template.isSummon) {
       creature.isSummon = true;
       creature.ownerId = null; // Владелец будет назначен механикой призыва.

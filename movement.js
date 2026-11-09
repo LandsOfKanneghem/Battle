@@ -37,7 +37,7 @@ window.buildPath = function(start, target) {
   return null; // Свободная цель может быть отрезана препятствиями.
 };
 
-// Двигаться могут союзники; волки пока только пропускают ход.
+// Двигаться могут управляемые союзники.
 window.activeMover = function() {
   if (window.gameState.isSkippingTurn) return undefined;
   return window.gameState.entities.find(entity => entity.id === window.gameState.activeEntityId && entity.hp > 0 && !window.isFrozen(entity)
@@ -108,7 +108,7 @@ window.beginTurn = function(entity) {
     }
   }
   // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
-  window.gameState.isSkippingTurn = entity.type === 'wolf' || window.isFrozen(entity);
+  window.gameState.isSkippingTurn = window.isFrozen(entity);
   // Длительности меняются только по casterId, один раз даже для caster = target.
   window.tickCasterEffects(entity.id);
   if (window.gameState.entities.some(target => target.hp <= 0)) {
@@ -127,8 +127,12 @@ window.beginTurn = function(entity) {
   entity.mp = entity.maxMP;
   window.clearHighlight();
   window.updatePanel(); // HP не является ресурсом хода.
+  if (entity.ai && !window.isFrozen(entity)) {
+    window.runAI(entity);
+    return;
+  }
   if (window.gameState.isSkippingTurn) {
-    // Волк или замороженный участник виден 100 мс, но действовать не может.
+    // Замороженный участник виден 100 мс, но действовать не может.
 
     setTimeout(() => {
       // Смерть или новая передача уже завершили этот ход: старый таймер не действует.

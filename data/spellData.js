@@ -22,7 +22,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
 
 const SPELL_DEFINITIONS = [{
   id: 'water-shot', magicSchool: 'water', isShot: true,
-  name: 'Водный выстрел', stackable: false, damage: 3, damageType: 'water', target: 'enemy',
+  name: 'Водный выстрел', stackable: false, damage: 3, damageType: 'water', target: 'any',
   description: 'Наносит небольшой урон водой.',
   range: 4, minRange: 1, modifiable: false, noLOS: false,
   apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0, cooldown: 0, maxCooldown: 0,

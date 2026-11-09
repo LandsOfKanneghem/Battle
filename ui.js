@@ -153,7 +153,14 @@ window.renderSpellPanel = function(resetPage = true) {
   const pages = getSpellPages();
   if (window.gameState.currentSpellPage >= pages.length) window.gameState.currentSpellPage = 0;
   const currentSpells = pages[window.gameState.currentSpellPage] ?? [];
-  for (const spell of currentSpells) {
+  for (let i = 0; i < 16; i++) {
+    const spell = currentSpells[i] ?? null;
+    if (!spell) {
+      const slot = document.createElement('div');
+      slot.className = 'spell-slot';
+      document.getElementById('spells').appendChild(slot);
+      continue;
+    }
     const slot = document.createElement('button');
     slot.type = 'button';
     slot.className = 'spell-slot';
@@ -177,11 +184,7 @@ window.renderSpellPanel = function(resetPage = true) {
     window.gameState.spellSlots.set(spell, slot);
     document.getElementById('spells').appendChild(slot);
   }
-  for (let i = currentSpells.length; i < 16; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'spell-slot';
-    document.getElementById('spells').appendChild(slot);
-  }
+
 
 };
 
@@ -277,7 +280,7 @@ window.updatePanel = function() {
   const viewingEffects = window.gameState.selectedEntityId !== null;
   if (viewingEffects) hideSpellTooltip();
   const pages = getSpellPages();
-  const hasSpells = pages.some(page => page.length > 0);
+  const hasSpells = pages.some(page => page.some(Boolean));
   document.getElementById('spells').hidden = viewingEffects || !hasSpells;
   window.gameState.spellPageControls.hidden = viewingEffects || !hasSpells;
   window.gameState.previousSpellPageButton.disabled = window.gameState.nextSpellPageButton.disabled = pages.length < 2 || window.gameState.isCasting || window.gameState.isMoving;

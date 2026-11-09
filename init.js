@@ -50,14 +50,25 @@ window.gameState.turnOrderIds = ['wizard', 'wolf-1', 'monk', 'wolf-2', 'wolf-3']
 window.gameState.activeEntityId = character.id;
 window.gameState.costLabel.className = 'path-cost';
 
-// Стабильная сортировка сохраняет исходный порядок заклинаний внутри каждой школы.
-const SCHOOL_ORDER = { fire: 0, water: 1, air: 2, earth: 3, body: 4, light: 5 };
-character.availableSpells.sort((a, b) => SCHOOL_ORDER[a.magicSchool] - SCHOOL_ORDER[b.magicSchool]);
-monk.availableSpells.sort((a, b) => SCHOOL_ORDER[a.magicSchool] - SCHOOL_ORDER[b.magicSchool]);
-// Страницы содержат те же объекты: кулдауны и лимиты не зависят от открытой страницы.
-character.spellPages = [character.availableSpells.filter(spell => !spell.isElementalShield),
-  character.availableSpells.filter(spell => spell.isElementalShield)];
-monk.spellPages = [monk.availableSpells];
+// Позиция в массиве соответствует ячейке 4×4; ссылки ведут на исходные объекты.
+character.spellPages = [
+  [
+    'fire-shot', 'burning-hands', 'reckless', null,
+    'liquid-membrane', 'rain', 'ice-arrow', null,
+    'haste', 'wind-rose', 'sparks', 'sky-shot',
+    'slow', 'dead-weight', null, null
+  ],
+  [
+    'fire-shield', 'water-shield', 'earth-shield', 'air-shield',
+    'stone-skin', null, null, null,
+    null, null, null, null,
+    null, null, null, null
+  ]
+].map(page => page.map(id => id === null ? null : character.availableSpells.find(spell => spell.id === id) ?? null));
+monk.spellPages = [Array.from({ length: 16 }, (_, i) => {
+  const id = monk.availableSpells[i]?.id;
+  return id === undefined ? null : monk.availableSpells.find(spell => spell.id === id) ?? null;
+})];
 
 for (const id of window.gameState.turnOrderIds) {
   const entity = window.gameState.entities.find(item => item.id === id);

@@ -111,6 +111,11 @@ window.beginTurn = function(entity) {
   window.gameState.isSkippingTurn = entity.type === 'wolf' || entity.isSummon === true || window.isFrozen(entity);
   // Длительности меняются только по casterId, один раз даже для caster = target.
   window.tickCasterEffects(entity.id);
+  if (window.gameState.entities.some(target => target.hp <= 0)) {
+    window.removeDefeatedEntities();
+    // Если ход сменился, beginTurn уже вызван удалением. Живой владелец продолжает без повторного тика.
+    if (!window.gameState.entities.includes(entity) || window.gameState.turnVersion !== version) return;
+  }
   // Начало личного хода обновляет только заклинания этого участника.
   for (const spell of entity.availableSpells) {
     spell.usesThisTurn = 0;
@@ -142,10 +147,8 @@ window.beginTurn = function(entity) {
 
 window.removeDefeatedEntities = function() {
   const activeIndex = window.gameState.entities.findIndex(entity => entity.id === window.gameState.activeEntityId);
-  const activeDied = activeIndex !== -1 && window.gameState.entities[activeIndex].hp <= 0;
-  // До удаления ID запоминаем следующего: после splice индекс погибшего духа потеряется.
-  const nextAfterSummon = activeDied && window.gameState.entities[activeIndex].isSummon
-    ? window.gameState.nextLivingEntity(window.gameState.activeEntityId) : null;
+  const activeBefore = window.gameState.entities[activeIndex];
+  const orderBefore = [...window.gameState.turnOrderIds];
   // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
   for (let i = window.gameState.entities.length - 1; i >= 0; i--) {
     const entity = window.gameState.entities[i];
@@ -162,7 +165,16 @@ window.removeDefeatedEntities = function() {
     if (window.gameState.fieldHoveredEntityId === entity.id) window.gameState.fieldHoveredEntityId = null;
     if (window.gameState.queueHoveredEntityId === entity.id) window.gameState.queueHoveredEntityId = null;
     window.gameState.entities.splice(i, 1);
+    // Смерть владельца могла пометить духа в уже пройденной части массива.
+    i = window.gameState.entities.length;
   }
+  const activeDied = !!activeBefore && !window.gameState.entities.includes(activeBefore);
+  // ID погибшего духа уже удалён: ищем преемника по прежней очереди среди оставшихся живых.
+  const activeOrderIndex = orderBefore.indexOf(activeBefore?.id);
+  const nextAfterSummon = activeDied && activeBefore.isSummon
+    ? [...orderBefore.slice(activeOrderIndex + 1), ...orderBefore.slice(0, activeOrderIndex + 1)]
+      .map(id => window.gameState.entities.find(entity => entity.id === id && entity.hp > 0)).find(Boolean)
+    : null;
   if (activeDied || window.gameState.entities.length === 0) {
     window.gameState.isMoving = false;
     window.gameState.stepQueue = [];

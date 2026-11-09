@@ -188,10 +188,18 @@ window.tickCasterEffects = function(casterId) {
     storeElementalShields(target, elementalShieldEffects(target)
       .map(effect => effect.casterId === casterId ? { ...effect, turnsLeft: effect.turnsLeft - 1 } : effect)
       .filter(effect => effect.turnsLeft > 0));
+    // Призыв живёт по ходам владельца; удаление выполняет управление очередью.
+    if (target.isSummon && target.ownerId === casterId) {
+      target.summonDuration = (target.summonDuration ?? 0) - 1;
+      if (target.summonDuration <= 0) target.hp = 0;
+    }
   }
 };
 
 window.removeCasterEffects = function(casterId) {
+  for (const target of window.gameState.entities) {
+    if (target.isSummon && target.ownerId === casterId) target.hp = 0;
+  }
   // Смерть источника снимает его эффекты сразу, даже если сейчас ход другой цели.
   for (const target of window.gameState.entities) {
     const lostAdrenaline = target.states.some(state => state.id === 'adrenaline' && state.casterId === casterId);

@@ -278,3 +278,12 @@ window.playWindRoseAnimation = function(centerCell) {
   centerCell.appendChild(gust);
   setTimeout(() => gust.remove(), 500);
 };
+
+window.playBiteAnimation = function(cell) {
+  const wound = document.createElement('span');
+  wound.className = 'state-animation adrenaline';
+  wound.setAttribute('aria-hidden', 'true');
+  wound.innerHTML = stateTypes.get('bleeding').icon;
+  cell.appendChild(wound);
+  setTimeout(() => wound.remove(), 500);
+};

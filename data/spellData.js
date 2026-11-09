@@ -21,6 +21,14 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'bite', abilityType: 'ability', magicSchool: 'body', name: 'Укус волка', stackable: false,
+  damage: 4, damageType: 'physical', target: 'any',
+  description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
+  stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,
+  range: 1, minRange: 1, modifiable: false, noLOS: false,
+  apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0, cooldown: 0, maxCooldown: 0, isAOE: false, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8 Q10 4 14 6 L18 10 Q20 8 22 10 L26 6 Q30 4 32 8 L28 18 L32 28 Q30 32 26 30 L22 26 Q20 28 18 26 L14 30 Q10 32 8 28 L12 18 Z" fill="#c93650" stroke="#ffadb6" stroke-width="2"/><circle cx="16" cy="14" r="2" fill="#fff"/><circle cx="24" cy="14" r="2" fill="#fff"/></svg>`
+}, {
   id: 'water-shot', magicSchool: 'water', isShot: true,
   name: 'Водный выстрел', stackable: false, damage: 3, damageType: 'water', target: 'any',
   description: 'Наносит небольшой урон водой.',

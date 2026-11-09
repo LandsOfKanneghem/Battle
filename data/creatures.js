@@ -38,7 +38,7 @@
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
-      spellsKey: null, spellPagesSplit: false
+      spellsKey: null, spellPagesSplit: false, spellIds: ['bite']
     }
   };
 
@@ -133,7 +133,7 @@
       creature.availableSpells = template.spellIds.map(id => SPELL_DEFINITIONS.find(spell => spell.id === id))
         .filter(Boolean).map(spell => ({ ...spell }));
     }
-    if (template.isSummon && !template.spellsKey) {
+    if ((template.isSummon || template.spellIds) && !template.spellsKey) {
       creature.spellPages = [Array.from({ length: 16 }, (_, i) => creature.availableSpells[i] ?? null)];
     }
     // Врождённые состояния имеют отдельные экземпляры и источник — само существо.

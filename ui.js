@@ -59,6 +59,7 @@ window.showSpellTooltip = function(icon, spell) {
     line.append(caption, ` ${value}`);
     tooltip.appendChild(line);
   };
+  addLine('Тип', spell.abilityType === 'ability' ? 'Способность' : 'Заклинание');
   addLine('ОД', spell.apCost);
   addLine('КД', spellTurnLabel(spell.maxCooldown));
   if (spell.maxUsesPerBattle !== undefined) addLine('Раз за бой', spell.maxUsesPerBattle);
@@ -92,7 +93,7 @@ window.showSpellTooltip = function(icon, spell) {
       if (index === 0) addLine('Эффекты', effect);
       else { const line = document.createElement('p'); line.textContent = effect; tooltip.appendChild(line); }
     });
-    addLine('Длительность', spell.isHealHarm ? `${spell.bleedDuration} [враг]` : spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(spell.stateDuration ?? spell.shieldDuration ?? spell.effectDuration ?? spell.burnDuration));
+    addLine('Длительность', spell.isHealHarm ? `${spell.bleedDuration} [враг]` : spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(spell.stateDuration ?? spell.shieldDuration ?? spell.effectDuration ?? spell.burnDuration ?? spell.bleedDuration));
   }
   document.body.appendChild(tooltip);
   // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.

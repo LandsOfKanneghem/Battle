@@ -223,6 +223,14 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
         id: spell.stateId, duration: spell.bleedDuration, casterId: caster.id, casterName: caster.name
       });
     }
+  } else if (spell.id === 'bite') {
+    if (directTarget) {
+      applyDamage(spell, directTarget);
+      if (directTarget.hp > 0 && Math.random() * 100 < spell.bleedChance) {
+        applyState(directTarget, { id: spell.stateId, duration: spell.bleedDuration,
+          casterId: caster.id, casterName: caster.name });
+      }
+    }
   } else if (spell.stateId) {
     const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
       && (spell.target !== 'ally' || isAlly(entity)) && (spell.target !== 'enemy' || !isAlly(entity)));
@@ -270,6 +278,10 @@ const spellAnimationHandlers = {
   },
   'water-shot': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'water', () => ctx.setTimeout(ctx.finishCast, 0));
+  },
+  'bite': ctx => {
+    ctx.deps.playBiteAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
   },
   'ice-arrow': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'ice', () => ctx.setTimeout(ctx.finishCast, 0));

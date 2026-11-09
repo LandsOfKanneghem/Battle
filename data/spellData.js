@@ -21,6 +21,14 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'water-shot', magicSchool: 'water', isShot: true,
+  name: 'Водный выстрел', stackable: false, damage: 3, damageType: 'water', target: 'enemy',
+  description: 'Наносит небольшой урон водой.',
+  range: 4, minRange: 1, modifiable: false, noLOS: false,
+  apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0, cooldown: 0, maxCooldown: 0,
+  isAOE: false, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 30 Q2 22 10 14 Q18 6 28 10 Q36 14 34 24 Q32 34 20 34 Q12 34 8 30 Z" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><path d="M14 22 Q18 18 24 20" fill="none" stroke="#d0f4ff" stroke-width="1.5" opacity=".7"/></svg>`
+}, {
   id: 'lake-spirit', name: 'Дух озера', stackable: false, isSummon: true, target: 'none',
   description: 'Призывает левитирующий шар воды. Дух озера наносит слабый урон водой на небольшой дистанции. Исчезает, получив 1 атаку.',
   minRange: 1, range: 1, modifiable: false, noLOS: false,

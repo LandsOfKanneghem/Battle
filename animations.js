@@ -49,6 +49,8 @@ window.playProjectileAnimation = function(fromCell, toCell, type = 'fire', onArr
   projectile.setAttribute('aria-hidden', 'true');
   projectile.innerHTML = type.startsWith('spark')
     ? WIZARD_SPELLS.find(spell => spell.id === 'sparks').svg
+    : type === 'water'
+    ? SPELL_DEFINITIONS.find(spell => spell.id === 'water-shot').svg
     : type === 'ice'
     ? WIZARD_SPELLS.find(spell => spell.id === 'ice-arrow').svg
     : `<svg viewBox="0 0 40 40"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`;

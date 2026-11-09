@@ -29,7 +29,7 @@
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
-      spellsKey: null, spellPagesSplit: false, isSummon: true, innateStates: ['water-entity']
+      spellsKey: null, spellPagesSplit: false, isSummon: true, innateStates: ['water-entity'], spellIds: ['water-shot']
     },
     wolf: {
       name: 'Волк', type: 'wolf',
@@ -127,7 +127,14 @@
     if (template.isSummon) {
       creature.isSummon = true;
       creature.ownerId = null; // Владелец будет назначен механикой призыва.
-      if (!template.spellsKey) creature.spellPages = [Array(16).fill(null)];
+    }
+    if (template.spellIds) {
+      // Счётчики каста принадлежат конкретному призыву, а не общему шаблону заклинания.
+      creature.availableSpells = template.spellIds.map(id => SPELL_DEFINITIONS.find(spell => spell.id === id))
+        .filter(Boolean).map(spell => ({ ...spell }));
+    }
+    if (template.isSummon && !template.spellsKey) {
+      creature.spellPages = [Array.from({ length: 16 }, (_, i) => creature.availableSpells[i] ?? null)];
     }
     // Врождённые состояния имеют отдельные экземпляры и источник — само существо.
     for (const id of template.innateStates ?? []) {

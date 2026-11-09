@@ -306,6 +306,7 @@
       position: absolute; z-index: 100; pointer-events: none;
       filter: drop-shadow(0 0 4px #ff7b24);
     }
+    .spell-projectile[data-type="water"] { filter: drop-shadow(0 0 4px #80dcff); }
     .spell-projectile[data-type="ice"] { filter: drop-shadow(0 0 4px #80dcff); }
     .spell-projectile[data-type^="spark"] { filter: drop-shadow(0 0 5px #b9edff); }
     .spell-projectile svg { display: block; width: 100%; height: 100%; }

@@ -79,4 +79,13 @@ const BLEEDING = {
   overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false, stackable: true,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 Q5 22 7 29 Q10 38 20 38 Q32 38 34 28 Q35 21 20 3 Z" fill="#c93650" stroke="#ffadb6" stroke-width="2"/><path d="M12 26 Q10 32 18 33" fill="none" stroke="#ffe1e5" stroke-width="2" stroke-linecap="round"/></svg>`
 };
-const stateTypes = new Map([[SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+const WATER_ENTITY = {
+  id: 'water-entity', name: 'Водяная сущность',
+  description: 'Иммунитет к урону водой. Иммунитет к Влаге, Охлаждению и Горению.',
+  duration: 0, mpBonus: 0, initiativeBonus: 0,
+  permanent: true, unremovable: true,
+  overrides: [], neutralizes: [], blocks: ['wet', 'chill', 'burning'],
+  casterName: '', suppressed: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 Q5 22 8 29 Q12 39 22 37 Q35 35 32 24 Q29 16 20 3 Z" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><path d="M13 26 Q11 32 19 33" fill="none" stroke="#d0f4ff" stroke-width="2" stroke-linecap="round"/></svg>`
+};
+const stateTypes = new Map([[WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

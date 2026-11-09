@@ -227,6 +227,13 @@ window.showEffectTooltip = function(icon, effect, kind = 'spell') {
     line.textContent = text;
     tooltip.appendChild(line);
   }
+  if (effect.suppressed) {
+    const line = document.createElement('p');
+    line.textContent = 'Неактивно';
+    line.style.color = '#ff6b6b';
+    line.style.marginTop = '6px';
+    tooltip.appendChild(line);
+  }
   document.body.appendChild(tooltip);
   // Сначала пробуем сбоку от иконки, на узком экране — снизу или сверху.
   const r = icon.getBoundingClientRect(), t = tooltip.getBoundingClientRect();
@@ -255,11 +262,12 @@ window.renderEffectPanel = function() {
   stateEffects.replaceChildren();
   for (const { effect, kind } of [
     ...effects.filter(item => item.sourceId).map(effect => ({ effect, kind: 'spell' })),
-    ...entity.states.filter(state => !state.suppressed).map(effect => ({ effect, kind: 'state' }))
+    ...entity.states.filter(state => !state.suppressed || state.permanent).map(effect => ({ effect, kind: 'state' }))
   ]) {
     const icon = document.createElement('button');
     icon.type = 'button';
     icon.className = 'spell-slot effect-icon';
+    if (kind === 'state' && effect.permanent && effect.suppressed) icon.classList.add('suppressed');
     const sourceSpell = window.gameState.entities.flatMap(item => item.availableSpells).find(item => item.id === effect.sourceId);
     const svg = effect.icon ?? effect.svg ?? sourceSpell?.svg;
     if (svg) icon.innerHTML = svg;

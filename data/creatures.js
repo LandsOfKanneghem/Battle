@@ -29,7 +29,7 @@
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
-      spellsKey: null, spellPagesSplit: false, isSummon: true
+      spellsKey: null, spellPagesSplit: false, isSummon: true, innateStates: ['water-entity']
     },
     wolf: {
       name: 'Волк', type: 'wolf',
@@ -127,6 +127,15 @@
     if (template.isSummon) {
       creature.isSummon = true;
       creature.ownerId = null; // Владелец будет назначен механикой призыва.
+    }
+    // Врождённые состояния имеют отдельные экземпляры и источник — само существо.
+    for (const id of template.innateStates ?? []) {
+      const templateState = stateTypes.get(id);
+      if (templateState) creature.states.push({ ...templateState,
+        casterId: creature.id, casterName: creature.name, suppressed: false,
+        appliedOrder: ++window.gameState.effectOrder,
+        overrides: [...templateState.overrides], neutralizes: [...templateState.neutralizes],
+        blocks: [...templateState.blocks] });
     }
     creature.svg.setAttribute('aria-label', creature.name);
     if (template.spellsKey) {

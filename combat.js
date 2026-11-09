@@ -58,6 +58,8 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
   const template = stateTypes.get(input.id);
   if (!template) return false;
   const stateDuration = input.duration ?? template.duration;
+  // Подавленные состояния не дают иммунитетов через blocks.
+  if (entity.states.some(state => !state.suppressed && (state.blocks ?? []).includes(input.id))) return false;
   if (stateDuration <= 0) return false;
   // Иммунитет Адреналина действует самостоятельно, без Бодрости.
   if (['weakness', 'exhaustion'].includes(input.id) && hasActiveState(entity, 'adrenaline')) return false;
@@ -289,6 +291,9 @@ window.isMagicalDamage = function(damageType) {
 
 window.damageBreakdown = function(spell, entity) {
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
+  if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) {
+    return { absorbed: 0, hpDamage: 0 }; // Иммунитет сохраняет и HP, и ES.
+  }
   // Учитываем защиту нужного типа (включая physical) один раз, до ES/HP.
   const resistance = getEffectiveStat(entity, spell.damageType);
   const afterResistance = Math.max(0, spell.damage - resistance);

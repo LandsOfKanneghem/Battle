@@ -262,12 +262,12 @@ window.renderEffectPanel = function() {
   stateEffects.replaceChildren();
   for (const { effect, kind } of [
     ...effects.filter(item => item.sourceId).map(effect => ({ effect, kind: 'spell' })),
-    ...entity.states.filter(state => !state.suppressed || state.permanent).map(effect => ({ effect, kind: 'state' }))
+    ...entity.states.map(effect => ({ effect, kind: 'state' }))
   ]) {
     const icon = document.createElement('button');
     icon.type = 'button';
     icon.className = 'spell-slot effect-icon';
-    if (kind === 'state' && effect.permanent && effect.suppressed) icon.classList.add('suppressed');
+    if (kind === 'state' && effect.suppressed) icon.classList.add('suppressed');
     const sourceSpell = window.gameState.entities.flatMap(item => item.availableSpells).find(item => item.id === effect.sourceId);
     const svg = effect.icon ?? effect.svg ?? sourceSpell?.svg;
     if (svg) icon.innerHTML = svg;

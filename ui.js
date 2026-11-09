@@ -82,10 +82,10 @@ window.showSpellTooltip = function(icon, spell) {
   }
   const effects = [];
   if (spell.isHealHarm) effects.push('Кровотечение [враг] / Снимает 1 стак кровотечения [союз]');
+  else if (spell.effectDescription) effects.push(spell.effectDescription);
   else if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
   if (spell.burnDuration) effects.push(stateTypes.get('burning').name);
   if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
-  if (spell.isSkyShot || spell.isWeaknessVigor) effects.push(spell.effectDescription);
   if (spell.isMembrane) effects.push(`+${spell.esAmount} ES, +${spell.evaAmount}% уклонения`);
   if (spell.isMpBuff) effects.push(`+${spell.mpAmount} MP`);
   if (effects.length) {

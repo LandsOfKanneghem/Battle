@@ -21,7 +21,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
-  id: 'bite', abilityType: 'ability', magicSchool: null, name: 'Укус волка', stackable: false,
+  id: 'bite', effectDescription: 'Кровотечение [50%]', abilityType: 'ability', magicSchool: null, name: 'Укус волка', stackable: false,
   damage: 4, damageType: 'physical', target: 'any',
   description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
   stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,
@@ -61,19 +61,19 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, isGlobal: true, aoeSize: 16,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 16 Q0 10 8 8 Q10 1 17 6 Q24 0 28 7 Q37 5 38 12 Q40 18 32 18 H10 Z" fill="#f65a25"/><path d="M11 14 L14 8 L18 13 L23 6 L26 14" fill="#ffc04c"/><g stroke-linecap="round"><path d="M5 22 L10 29 M16 21 L22 30 M28 22 L34 31 M9 32 L13 38 M24 33 L28 38" stroke="#ff6425" stroke-width="4"/><path d="M9 27 L11 30 M21 28 L23 31 M33 29 L35 32 M12 36 L13 38 M27 36 L28 38" stroke="#ffdd75" stroke-width="2"/></g></svg>`
 }, {
-  id: 'haste', name: 'Ускорение', stackable: false, magicSchool: 'air', stateId: 'speed', stateDuration: 2, effectDuration: 2, target: 'ally',
+  id: 'haste', effectDescription: 'Скорость', name: 'Ускорение', stackable: false, magicSchool: 'air', stateId: 'speed', stateDuration: 2, effectDuration: 2, target: 'ally',
   description: 'Накладывает на союзную цель Скорость.',
   minRange: 0, range: 4, modifiable: true, apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 2, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 12 H26 Q36 12 33 6 Q30 2 27 6 M4 20 H32 Q40 20 36 27 Q32 31 29 26 M6 29 H20 Q28 29 23 35" fill="none" stroke="#a7eced" stroke-width="3" stroke-linecap="round"/></svg>`
 }, {
-  id: 'slow', name: 'Замедление', stackable: false, magicSchool: 'earth', stateId: 'slowness', stateDuration: 2, effectDuration: 2, target: 'enemy',
+  id: 'slow', effectDescription: 'Медлительность', name: 'Замедление', stackable: false, magicSchool: 'earth', stateId: 'slowness', stateDuration: 2, effectDuration: 2, target: 'enemy',
   description: 'Накладывает на вражескую цель Медлительность.',
   minRange: 0, range: 4, modifiable: true, apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 2, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 24 Q0 17 12 17 Q17 9 25 17 Q39 15 37 25 Q40 35 21 35 Q4 38 3 24" fill="#78522f" stroke="#bc8c50"/><ellipse cx="20" cy="24" rx="10" ry="4" fill="none" stroke="#c49e68"/><circle cx="29" cy="11" r="3" fill="#916337"/></svg>`
 }, {
-  id: 'deep-freeze', magicSchool: 'water', name: 'Глубокая заморозка', stackable: false, stateId: 'freeze', stateDuration: 2, effectDuration: 2, target: 'any',
+  id: 'deep-freeze', effectDescription: 'Заморозка', magicSchool: 'water', name: 'Глубокая заморозка', stackable: false, stateId: 'freeze', stateDuration: 2, effectDuration: 2, target: 'any',
   minRange: 1, range: 5, modifiable: true, apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 4, isAOE: false, aoeSize: 1, svg: FREEZE.icon
 }, ...ELEMENTAL_SHIELD_SPELLS, {
@@ -84,7 +84,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><radialGradient id="membrane-glow"><stop offset="0" stop-color="#e8ffff" stop-opacity=".25"/><stop offset=".75" stop-color="#70d4eb" stop-opacity=".5"/><stop offset="1" stop-color="#d3b4ff" stop-opacity=".8"/></radialGradient></defs><circle cx="20" cy="20" r="17" fill="url(#membrane-glow)" stroke="#a7f4ed" stroke-width="2"/><path d="M9 16 Q10 8 18 7 M24 33 Q32 31 33 24" fill="none" stroke="#ffdfae" stroke-width="2" stroke-linecap="round"/></svg>`
 }, {
-  id: 'rain', magicSchool: 'water', name: 'Дождь', stackable: false, isRain: true, stateId: 'wet', stateDuration: 3, effectDuration: 3, target: 'any',
+  id: 'rain', effectDescription: 'Влага', magicSchool: 'water', name: 'Дождь', stackable: false, isRain: true, stateId: 'wet', stateDuration: 3, effectDuration: 3, target: 'any',
   description: 'Накладывает на все цели в области действия Влагу.',
   minRange: 0, range: 4, modifiable: true, noLOS: true,
   apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 3,
@@ -99,7 +99,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="none" stroke="#70aebc" stroke-width="2"/><path d="M20 2 L24 16 L38 20 L24 24 L20 38 L16 24 L2 20 L16 16 Z" fill="#b8f3f5" stroke="#498998"/><path d="M20 8 V32 M8 20 H32" stroke="#fff" stroke-width="2"/><circle cx="20" cy="20" r="3" fill="#447d99"/></svg>`
 }, {
-  id: 'dead-weight', magicSchool: 'earth', name: 'Мёртвый груз', stackable: false, target: 'any', stateId: 'heavy', stateDuration: 2, effectDuration: 2,
+  id: 'dead-weight', effectDescription: 'Тяжесть', magicSchool: 'earth', name: 'Мёртвый груз', stackable: false, target: 'any', stateId: 'heavy', stateDuration: 2, effectDuration: 2,
   description: 'Накладывает на одиночную цель Тяжесть.',
   minRange: 0, range: 4, modifiable: true, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 3,
@@ -112,7 +112,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, aoeSize: 3,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 23 Q1 14 10 3 L14 13 L20 1 L25 13 L33 5 Q42 25 30 34 H11 Z" fill="#fa642b"/><path d="M12 34 L9 23 Q9 19 12 21 L16 25 V13 Q16 10 19 12 V22 V10 Q21 7 23 11 V23 V14 Q26 11 27 15 V25 L30 21 Q34 20 32 26 L28 35 Z" fill="#ffd18b" stroke="#a95429"/><path d="M16 38 H28" stroke="#ffe4ac" stroke-width="2"/></svg>`
 }, {
-  id: 'ice-arrow', magicSchool: 'water', name: 'Ледяная стрела', stackable: false, isShot: true, target: 'any',
+  id: 'ice-arrow', effectDescription: 'Охлаждение', magicSchool: 'water', name: 'Ледяная стрела', stackable: false, isShot: true, target: 'any',
   description: 'Наносит водой по одиночной цели и накладывает на нее Охлаждение.',
   damage: 2, damageType: 'water', stateId: 'chill', stateDuration: 2, effectDuration: 2,
   minRange: 1, range: 5, modifiable: true, noLOS: false,
@@ -143,7 +143,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 29 Q0 27 4 23 Q7 20 11 22 Q12 16 18 18 Q24 16 27 22 Q35 20 36 27 Q35 31 29 30 Z" fill="#729cbf" stroke="#c4e7ff"/><path d="M20 35 V6 M11 15 L20 5 L29 15" fill="none" stroke="#ffe7a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 3 V11 M28 7 H36" stroke="#d5f8ff" stroke-width="2"/></svg>`
 }, {
-  id: 'reckless', magicSchool: 'fire', name: 'Сорвиголова', stackable: false, target: 'ally',
+  id: 'reckless', effectDescription: 'Адреналин', magicSchool: 'fire', name: 'Сорвиголова', stackable: false, target: 'ally',
   description: 'Накладывает на союзную цель состояние Адреналин.',
   stateId: 'adrenaline', stateDuration: 2, effectDuration: 2,
   minRange: 0, range: 4, modifiable: true, noLOS: false,

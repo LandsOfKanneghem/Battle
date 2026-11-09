@@ -12,7 +12,17 @@
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'wizard', spellPagesSplit: true
+      attributes: { str: 0, att: 1, cha: 1, luc: 0 },
+      spellPages: [
+        ['fire-shot', 'burning-hands', 'reckless', null,
+          'liquid-membrane', 'rain', 'ice-arrow', 'lake-spirit',
+          'haste', 'wind-rose', 'sparks', 'sky-shot',
+          'slow', 'dead-weight', null, null],
+        ['fire-shield', 'water-shield', 'earth-shield', 'air-shield',
+          'stone-skin', null, null, null,
+          null, null, null, null,
+          null, null, null, null]
+      ]
     },
     monk: {
       name: 'Монах', type: 'monk',
@@ -20,7 +30,12 @@
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'monk', spellPagesSplit: false
+      attributes: { str: 0, att: 1, cha: 1, luc: 0 },
+      spellPages: [
+        ['fire-cube', 'heal-harm', 'light-flash', 'haste',
+          'weakness-vigor', 'sprint', 'bite', null,
+          null, null, null, null, null, null, null, null]
+      ]
     },
     'lake-spirit': {
       name: 'Дух озера', type: 'lake-spirit',
@@ -29,7 +44,11 @@
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
-      spellsKey: null, spellPagesSplit: false, isSummon: true, innateStates: ['water-entity'], spellIds: ['water-shot']
+      isSummon: true, innateStates: ['water-entity'],
+      spellPages: [
+        ['water-shot', null, null, null, null, null, null, null,
+          null, null, null, null, null, null, null, null]
+      ]
     },
     wolf: {
       name: 'Волк', type: 'wolf',
@@ -38,7 +57,10 @@
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
-      spellsKey: null, spellPagesSplit: false, spellIds: ['bite']
+      spellPages: [
+        ['bite', null, null, null, null, null, null, null,
+          null, null, null, null, null, null, null, null]
+      ]
     }
   };
 
@@ -128,13 +150,20 @@
       creature.isSummon = true;
       creature.ownerId = null; // Владелец будет назначен механикой призыва.
     }
-    if (template.spellIds) {
-      // Счётчики каста принадлежат конкретному призыву, а не общему шаблону заклинания.
-      creature.availableSpells = template.spellIds.map(id => SPELL_DEFINITIONS.find(spell => spell.id === id))
-        .filter(Boolean).map(spell => ({ ...spell }));
-    }
-    if ((template.isSummon || template.spellIds) && !template.spellsKey) {
-      creature.spellPages = [Array.from({ length: 16 }, (_, i) => creature.availableSpells[i] ?? null)];
+    if (template.spellPages) {
+      // Одна копия способности на владельца; страницы и flat-массив делят её счётчики.
+      const resolved = new Map();
+      creature.spellPages = template.spellPages.map(page => page.map(id => {
+        if (id === null) return null;
+        if (!resolved.has(id)) {
+          // Часть старых способностей монаха пока определена только в MONK_SPELLS.
+          const spell = SPELL_DEFINITIONS.find(spell => spell.id === id)
+            ?? MONK_SPELLS.find(spell => spell.id === id);
+          resolved.set(id, spell ? { ...spell } : null);
+        }
+        return resolved.get(id);
+      }));
+      creature.availableSpells = creature.spellPages.flat().filter(Boolean);
     }
     // Врождённые состояния имеют отдельные экземпляры и источник — само существо.
     for (const id of template.innateStates ?? []) {
@@ -146,12 +175,6 @@
         blocks: [...templateState.blocks] });
     }
     creature.svg.setAttribute('aria-label', creature.name);
-    if (template.spellsKey) {
-      creature.availableSpells = template.spellsKey === 'wizard' ? WIZARD_SPELLS : MONK_SPELLS;
-      creature.spellPages = template.spellPagesSplit
-        ? [creature.availableSpells.filter(spell => !spell.isElementalShield), creature.availableSpells.filter(spell => spell.isElementalShield)]
-        : [creature.availableSpells];
-    }
     return creature;
   };
 })();

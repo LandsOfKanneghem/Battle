@@ -127,6 +127,7 @@
     if (template.isSummon) {
       creature.isSummon = true;
       creature.ownerId = null; // Владелец будет назначен механикой призыва.
+      if (!template.spellsKey) creature.spellPages = [Array(16).fill(null)];
     }
     // Врождённые состояния имеют отдельные экземпляры и источник — само существо.
     for (const id of template.innateStates ?? []) {

@@ -136,7 +136,7 @@
 
     gameState.endTurnButton.addEventListener('click', () => {
       if (gameState.isCasting || gameState.isSkippingTurn || isFrozen(gameState.activeEntity())) return;
-      if (gameState.isMoving || ![character.id, monk.id].includes(gameState.activeEntityId)) return;
+      if (gameState.isMoving || !window.activeMover()) return;
       window.beginTurn(gameState.nextLivingEntity(gameState.activeEntityId));
     });
 

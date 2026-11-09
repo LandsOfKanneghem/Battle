@@ -41,7 +41,7 @@ window.buildPath = function(start, target) {
 window.activeMover = function() {
   if (window.gameState.isSkippingTurn) return undefined;
   return window.gameState.entities.find(entity => entity.id === window.gameState.activeEntityId && entity.hp > 0 && !window.isFrozen(entity)
-    && (entity.type === 'wizard' || entity.type === 'monk'));
+    && (entity.type === 'wizard' || entity.type === 'monk' || entity.isSummon === true));
 };
 
 window.takeStep = function() {
@@ -108,7 +108,7 @@ window.beginTurn = function(entity) {
     }
   }
   // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
-  window.gameState.isSkippingTurn = entity.type === 'wolf' || entity.isSummon === true || window.isFrozen(entity);
+  window.gameState.isSkippingTurn = entity.type === 'wolf' || window.isFrozen(entity);
   // Длительности меняются только по casterId, один раз даже для caster = target.
   window.tickCasterEffects(entity.id);
   if (window.gameState.entities.some(target => target.hp <= 0)) {
@@ -128,7 +128,7 @@ window.beginTurn = function(entity) {
   window.clearHighlight();
   window.updatePanel(); // HP не является ресурсом хода.
   if (window.gameState.isSkippingTurn) {
-    // Волк, призванный или замороженный участник виден 100 мс, но действовать не может.
+    // Волк или замороженный участник виден 100 мс, но действовать не может.
 
     setTimeout(() => {
       // Смерть или новая передача уже завершили этот ход: старый таймер не действует.
@@ -217,8 +217,9 @@ window.cancelSpell = function() {
 
 // Будущие действия используют эту проверку, чтобы не уйти в минус.
 window.spendAP = function(amount) {
-  if (window.gameState.isSkippingTurn || window.isFrozen(window.gameState.activeEntity()) || window.gameState.isCasting || window.gameState.isMoving || window.gameState.activeEntityId !== character.id || !Number.isInteger(amount) || amount < 0 || amount > character.ap) return false;
-  character.ap -= amount;
+  const active = window.gameState.activeEntity();
+  if (window.gameState.isSkippingTurn || window.isFrozen(active) || window.gameState.isCasting || window.gameState.isMoving || !active || !Number.isInteger(amount) || amount < 0 || amount > active.ap) return false;
+  active.ap -= amount;
   window.updatePanel();
   return true;
 };

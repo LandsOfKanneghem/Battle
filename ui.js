@@ -296,7 +296,9 @@ window.updatePanel = function() {
   const viewingEffects = window.gameState.selectedEntityId !== null;
   if (viewingEffects) hideSpellTooltip();
   const pages = getSpellPages();
-  const hasSpells = pages.some(page => page.some(Boolean));
+  // У управляемого призыва показываем и полностью пустую книгу.
+  const hasSpells = pages.some(page => page.some(Boolean)
+    || (window.gameState.activeEntity()?.isSummon === true && page.length > 0));
   document.getElementById('spells').hidden = viewingEffects || !hasSpells;
   window.gameState.spellPageControls.hidden = viewingEffects || !hasSpells;
   window.gameState.previousSpellPageButton.disabled = window.gameState.nextSpellPageButton.disabled = pages.length < 2 || window.gameState.isCasting || window.gameState.isMoving;
@@ -324,7 +326,7 @@ window.updatePanel = function() {
     writeAttribute(id, String(value));
     document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);
   }
-  window.gameState.endTurnButton.disabled = !displayed || window.gameState.isMoving || window.gameState.isCasting || window.gameState.isSkippingTurn || window.isFrozen(window.gameState.activeEntity()) || ![character.id, monk.id].includes(window.gameState.activeEntityId);
+  window.gameState.endTurnButton.disabled = !displayed || window.gameState.isMoving || window.gameState.isCasting || window.gameState.isSkippingTurn || window.isFrozen(window.gameState.activeEntity()) || !window.activeMover();
   // Характеристики учитывают наведение, заклинания — только активного участника.
   for (const spell of window.gameState.activeEntity()?.availableSpells ?? []) {
     const slot = window.gameState.spellSlots.get(spell);

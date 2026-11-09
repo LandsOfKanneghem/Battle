@@ -103,10 +103,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     return;
   }
   if (spell.isSummon) {
-    const spirit = window.createCreature('spirit', target);
-    spirit.ownerId = caster.id;
-    spirit.summonDuration = spell.summonDuration;
-    entities.push(spirit);
+    const creature = window.createCreature('lake-spirit', target);
+    creature.ownerId = caster.id;
+    creature.summonDuration = spell.summonDuration;
+    entities.push(creature);
     const gameState = window.gameState;
     const casterIndex = gameState.turnOrderIds.indexOf(caster.id);
     const existingSummons = gameState.turnOrderIds.filter(id => {
@@ -114,24 +114,24 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       return creature?.isSummon && creature.ownerId === caster.id;
     }).length;
     const insertIndex = casterIndex + 1 + existingSummons;
-    gameState.turnOrderIds.splice(insertIndex, 0, spirit.id);
+    gameState.turnOrderIds.splice(insertIndex, 0, creature.id);
     const slot = document.createElement('div');
     slot.className = 'turn-slot';
-    slot.setAttribute('aria-label', spirit.name);
-    slot.appendChild(spirit.svg.cloneNode(true));
+    slot.setAttribute('aria-label', creature.name);
+    slot.appendChild(creature.svg.cloneNode(true));
     slot.addEventListener('contextmenu', event => {
       event.preventDefault();
-      window.selectEntity(spirit.id);
+      window.selectEntity(creature.id);
     });
     slot.addEventListener('mouseenter', () => {
-      gameState.queueHoveredEntityId = spirit.id;
+      gameState.queueHoveredEntityId = creature.id;
       window.updatePanel();
     });
     slot.addEventListener('mouseleave', () => {
       gameState.queueHoveredEntityId = null;
       window.updatePanel();
     });
-    gameState.turnSlots.set(spirit.id, slot);
+    gameState.turnSlots.set(creature.id, slot);
     // Визуальная очередь повторяет порядок ID, включая несколько духов владельца.
     const nextSlot = gameState.turnOrderIds.slice(insertIndex + 1)
       .map(id => gameState.turnSlots.get(id)).find(Boolean);

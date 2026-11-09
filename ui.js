@@ -218,7 +218,8 @@ window.showEffectTooltip = function(icon, effect, kind = 'spell') {
   const weaknessLocked = kind === 'state' && effect.id === 'weakness' && window.gameState.entities.some(entity =>
     entity.states.includes(effect) && window.hasActiveState(entity, 'adrenaline-crash'));
   const lines = kind === 'state'
-    ? [...(effect.description === undefined ? [] : [effect.description]), `Длительность: ${n} ${word}`,
+    ? [...(effect.description === undefined ? [] : [effect.description]),
+      ...(effect.permanent ? [] : [`Длительность: ${n} ${word}`]),
       ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable || weaknessLocked ? [effect.id === 'weakness' ? 'Неснимаемая' : 'Неснимаемое'] : [])]
     : [...(spellDescription === undefined ? [] : [spellDescription]), `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
       `Источник: ${effect.casterName ?? 'Неизвестно'}`];

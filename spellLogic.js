@@ -117,6 +117,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     gameState.turnOrderIds.splice(insertIndex, 0, creature.id);
     const slot = document.createElement('div');
     slot.className = 'turn-slot';
+    slot.classList.add('summon');
     slot.setAttribute('aria-label', creature.name);
     slot.appendChild(creature.svg.cloneNode(true));
     slot.addEventListener('contextmenu', event => {

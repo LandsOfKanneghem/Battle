@@ -21,7 +21,15 @@
     #turn-order::-webkit-scrollbar-track { background: #1a1e24; border-radius: 4px; }
     #turn-order::-webkit-scrollbar-thumb { background: #515966; border-radius: 4px; }
     #turn-order::-webkit-scrollbar-thumb:hover { background: #606c80; }
-    .turn-slot { width: 35px; flex-shrink: 0; min-width: 0; height: auto; aspect-ratio: 1; padding: 3px; border: 2px solid transparent; border-radius: 5px; background: #343b46; }
+    .turn-slot { position: relative; width: 35px; flex-shrink: 0; min-width: 0; height: auto; aspect-ratio: 1; padding: 3px; border: 2px solid transparent; border-radius: 5px; background: #343b46; }
+    .turn-slot.summon { margin-left: -4px; }
+    .summon-badge {
+      position: absolute; top: 1px; right: 1px; z-index: 2;
+      font-size: 9px; font-weight: 700; color: #fff;
+      text-shadow: 0 0 3px #000, 0 0 5px #000;
+      background: rgba(0, 0, 0, 0.6); border-radius: 3px;
+      padding: 0 2px; line-height: 1.2; pointer-events: none;
+    }
     .turn-slot.active { background: #606c80; border-color: #ffdc36; }
     .panel {
       width: 220px;
@@ -165,6 +173,7 @@
     #battlefield .obstacle, #battlefield .wizard, #battlefield .wolf, #battlefield .monk, #battlefield .lake-spirit {
       position: absolute; inset: 0; z-index: 3;
     }
+    #battlefield .lake-spirit { inset: auto 20% 0 0; width: 80%; height: 80%; }
     .path-cost {
       position: absolute; top: 1px; right: 1px; z-index: 2;
       color: #edb4ff; background: rgba(26, 12, 40, .85); border-radius: 3px;

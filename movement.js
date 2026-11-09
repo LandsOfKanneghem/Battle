@@ -108,7 +108,7 @@ window.beginTurn = function(entity) {
     }
   }
   // Проверяем ДО тика: последний ход самоналоженной Заморозки тоже пропускается.
-  window.gameState.isSkippingTurn = entity.type === 'wolf' || window.isFrozen(entity);
+  window.gameState.isSkippingTurn = entity.type === 'wolf' || entity.isSummon === true || window.isFrozen(entity);
   // Длительности меняются только по casterId, один раз даже для caster = target.
   window.tickCasterEffects(entity.id);
   // Начало личного хода обновляет только заклинания этого участника.
@@ -123,7 +123,7 @@ window.beginTurn = function(entity) {
   window.clearHighlight();
   window.updatePanel(); // HP не является ресурсом хода.
   if (window.gameState.isSkippingTurn) {
-    // Волк или замороженный участник виден 100 мс, но действовать не может.
+    // Волк, призванный или замороженный участник виден 100 мс, но действовать не может.
 
     setTimeout(() => {
       // Смерть или новая передача уже завершили этот ход: старый таймер не действует.

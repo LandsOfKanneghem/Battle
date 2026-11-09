@@ -102,7 +102,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     playMissAnimation(cells[target.y * SIZE + target.x]);
     return;
   }
-  if (spell.isWeaknessVigor) {
+  if (spell.isSummon) {
+    // Заглушка первого шага: создание и жизненный цикл духа появятся отдельно.
+    return;
+  } else if (spell.isWeaknessVigor) {
     // Общие правила иммунитета, снятия Слабости и обновления срока остаются в applyState.
     if (directTarget) applyState(directTarget, {
       id: isAlly(directTarget) ? 'vigor' : 'weakness', duration: spell.stateDuration,

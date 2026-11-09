@@ -21,6 +21,13 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'lake-spirit', name: 'Дух озера', stackable: false, isSummon: true, target: 'any',
+  description: 'Призывает левитирующий шар воды. Дух озера наносит слабый урон водой на небольшой дистанции. Исчезает, получив 1 атаку.',
+  minRange: 1, range: 1, modifiable: false, noLOS: false,
+  apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
+  isAOE: false, aoeSize: 1, summonDuration: 2, magicSchool: 'water',
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#d0f4ff" opacity=".7"/><path d="M8 14 Q14 8 22 10" fill="none" stroke="#a0d4ff" stroke-width="1.5" opacity=".6"/><path d="M20 6 V2 M14 4 L20 2 L26 4" fill="none" stroke="#c3ffff" stroke-width="2" stroke-linecap="round"/></svg>`
+}, {
   id: 'fire-shot', magicSchool: 'fire', isShot: true, name: 'Огненный выстрел', stackable: false, damage: 2, damageType: 'fire', target: 'any',
   description: 'Наносит урон огнем по одиночной цели.',
   range: 6, minRange: 1, modifiable: true, noLOS: false, apCost: 3, maxUsesPerTurn: 2, usesThisTurn: 0,
@@ -131,7 +138,7 @@ const SPELL_DEFINITIONS = [{
 const HIDDEN_SPELLS = SPELL_DEFINITIONS.filter(spell => ['fire-cube', 'deep-freeze', 'armageddon'].includes(spell.id));
 const WIZARD_SPELLS = [
   'fire-shot', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin',
-  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands', 'ice-arrow', 'sparks', 'sky-shot', 'reckless'
+  'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands', 'ice-arrow', 'sparks', 'sky-shot', 'reckless', 'lake-spirit'
 ].map(id => SPELL_DEFINITIONS.find(spell => spell.id === id));
 
 // Все поля заклинания — примитивы, включая SVG-разметку, поэтому

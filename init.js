@@ -54,7 +54,7 @@ window.gameState.costLabel.className = 'path-cost';
 character.spellPages = [
   [
     'fire-shot', 'burning-hands', 'reckless', null,
-    'liquid-membrane', 'rain', 'ice-arrow', null,
+    'liquid-membrane', 'rain', 'ice-arrow', 'lake-spirit',
     'haste', 'wind-rose', 'sparks', 'sky-shot',
     'slow', 'dead-weight', null, null
   ],

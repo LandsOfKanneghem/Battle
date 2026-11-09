@@ -22,6 +22,15 @@
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { str: 0, att: 1, cha: 1, luc: 0 }, spellsKey: 'monk', spellPagesSplit: false
     },
+    spirit: {
+      name: 'Дух озера', type: 'spirit',
+      baseHP: 1, baseWP: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+      baseEarth: 0, baseMind: 0, basePoison: 0,
+      attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
+      spellsKey: null, spellPagesSplit: false, isSummon: true
+    },
     wolf: {
       name: 'Волк', type: 'wolf',
       baseHP: 6, baseWP: 4, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
@@ -34,6 +43,7 @@
   };
 
   const SVG_ART = {
+    spirit: `<circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#fff" opacity=".6"/>`,
     wizard: `
       <path d="M11 36 L15 20 L25 20 L30 36 Z" fill="#287dff" stroke="#102e70"/>
       <circle cx="20" cy="17" r="6" fill="#ffd6a0"/>
@@ -114,6 +124,10 @@
       attributes: window.createAttributes(template.attributes),
       position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };
+    if (template.isSummon) {
+      creature.isSummon = true;
+      creature.ownerId = null; // Владелец будет назначен механикой призыва.
+    }
     creature.svg.setAttribute('aria-label', creature.name);
     if (template.spellsKey) {
       creature.availableSpells = template.spellsKey === 'wizard' ? WIZARD_SPELLS : MONK_SPELLS;

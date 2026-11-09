@@ -73,6 +73,10 @@ window.showSpellTooltip = function(icon, spell) {
   const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', physical: 'физический' };
   if (spell.damage > 0) addLine('Урон', `${spell.damage} ${elements[spell.damageType] ?? spell.damageType}`);
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
+  if (spell.isSummon) {
+    addLine('Призыв', spell.name);
+    addLine('Длительность', spellTurnLabel(spell.summonDuration));
+  }
   const effects = [];
   if (spell.isHealHarm) effects.push('Кровотечение [враг] / Снимает 1 стак кровотечения [союз]');
   else if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);

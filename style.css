@@ -23,7 +23,8 @@
     #turn-order::-webkit-scrollbar-thumb:hover { background: #606c80; }
     .turn-slot { position: relative; width: 35px; flex-shrink: 0; min-width: 0; height: auto; aspect-ratio: 1; padding: 3px; border: 2px solid transparent; border-radius: 5px; background: #343b46; }
     .turn-slot svg { display: block; width: 100%; height: 100%; }
-    .turn-slot.summon { width: 28px; margin-left: -4px; }
+    /* При align-items: center отступ компенсирует разницу высот 35 − 28. */
+    .turn-slot.summon { width: 28px; margin-left: -4px; margin-top: 7px; }
     .summon-badge {
       position: absolute; top: 1px; right: 1px; z-index: 2;
       font-size: 9px; font-weight: 700; color: #fff;

@@ -37,16 +37,22 @@ function createObstacle() {
   return sprite;
 }
 
-// Порядок создания волков определяет их стабильные id в очереди.
+// Создаём и регистрируем участников сразу, в порядке ходов.
 const character = window.createCreature('wizard', { x: 8, y: 8 });
+window.gameState.entities.push(character);
+window.gameState.turnOrderIds.push(character.id);
 const wolf1 = window.createCreature('wolf', { x: 3, y: 4 });
-const wolf2 = window.createCreature('wolf', { x: 7, y: 7 });
-const wolf3 = window.createCreature('wolf', { x: 12, y: 5 });
+window.gameState.entities.push(wolf1);
+window.gameState.turnOrderIds.push(wolf1.id);
 const monk = window.createCreature('monk', { x: 7, y: 8 });
-window.gameState.entities = [character, wolf1, wolf2, wolf3, monk];
-// Порядок ходов не зависит от порядка хранения и удаления существ.
-window.gameState.turnOrderIds = ['wizard', 'wolf-1', 'monk', 'wolf-2', 'wolf-3'];
-// Свободная травяная клетка; общий цикл ниже создаёт слот и для великана.
+window.gameState.entities.push(monk);
+window.gameState.turnOrderIds.push(monk.id);
+const wolf2 = window.createCreature('wolf', { x: 7, y: 7 });
+window.gameState.entities.push(wolf2);
+window.gameState.turnOrderIds.push(wolf2.id);
+const wolf3 = window.createCreature('wolf', { x: 12, y: 5 });
+window.gameState.entities.push(wolf3);
+window.gameState.turnOrderIds.push(wolf3.id);
 const giant = window.createCreature('hill-giant', { x: 13, y: 2 });
 window.gameState.entities.push(giant);
 window.gameState.turnOrderIds.push(giant.id);

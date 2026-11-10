@@ -74,6 +74,24 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     window.updatePanel?.();
     return false;
   }
+  if (input.id === 'light') {
+    // Новая Легкость не подавляет неснимаемую Тяжесть.
+    if (entity.states.some(state => state.id === 'heavy' && state.unremovable)) return false;
+    // Поддерживаем постоянную Тяжесть, добавленную вручную без метки порядка.
+    for (const state of entity.states) {
+      if (state.id === 'heavy' && state.permanent && state.appliedOrder === undefined) state.appliedOrder = 0;
+    }
+  }
+  // Повторное наложение обновляет приоритет постоянного экземпляра, сохраняя его источник и флаги.
+  const permanentInstance = entity.states.find(state => state.id === input.id && state.permanent && !state.unremovable);
+  if (permanentInstance) {
+    permanentInstance.appliedOrder = ++window.gameState.effectOrder;
+    permanentInstance.suppressed = false;
+    resolveStateSuppression(entity);
+    recalculateStateStats(entity);
+    window.updatePanel?.();
+    return true;
+  }
   // Стакающиеся состояния всегда создают отдельный экземпляр и собственный таймер.
   const sameInstance = state => template.stackable !== true && state.id === input.id;
   const existing = entity.states.find(sameInstance);

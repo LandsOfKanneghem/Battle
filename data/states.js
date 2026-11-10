@@ -34,8 +34,14 @@ const WET = {
 const HEAVY = {
   id: 'heavy', name: 'Тяжесть', mpBonus: 0, initiativeBonus: 0,
   description: 'Нельзя толкнуть; обычная ходьба разрешена', duration: 2, casterName: '', suppressed: false,
-  overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  overrides: ['light'], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M15 14 V10 Q15 4 20 4 Q25 4 25 10 V14" fill="none" stroke="#c5c9ce" stroke-width="4"/><path d="M11 14 H29 L35 35 H5 Z" fill="#57616e" stroke="#bbc4cf" stroke-width="2"/><path d="M20 18 V29 M15 24 L20 29 L25 24" fill="none" stroke="#e5e9ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+};
+const LIGHT = {
+  id: 'light', name: 'Легкость', duration: 2, mpBonus: 0, initiativeBonus: 0,
+  description: 'Временно снимает Тяжесть (перекрывает).', casterName: '', suppressed: false,
+  overrides: ['heavy'], neutralizes: [], blocks: [], permanent: false, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 Q24 10 30 12 Q38 16 34 24 Q30 32 20 34 Q10 32 6 24 Q2 16 10 12 Q16 10 20 4 Z" fill="#d5edf6" stroke="#829ea9" stroke-width="2"/><path d="M14 20 Q20 16 26 20" fill="none" stroke="#fff" stroke-width="2"/></svg>`
 };
 const CHILL = {
   id: 'chill', name: 'Охлаждение', mpBonus: 0, initiativeBonus: 0,
@@ -88,4 +94,4 @@ const WATER_ENTITY = {
   casterName: '', suppressed: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 Q5 22 8 29 Q12 39 22 37 Q35 35 32 24 Q29 16 20 3 Z" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><path d="M13 26 Q11 32 19 33" fill="none" stroke="#d0f4ff" stroke-width="2" stroke-linecap="round"/></svg>`
 };
-const stateTypes = new Map([[WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+const stateTypes = new Map([[WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

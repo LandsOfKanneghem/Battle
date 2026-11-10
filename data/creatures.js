@@ -17,7 +17,7 @@
         ['fire-shot', 'burning-hands', 'reckless', null,
           'liquid-membrane', 'rain', 'ice-arrow', 'lake-spirit',
           'haste', 'wind-rose', 'sparks', 'sky-shot',
-          'slow', 'dead-weight', null, null],
+          'slow', 'dead-weight', null, 'teleport'],
         ['fire-shield', 'water-shield', 'earth-shield', 'air-shield',
           'stone-skin', null, null, null,
           null, null, null, null,

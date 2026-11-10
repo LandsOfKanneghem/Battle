@@ -7,7 +7,7 @@
 
   window.runAI = function(entity) {
     if (entity.ai === 'wolf') { runWolfAI(entity); return; }
-    // runSkipAI(entity); // Режим простого пропуска для тестов.
+    runSkipAI(entity); // Остальные типы ИИ пока только пропускают ход.
   };
 
   function runSkipAI(entity, version = state().turnVersion) {

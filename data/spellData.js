@@ -21,6 +21,21 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'club-smash', abilityType: 'ability', name: 'Удар дубиной', stackable: false,
+  damage: 24, damageType: 'physical', target: 'any',
+  range: 1, minRange: 1, modifiable: false, noLOS: false,
+  apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 1,
+  isAOE: false, aoeSize: 1, isShot: false,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 36 L23 13" stroke="#a77b4b" stroke-width="6" stroke-linecap="round"/><path d="M19 4 L31 2 L37 13 L25 23 L16 15 Z" fill="#775035" stroke="#d3ad76" stroke-width="2"/><path d="M24 7 L29 15 M30 6 L33 11" stroke="#493326" stroke-width="2"/></svg>`
+}, {
+  id: 'boulder-throw', abilityType: 'ability', name: 'Бросок булыжника', stackable: false,
+  damage: 16, damageType: 'physical', target: 'any',
+  range: 4, minRange: 1, modifiable: false, noLOS: false,
+  apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 3,
+  isAOE: false, aoeSize: 1, isShot: true,
+  description: 'Бросает булыжник, нанося физический урон по цели.',
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 12 L22 5 L34 13 L36 28 L24 36 L7 30 L3 20 Z" fill="#8b8f96" stroke="#d1d5dc" stroke-width="2"/><path d="M9 12 L17 22 L7 30 M17 22 L31 18 L34 13 M17 22 L24 36" fill="none" stroke="#565d68" stroke-width="2"/></svg>`
+}, {
   id: 'bite', effectDescription: 'Кровотечение [50%]', abilityType: 'ability', magicSchool: null, name: 'Укус волка', stackable: false,
   damage: 4, damageType: 'physical', target: 'any',
   description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',

@@ -48,10 +48,12 @@ window.showSpellTooltip = function(icon, spell) {
   title.className = 'spell-title';
   title.textContent = spell.name;
   tooltip.appendChild(title);
-  const description = document.createElement('p');
-  description.className = 'spell-description';
-  description.textContent = spell.description ?? 'NULL';
-  tooltip.appendChild(description);
+  if (spell.description) {
+    const description = document.createElement('p');
+    description.className = 'spell-description';
+    description.textContent = spell.description;
+    tooltip.appendChild(description);
+  }
   const addLine = (label, value) => {
     const line = document.createElement('p');
     const caption = document.createElement('strong');

@@ -50,9 +50,23 @@
           null, null, null, null, null, null, null, null]
       ]
     },
+    'hill-giant': {
+      name: 'Холмовой Великан', type: 'hill-giant', ai: 'hill-giant',
+      baseHP: 30, baseWP: 10, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+      baseEarth: 0, baseMind: 0, basePoison: 0,
+      attributes: { str: 5, att: 1, cha: 1, luc: 0 },
+      innateStates: [{ id: 'heavy', permanent: true }],
+      spellPages: [
+        ['club-smash', 'boulder-throw', null, null,
+          null, null, null, null, null, null, null, null,
+          null, null, null, null]
+      ]
+    },
     wolf: {
       name: 'Волк', type: 'wolf', ai: 'wolf',
-      baseHP: 6, baseWP: 4, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
+      baseHP: 6, baseWP: 4, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -65,6 +79,7 @@
   };
 
   const SVG_ART = {
+    'hill-giant': `<path d="M8 37 L10 19 Q20 13 29 20 L31 37 H23 L21 29 L18 37 Z" fill="#807467" stroke="#c7b69c"/><path d="M10 21 L4 30 L8 33 L15 25 M27 22 L34 27" fill="none" stroke="#a59580" stroke-width="6" stroke-linecap="round"/><circle cx="20" cy="11" r="8" fill="#a59580" stroke="#5f544b"/><path d="M13 8 L17 4 H25 L28 10" fill="#544638"/><circle cx="17" cy="11" r="1.2" fill="#fff0c6"/><circle cx="23" cy="11" r="1.2" fill="#fff0c6"/><path d="M17 16 H23 M35 35 L32 15" stroke="#493425" stroke-width="3"/><path d="M29 4 L35 3 L39 17 L32 20 Z" fill="#76502d" stroke="#b18a53" stroke-width="2"/>`,
     'lake-spirit': `<circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#fff" opacity=".6"/>`,
     wizard: `
       <path d="M11 36 L15 20 L25 20 L30 36 Z" fill="#287dff" stroke="#102e70"/>
@@ -104,6 +119,11 @@
     svg.setAttribute('role', 'img');
     svg.setAttribute('aria-label', CREATURE_TEMPLATES[kind].name);
     svg.innerHTML = SVG_ART[kind];
+    if (kind === 'hill-giant') {
+      // Новый спрайт и его копия очереди вписываются в контейнер без изменения общей CSS.
+      Object.assign(svg.style, { display: 'block', width: '100%', height: '100%',
+        position: 'absolute', inset: '0', zIndex: '3', pointerEvents: 'none' });
+    }
     return svg;
   };
 
@@ -167,13 +187,16 @@
       creature.availableSpells = creature.spellPages.flat().filter(Boolean);
     }
     // Врождённые состояния имеют отдельные экземпляры и источник — само существо.
-    for (const id of template.innateStates ?? []) {
+    for (const entry of template.innateStates ?? []) {
+      const id = typeof entry === 'string' ? entry : entry.id;
+      const overrides = typeof entry === 'string' ? {} : entry;
       const templateState = stateTypes.get(id);
-      if (templateState) creature.states.push({ ...templateState,
+      if (templateState) creature.states.push({ ...templateState, ...overrides,
         casterId: creature.id, casterName: creature.name, suppressed: false,
         appliedOrder: ++window.gameState.effectOrder,
-        overrides: [...templateState.overrides], neutralizes: [...templateState.neutralizes],
-        blocks: [...templateState.blocks] });
+        overrides: [...(overrides.overrides ?? templateState.overrides)],
+        neutralizes: [...(overrides.neutralizes ?? templateState.neutralizes)],
+        blocks: [...(overrides.blocks ?? templateState.blocks)] });
     }
     creature.svg.setAttribute('aria-label', creature.name);
     return creature;

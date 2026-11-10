@@ -46,6 +46,10 @@ const monk = window.createCreature('monk', { x: 7, y: 8 });
 window.gameState.entities = [character, wolf1, wolf2, wolf3, monk];
 // Порядок ходов не зависит от порядка хранения и удаления существ.
 window.gameState.turnOrderIds = ['wizard', 'wolf-1', 'monk', 'wolf-2', 'wolf-3'];
+// Свободная травяная клетка; общий цикл ниже создаёт слот и для великана.
+const giant = window.createCreature('hill-giant', { x: 13, y: 2 });
+window.gameState.entities.push(giant);
+window.gameState.turnOrderIds.push(giant.id);
 
 window.gameState.activeEntityId = character.id;
 window.gameState.costLabel.className = 'path-cost';
@@ -56,7 +60,12 @@ for (const id of window.gameState.turnOrderIds) {
   const slot = document.createElement('div');
   slot.className = 'turn-slot';
   slot.setAttribute('aria-label', entity.name);
-  slot.appendChild(entity.svg.cloneNode(true));
+  const queueSprite = entity.svg.cloneNode(true);
+  if (entity.type === 'hill-giant') {
+    queueSprite.style.position = 'static';
+    queueSprite.style.inset = 'auto';
+  }
+  slot.appendChild(queueSprite);
   window.gameState.turnSlots.set(entity.id, slot);
   window.gameState.turnOrder.appendChild(slot);
 }

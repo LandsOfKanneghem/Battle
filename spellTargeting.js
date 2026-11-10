@@ -68,6 +68,7 @@ window.inSpellReach = function(target, spell) {
     // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
     && (spell.isHeal || !window.gameState.obstacles.has(window.gameState.keyOf(target)))
     && !(spell.isSummon && window.gameState.terrain.get(window.gameState.keyOf(target)) === 'deep-water')
+    && !(spell.isTeleport && window.gameState.terrain.get(window.gameState.keyOf(target)) === 'deep-water')
     && distance >= (spell.isHeal ? 0 : (spell.minRange ?? 1)) && distance <= window.effectiveSpellRange(spell, caster)
     && (distance === 0 || spell.noLOS === true || (spell.isShot && window.hasSkyShotBuff(caster)) || window.checkLOS(caster.position, target));
 };

@@ -144,6 +144,11 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       duration: spell.summonDuration, casterId: caster.id, casterName: caster.name
     });
     return;
+  } else if (spell.isTeleport) {
+    if (caster) {
+      caster.position = { x: target.x, y: target.y };
+      renderPosition(); // Мгновенное перемещение без шагов и расхода MP.
+    }
   } else if (spell.isWeaknessVigor) {
     // Общие правила иммунитета, снятия Слабости и обновления срока остаются в applyState.
     if (directTarget) applyState(directTarget, {
@@ -269,6 +274,11 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'teleport': ctx => {
+    ctx.deps.playTeleportAnimation(ctx.fromCell);
+    ctx.deps.playTeleportAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
   'sprint': ctx => {
     ctx.deps.playSprintAnimation(ctx.targetCell);
     ctx.setTimeout(ctx.finishCast, 500);
@@ -403,6 +413,8 @@ window.castSpell = function(targetCell, deps) {
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
   // Занятая клетка не расходует ресурсы призыва и сохраняет подготовку.
   if (spell.isSummon && entities.some(entity => entity.hp > 0
+    && keyOf(entity.position) === keyOf(target))) return false;
+  if (spell.isTeleport && entities.some(entity => entity.hp > 0
     && keyOf(entity.position) === keyOf(target))) return false;
   // Лечение и защита требуют живого союзника до оплаты.
   if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)

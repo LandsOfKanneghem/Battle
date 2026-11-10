@@ -378,3 +378,13 @@
   text-shadow: 0 0 20px #000, 0 4px 8px #000; letter-spacing: 2px;
 }
 .defeat-hint { margin-top: 16px; font-size: clamp(14px, 2vmin, 20px); color: #ccc; }
+
+.teleport-flash {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background: radial-gradient(circle, #c3ffff, #86e8ff 40%, transparent 75%);
+  border-radius: 50%; animation: teleport-burst 0.5s ease-out both;
+}
+@keyframes teleport-burst {
+  from { transform: scale(0.3); opacity: 1; }
+  to { transform: scale(1.2); opacity: 0; }
+}

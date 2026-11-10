@@ -287,3 +287,11 @@ window.playBiteAnimation = function(cell) {
   cell.appendChild(wound);
   setTimeout(() => wound.remove(), 500);
 };
+
+window.playTeleportAnimation = function(cell) {
+  const flash = document.createElement('span');
+  flash.className = 'teleport-flash';
+  flash.setAttribute('aria-hidden', 'true');
+  cell.appendChild(flash);
+  setTimeout(() => flash.remove(), 500);
+};

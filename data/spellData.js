@@ -21,6 +21,14 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'teleport', magicSchool: 'air', isTeleport: true,
+  name: 'Перемещение', stackable: false, target: 'none',
+  description: 'Заклинатель телепортируется в указанную клетку.',
+  range: 5, minRange: 1, modifiable: false, noLOS: true,
+  apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
+  isAOE: false, aoeSize: 1,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14" fill="none" stroke="#a7eced" stroke-width="2" stroke-dasharray="4 3"/><path d="M20 6 V14 M14 10 L20 16 L26 10" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><path d="M20 34 V26 M14 30 L20 24 L26 30" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="3" fill="#86e8ff"/></svg>`
+}, {
   id: 'club-smash', abilityType: 'ability', name: 'Удар дубиной', stackable: false,
   damage: 24, damageType: 'physical', target: 'any',
   range: 1, minRange: 1, modifiable: false, noLOS: false,

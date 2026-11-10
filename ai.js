@@ -23,8 +23,8 @@
 
   function availablePairs(entity) {
     const pairs = [];
-    const sfc = failureChance(entity);
     for (const spell of entity.availableSpells) {
+      const sfc = spell.abilityType === 'spell' ? failureChance(entity) : 0;
       if (entity.ap < spell.apCost || spell.cooldown > 0
         || (spell.maxUsesPerTurn !== undefined && spell.usesThisTurn >= spell.maxUsesPerTurn)
         || (spell.maxUsesPerBattle !== undefined && (spell.usesTotal ?? 0) >= spell.maxUsesPerBattle)) continue;
@@ -34,7 +34,7 @@
         if (distance < (spell.minRange ?? 1) || distance > range
           || (!spell.noLOS && !window.checkLOS(entity.position, target.position))) continue;
         const factDamage = window.spellDamage(spell, target);
-        const hitChance = spell.isShot ? Math.max(0, Math.min(100,
+        const hitChance = (spell.isShot || spell.isHit) ? Math.max(0, Math.min(100,
           window.getEffectiveStat(entity, 'acc') - window.getEffectiveStat(target, 'eva'))) / 100 : 1;
         pairs.push({ spell, target, factDamage,
           pKill: factDamage >= target.hp ? (1 - sfc) * hitChance : 0 });
@@ -148,7 +148,7 @@
       window.updatePanel();
       onDone();
     }
-    const sfc = failureChance(caster);
+    const sfc = spell.abilityType === 'spell' ? failureChance(caster) : 0;
     if (sfc > 0 && Math.random() < sfc) {
       window.playFailureAnimation(cell);
       setTimeout(() => { if (current(caster, version)) onDone(); }, 0);

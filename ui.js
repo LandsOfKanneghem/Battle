@@ -71,8 +71,9 @@ window.showSpellTooltip = function(icon, spell) {
     ? spell.range : `${spell.minRange}–${spell.range}`;
   addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`);
   const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
-  // Тип выстрела дополняет форму АОЕ, не меняя её и остальные строки тултипа.
-  addLine('АОЕ', `${areaLabel}${spell.isShot ? ' [тип: Выстрел]' : ''}`);
+  // Тип атаки дополняет форму АОЕ.
+  const typeLabel = spell.isShot ? ' [тип: Выстрел]' : spell.isHit ? ' [тип: Удар]' : '';
+  addLine('АОЕ', `${areaLabel}${typeLabel}`);
   addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг', none: 'нет' }[spell.target] ?? 'нет');
   addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
   const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', physical: 'физический' };

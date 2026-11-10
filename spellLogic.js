@@ -97,7 +97,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
   if (spell.isShot && !directTarget) return;
   // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
-  if (spell.isShot && directTarget && !(shotHit ?? shotHits(caster, directTarget))) {
+  if ((spell.isShot || spell.isHit) && directTarget && !(shotHit ?? shotHits(caster, directTarget))) {
     // Общая точка промаха, включая готовый результат Искр: надпись появляется один раз.
     playMissAnimation(cells[target.y * SIZE + target.x]);
     return;
@@ -427,7 +427,7 @@ window.castSpell = function(targetCell, deps) {
   const caster = activeEntity();
   // Отдельный бросок до оплаты: при SFC = 0 последовательность бросков выстрелов не меняется.
   const sfc = getEffectiveStat(caster, 'sfc');
-  const failed = sfc > 0 && Math.random() * 100 < sfc;
+  const failed = spell.abilityType === 'spell' && sfc > 0 && Math.random() * 100 < sfc;
   const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
   // Этот же снимок целей используется для анимации и последующего урона.
   const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount, entities) : null;

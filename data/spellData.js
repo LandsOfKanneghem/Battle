@@ -26,7 +26,7 @@ const SPELL_DEFINITIONS = [{
   description: 'Накладывает Левитацию на союзную цель.', effectDescription: 'Левитация',
   stateId: 'levitation', stateDuration: 1, effectDuration: 1,
   range: 0, minRange: 0, modifiable: false, noLOS: false,
-  apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 4,
+  apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 4,
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24 Q10 18 20 20 Q30 22 36 18 M4 30 Q10 24 20 26 Q30 28 36 24" fill="none" stroke="#6fbaff" stroke-width="2"/><path d="M20 4 Q22 10 26 12 Q32 15 30 20 Q28 26 20 26 Q12 26 10 20 Q8 15 14 12 Q18 10 20 4 Z" fill="#d5edf6" stroke="#829ea9" stroke-width="2"/></svg>`
 }, {

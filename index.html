@@ -172,19 +172,19 @@
         return;
       }
       // Повторные события в одной клетке не запускают A* заново.
-      // Позиция и MP включены в ключ, чтобы не использовать устаревшее превью.
-      const key = `${mover.id}:${gameState.keyOf(target)}:${gameState.keyOf(mover.position)}:${mover.mp}`;
+      // Позиция, MP и Левитация включены в ключ, чтобы не использовать устаревшее превью.
+      const key = `${mover.id}:${gameState.keyOf(target)}:${gameState.keyOf(mover.position)}:${mover.mp}:${window.hasActiveState(mover, 'levitation')}`;
       if (gameState.previewKey === key) return;
       window.clearHighlight();
       // Стоимость нужна только для свободного места назначения.
       // Даже свой персонаж занимает клетку: число под ним не показываем.
-      if (!gameState.isFree(target) || gameState.entities.some(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))) {
+      if (!gameState.isFree(target, mover) || gameState.entities.some(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))) {
         gameState.previewKey = key;
         return;
       }
-      const path = window.buildPath(mover.position, target);
-      if (path) window.highlightPath(path, mover.mp);
-      gameState.costLabel.textContent = path === null ? '∞' : String(gameState.pathCost(path));
+      const path = window.buildPath(mover.position, target, mover);
+      if (path) window.highlightPath(path, mover.mp, mover);
+      gameState.costLabel.textContent = path === null ? '∞' : String(gameState.pathCost(path, mover));
       cell.appendChild(gameState.costLabel);
       gameState.previewKey = key;
     });
@@ -208,10 +208,10 @@
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
-      if (!gameState.isFree(target)) return;
-      const path = window.buildPath(mover.position, target);
+      if (!gameState.isFree(target, mover)) return;
+      const path = window.buildPath(mover.position, target, mover);
       // Недоступный маршрут игнорируем, сохраняя текущее превью.
-      if (mover.mp <= 0 || path === null || gameState.pathCost(path) > mover.mp) return;
+      if (mover.mp <= 0 || path === null || gameState.pathCost(path, mover) > mover.mp) return;
       if (path.length === 0) return;
       window.clearHighlight();
       gameState.fieldHoveredEntityId = null;

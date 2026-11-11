@@ -2,8 +2,10 @@
 // Состояние читается из window.gameState; боевые и UI-функции вызываются через window.*.
 // При загрузке только объявляем функции: работа начинается после инициализации index.html.
 
-window.buildPath = function(start, target) {
-  if (!window.gameState.isFree(start) || !window.gameState.isFree(target)) return null;
+window.buildPath = function(start, target, entity = window.gameState.activeEntity()) {
+  if (!window.gameState.isFree(start, entity) || !window.gameState.isFree(target, entity)) return null;
+  // Воду можно пересекать с Левитацией, но точка назначения всегда на суше.
+  if (window.gameState.terrain.get(window.gameState.keyOf(target)) === 'deep-water') return null;
   const heuristic = (point) => Math.abs(point.x - target.x) + Math.abs(point.y - target.y);
   const open = [{ ...start, g: 0, h: heuristic(start), parent: null, axis: null, turn: 0 }];
   const bestCost = new Map([[window.gameState.keyOf(start), 0]]);
@@ -25,8 +27,8 @@ window.buildPath = function(start, target) {
     }
     for (const [dx, dy] of directions) {
       const next = { x: current.x + dx, y: current.y + dy };
-      if (!window.gameState.isFree(next)) continue;
-      const g = current.g + window.gameState.entryCost(next);
+      if (!window.gameState.isFree(next, entity)) continue;
+      const g = current.g + window.gameState.entryCost(next, entity);
       if (g >= (bestCost.get(window.gameState.keyOf(next)) ?? Infinity)) continue;
       bestCost.set(window.gameState.keyOf(next), g);
       const axis = dx ? 'x' : 'y';
@@ -49,7 +51,7 @@ window.takeStep = function() {
   const mover = window.activeMover();
   if (!window.gameState.isMoving || !mover || window.gameState.stepQueue.length === 0) return;
   const next = window.gameState.stepQueue[0];
-  if (window.gameState.entryCost(next) > mover.mp) {
+  if (window.gameState.entryCost(next, mover) > mover.mp) {
     window.gameState.stepQueue = [];
     window.gameState.isMoving = false;
     window.gameState.battlefield.classList.remove('moving');
@@ -57,7 +59,7 @@ window.takeStep = function() {
     return;
   }
   mover.position = window.gameState.stepQueue.shift();
-  mover.mp -= window.gameState.entryCost(mover.position);
+  mover.mp -= window.gameState.entryCost(mover.position, mover);
   window.renderPosition();
   if (window.gameState.stepQueue.length > 0) {
     setTimeout(window.takeStep, window.gameState.STEP_MS);
@@ -195,11 +197,11 @@ window.removeDefeatedEntities = function() {
   }
 };
 
-window.highlightPath = function(path, mp) {
+window.highlightPath = function(path, mp, entity = window.gameState.activeEntity()) {
   window.clearHighlight();
   let cost = 0;
   path.forEach(point => {
-    cost += window.gameState.entryCost(point);
+    cost += window.gameState.entryCost(point, entity);
     const cell = window.gameState.cells[point.y * window.gameState.SIZE + point.x];
     cell.classList.add(cost <= mp ? 'path-reachable' : 'path-over-budget');
     window.gameState.highlightedCells.push(cell);

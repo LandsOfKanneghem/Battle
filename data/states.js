@@ -94,4 +94,10 @@ const WATER_ENTITY = {
   casterName: '', suppressed: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 Q5 22 8 29 Q12 39 22 37 Q35 35 32 24 Q29 16 20 3 Z" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><path d="M13 26 Q11 32 19 33" fill="none" stroke="#d0f4ff" stroke-width="2" stroke-linecap="round"/></svg>`
 };
-const stateTypes = new Map([[WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+const LEVITATION = {
+  id: 'levitation', name: 'Левитация', duration: 0, mpBonus: 0, initiativeBonus: 0,
+  description: 'Цель может преодолевать водные преграды, но не может заканчивать на них ход. Стоимость движения по водным преградам 1 ОП.',
+  casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 6 Q22 14 26 16 Q34 20 30 28 Q26 36 20 36 Q14 36 10 28 Q6 20 14 16 Q18 14 20 6 Z" fill="#d5edf6" stroke="#829ea9" stroke-width="2"/><path d="M12 30 Q16 26 20 30 M20 30 Q24 26 28 30" fill="none" stroke="#a0d4ff" stroke-width="2"/></svg>`
+};
+const stateTypes = new Map([[LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

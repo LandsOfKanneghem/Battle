@@ -40,11 +40,18 @@ window.gameState = {
 
   // Утилиты читают актуальные свойства контейнера, а не снимки при загрузке скрипта.
   keyOf: ({ x, y }) => `${x},${y}`,
-  entryCost: point => ({ grass: 1, sand: 2, 'deep-water': Infinity })[gameState.terrain.get(gameState.keyOf(point))] ?? Infinity,
-  pathCost: path => path.reduce((cost, point) => cost + gameState.entryCost(point), 0),
-  isFree: ({ x, y }) => x >= 0 && x < gameState.SIZE && y >= 0 && y < gameState.SIZE
-    && Number.isFinite(gameState.entryCost({ x, y })) && gameState.obstacles.get(`${x},${y}`) !== 'crate'
-    && !gameState.entities.some(entity => entity.id !== gameState.activeEntityId && entity.position.x === x && entity.position.y === y),
+  entryCost(point, entity = gameState.activeEntity()) {
+    const terrain = gameState.terrain.get(gameState.keyOf(point));
+    if (terrain === 'deep-water') {
+      return entity && window.hasActiveState?.(entity, 'levitation') ? 1 : Infinity;
+    }
+    return { grass: 1, sand: 2 }[terrain] ?? Infinity;
+  },
+  pathCost: (path, entity = gameState.activeEntity()) => path.reduce((cost, point) => cost + gameState.entryCost(point, entity), 0),
+  isFree: ({ x, y }, entity = gameState.activeEntity()) => x >= 0 && x < gameState.SIZE && y >= 0 && y < gameState.SIZE
+    && Number.isFinite(gameState.entryCost({ x, y }, entity)) && gameState.obstacles.get(`${x},${y}`) !== 'crate'
+    && !gameState.entities.some(other => other.id !== (entity?.id ?? gameState.activeEntityId)
+      && other.position.x === x && other.position.y === y),
   activeEntity() {
     return gameState.entities.find(entity => entity.id === gameState.activeEntityId);
   },

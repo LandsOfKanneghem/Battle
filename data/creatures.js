@@ -44,7 +44,7 @@
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
-      isSummon: true, innateStates: ['water-entity'],
+      isSummon: true, innateStates: ['water-entity', { id: 'levitation', permanent: true }],
       spellPages: [
         ['water-shot', null, null, null, null, null, null, null,
           null, null, null, null, null, null, null, null]

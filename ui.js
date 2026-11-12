@@ -338,8 +338,17 @@ window.updatePanel = function() {
   else { effectPanelKey = null; hideEffectTooltip(); }
   document.getElementById('character-name').textContent = displayed ? `${displayed.name} ${displayed.level} ур.` : '—';
   document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp} / ${displayed.maxHP}` : '—';
-  document.getElementById('ap').textContent = displayed ? `AP: ${displayed.ap} / ${displayed.maxAP}` : '—';
-  document.getElementById('mp').textContent = displayed ? `MP: ${displayed.mp} / ${displayed.maxMP}` : '—';
+  // Подсвечиваем только текущий ресурс; максимум сохраняет обычный цвет.
+  for (const [stat, label, bonus] of [['ap', 'AP', 'bonusAP'], ['mp', 'MP', 'bonusMP']]) {
+    const element = document.getElementById(stat);
+    element.textContent = '';
+    if (displayed) {
+      const current = document.createElement('span');
+      current.textContent = `${label}: ${displayed[stat]}`;
+      if (displayed[bonus] > 0) current.style.color = '#4ade80';
+      element.append(current, document.createTextNode(` / ${displayed[`max${label}`]}`));
+    } else element.textContent = '—';
+  }
   const attributes = displayed?.attributes;
   const writeAttribute = (id, text) => { document.getElementById(id).textContent = attributes ? text : '—'; };
   for (const key of ['ra', 'vs', 'es', 'vit', 'str', 'att', 'int', 'wis', 'cha', 'luc', 'ini']) {

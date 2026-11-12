@@ -128,11 +128,24 @@ window.beginTurn = function(entity) {
   window.renderSpellPanel();
   entity.ap = entity.maxAP;
   entity.mp = entity.maxMP;
+  entity.bonusAP = 0;
+  entity.bonusMP = 0;
   // Независимые броски на каждый ход: бонус к остатку может превышать максимум на 1.
   const wisChance = (window.getEffectiveStat(entity, 'wis') % 20) * 5;
-  if (wisChance > 0 && Math.random() * 100 < wisChance) entity.ap += 1;
+  if (wisChance > 0 && Math.random() * 100 < wisChance) {
+    entity.ap += 1;
+    entity.bonusAP = 1;
+  }
   const strChance = (window.getEffectiveStat(entity, 'str') % 20) * 5;
-  if (strChance > 0 && Math.random() * 100 < strChance) entity.mp += 1;
+  if (strChance > 0 && Math.random() * 100 < strChance) {
+    entity.mp += 1;
+    entity.bonusMP = 1;
+  }
+  if (entity.bonusAP || entity.bonusMP) {
+    const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
+    if (entity.bonusAP) window.playBonusAnimation?.(cell, '+1 ОД', 0);
+    if (entity.bonusMP) window.playBonusAnimation?.(cell, '+1 ОП', entity.bonusAP ? 1 : 0);
+  }
   window.clearHighlight();
   window.updatePanel(); // HP не является ресурсом хода.
   if (entity.ai && !window.isFrozen(entity)) {

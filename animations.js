@@ -313,3 +313,13 @@ window.playPowerHourAnimation = function(cell) {
   cell.appendChild(flash);
   setTimeout(() => flash.remove(), 500);
 };
+
+window.playBonusAnimation = function(cell, text, offset = 0) {
+  const label = document.createElement('span');
+  label.className = 'bonus-label';
+  label.textContent = text;
+  label.setAttribute('aria-hidden', 'true');
+  label.style.top = `${30 + offset * 20}%`;
+  cell.appendChild(label);
+  setTimeout(() => label.remove(), 900);
+};

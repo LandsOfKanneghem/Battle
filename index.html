@@ -91,7 +91,29 @@
     // window.removeDefeatedEntities(); // Следующий участник должен стать активным сразу.
 
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && gameState.preparedSpellId) window.cancelSpell();
+      if (event.key === 'Escape' && gameState.preparedSpellId) {
+        window.cancelSpell();
+        return;
+      }
+      // Клавиши книги не применяются при вводе текста и с системными модификаторами.
+      if (event.target.closest?.('input, textarea, select, [contenteditable]') || event.altKey || event.metaKey) return;
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        window.changeSpellPage(event.key === 'ArrowLeft' ? -1 : 1);
+        return;
+      }
+      if (!/^[0-9]$/.test(event.key)) return;
+      // Ctrl выбирает вторую десятку; 0 соответствует десятому слоту в каждой группе.
+      event.preventDefault();
+      const digit = event.key === '0' ? 10 : Number(event.key);
+      const index = event.ctrlKey ? digit + 9 : digit - 1;
+      const pages = window.getSpellPages();
+      const spell = (pages[gameState.currentSpellPage] ?? [])[index];
+      if (!spell || gameState.selectedEntityId !== null || gameState.isCasting || !window.canPrepareSpell(spell)) return;
+      window.hideSpellTooltip();
+      gameState.preparedSpellId = spell.id;
+      window.highlightSpellRange();
+      window.updatePanel();
     });
 
     for (const id of gameState.turnOrderIds) {

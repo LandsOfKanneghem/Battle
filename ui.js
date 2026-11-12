@@ -163,7 +163,7 @@ window.renderSpellPanel = function(resetPage = true) {
   const pages = getSpellPages();
   if (window.gameState.currentSpellPage >= pages.length) window.gameState.currentSpellPage = 0;
   const currentSpells = pages[window.gameState.currentSpellPage] ?? [];
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 20; i++) {
     const spell = currentSpells[i] ?? null;
     if (!spell) {
       const slot = document.createElement('div');

@@ -14,14 +14,14 @@
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
       spellPages: [
-        ['fire-shot', 'burning-hands', 'reckless', null,
-          'liquid-membrane', 'rain', 'ice-arrow', 'lake-spirit',
-          'haste', 'wind-rose', 'sparks', 'sky-shot',
-          'slow', 'dead-weight', null, 'teleport'],
-        ['fire-shield', 'water-shield', 'earth-shield', 'air-shield',
-          'stone-skin', null, null, null,
-          null, null, null, null,
-          null, null, null, null]
+        ['fire-shot', 'burning-hands', 'reckless', null, 'liquid-membrane',
+          'rain', 'ice-arrow', 'lake-spirit', 'haste', 'wind-rose',
+          'sparks', 'sky-shot', 'slow', 'dead-weight', null,
+          'teleport', null, null, null, null],
+        ['fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin',
+          null, null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null]
       ]
     },
     monk: {
@@ -32,9 +32,10 @@
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
       spellPages: [
-        ['fire-cube', 'heal-harm', 'light-flash', 'haste',
-          'weakness-vigor', 'sprint', null, null,
-          null, null, null, null, null, null, null, null]
+        ['fire-cube', 'heal-harm', 'light-flash', 'haste', 'weakness-vigor',
+          'sprint', null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null]
       ]
     },
     'lake-spirit': {
@@ -46,8 +47,10 @@
       attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
       isSummon: true, innateStates: ['water-entity', { id: 'levitation', permanent: true }],
       spellPages: [
-        ['water-shot', null, null, null, null, null, null, null,
-          null, null, null, null, null, null, null, null]
+        ['water-shot', null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null]
       ]
     },
     'hill-giant': {
@@ -59,9 +62,10 @@
       attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
       innateStates: [{ id: 'heavy', permanent: true }],
       spellPages: [
-        ['club-smash', 'boulder-throw', null, null,
-          null, null, null, null, null, null, null, null,
-          null, null, null, null]
+        ['club-smash', 'boulder-throw', null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null]
       ]
     },
     wolf: {
@@ -72,8 +76,10 @@
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },
       spellPages: [
-        ['bite', null, null, null, null, null, null, null,
-          null, null, null, null, null, null, null, null]
+        ['bite', null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null]
       ]
     }
   };

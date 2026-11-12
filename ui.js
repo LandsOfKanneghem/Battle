@@ -356,6 +356,7 @@ window.updatePanel = function() {
   }
   writeAttribute('wp', `WP: ${window.getEffectiveStat(displayed, 'wp')} / ${window.getEffectiveStat(displayed, 'maxWP')}`);
   writeAttribute('acc', `ACC: ${window.getEffectiveStat(displayed, 'acc')}%`);
+  writeAttribute('cri', `CRI: ${window.getEffectiveStat(displayed, 'cri')}%`);
   writeAttribute('sfc', `SFC: ${window.getEffectiveStat(displayed, 'sfc')}%`);
   writeAttribute('eva', `EVA: ${window.getEffectiveStat(displayed, 'eva')}% / ${displayed?.baseEVA}`);
   writeAttribute('blo', `BLO: ${window.getEffectiveStat(displayed, 'blo')}% / ${displayed?.baseBLO}`);

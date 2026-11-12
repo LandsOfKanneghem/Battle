@@ -9,7 +9,7 @@
     wizard: {
       name: 'Волшебник', type: 'wizard',
       level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
@@ -27,7 +27,7 @@
     monk: {
       name: 'Монах', type: 'monk',
       level: 1, baseHP: 8, hpPerLevel: 5, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
@@ -41,7 +41,7 @@
     'lake-spirit': {
       name: 'Дух озера', type: 'lake-spirit',
       level: 1, baseHP: 1, hpPerLevel: 0, baseWP: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
@@ -56,7 +56,7 @@
     'hill-giant': {
       name: 'Холмовой Великан', type: 'hill-giant', ai: 'hill-giant',
       level: 1, baseHP: 25, hpPerLevel: 10, baseWP: 10, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
@@ -71,7 +71,7 @@
     wolf: {
       name: 'Волк', type: 'wolf', ai: 'wolf',
       level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 4, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },
@@ -159,6 +159,7 @@
       baseVS: template.baseVS, vs: template.baseVS, maxVS: template.baseVS,
       baseINI: template.baseINI, ini: template.baseINI,
       baseACC: template.baseACC, acc: template.baseACC,
+      baseCRI: template.baseCRI ?? 0, cri: template.baseCRI ?? 0,
       baseEVA: template.baseEVA, eva: template.baseEVA,
       baseSFC: template.baseSFC, sfc: template.baseSFC,
       baseBLO: template.baseBLO, blo: template.baseBLO,

@@ -381,5 +381,8 @@ window.getEffectiveStat = function(entity, statName) {
   // Бонусы ATT дополняют итог со всеми эффектами; точность может превышать 100%.
   if (statName === 'ra') return total + Math.floor(getEffectiveStat(entity, 'att') / 10);
   if (statName === 'acc') return total + getEffectiveStat(entity, 'att');
+  // Удача дополняет существующие модификаторы CRI и все бонусы уклонения.
+  if (statName === 'cri') return total + getEffectiveStat(entity, 'luc') * 2;
+  if (statName === 'eva') return total + getEffectiveStat(entity, 'luc');
   return total;
 };

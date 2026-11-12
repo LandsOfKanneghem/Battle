@@ -76,6 +76,16 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
     return points;
   }
   const radius = Math.floor(spell.aoeSize / 2);
+  if (spell.isDiamond) {
+    // D7: центр и клетки в манхэттенском радиусе 3, с обрезкой по краям поля.
+    for (let y = center.y - radius; y <= center.y + radius; y++) {
+      for (let x = center.x - radius; x <= center.x + radius; x++) {
+        if (Math.abs(x - center.x) + Math.abs(y - center.y) <= radius
+          && x >= 0 && x < SIZE && y >= 0 && y < SIZE) points.push({ x, y });
+      }
+    }
+    return points;
+  }
   for (let y = center.y - radius; y <= center.y + radius; y++) {
     for (let x = center.x - radius; x <= center.x + radius; x++) {
       if (x >= 0 && x < SIZE && y >= 0 && y < SIZE) points.push({ x, y });
@@ -148,6 +158,18 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     if (caster) {
       caster.position = { x: target.x, y: target.y };
       renderPosition(); // Мгновенное перемещение без шагов и расхода MP.
+    }
+  } else if (spell.isPowerHour) {
+    const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
+    for (const victim of entities) {
+      if (victim.hp > 0 && isAlly(victim) && area.has(keyOf(victim.position))) {
+        applySpellOnEntity(victim, {
+          id: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
+          modifiers: { vit: 3, str: 3, att: 3, int: 3, wis: 3, cha: 3, luc: 3 },
+          duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
+          description: spell.effectDescription
+        });
+      }
     }
   } else if (spell.isWeaknessVigor) {
     // Общие правила иммунитета, снятия Слабости и обновления срока остаются в applyState.
@@ -274,6 +296,17 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'power-hour': ctx => {
+    const { entities, obstacles, terrain, keyOf, SIZE, cells, isAlly } = window.gameState;
+    const area = new Set(ctx.deps.affectedCells(ctx.target, ctx.spell, ctx.caster,
+      entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
+    for (const victim of entities) {
+      if (victim.hp > 0 && isAlly(victim) && area.has(keyOf(victim.position))) {
+        ctx.deps.playPowerHourAnimation(cells[victim.position.y * SIZE + victim.position.x]);
+      }
+    }
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
   'apply-old-age': ctx => {
     ctx.deps.playOldAgeAnimation(ctx.targetCell);
     ctx.setTimeout(ctx.finishCast, 500);

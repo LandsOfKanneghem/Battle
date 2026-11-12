@@ -74,7 +74,7 @@ window.showSpellTooltip = function(icon, spell) {
   const range = spell.minRange === undefined || spell.minRange === spell.range
     ? spell.range : `${spell.minRange}–${spell.range}`;
   addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`);
-  const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
+  const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.isDiamond ? `ромб D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
   // Тип атаки дополняет форму АОЕ.
   const typeLabel = spell.isShot ? ' [тип: Выстрел]' : spell.isHit ? ' [тип: Удар]' : '';
   addLine('АОЕ', `${areaLabel}${typeLabel}`);

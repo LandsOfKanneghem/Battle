@@ -207,11 +207,12 @@ window.tickCasterEffects = function(casterId) {
       restoreSuspendedWeakness(target);
     }
     resolveStateSuppression(target);
-    recalculateStateStats(target);
     // Срок заклинания независим от срока созданного им состояния.
     target.appliedEffects = target.appliedEffects.map(effect => effect.casterId === casterId
       ? { ...effect, duration: effect.duration - 1 } : effect)
       .filter(effect => effect.duration > 0);
+    // VIT из заклинания должен исчезнуть из maxHP в том же тике, что и сам эффект.
+    recalculateStateStats(target);
     // Единственный тик — у appliedEffect; поле для очереди лишь отражает его срок.
     if (target.isSummon && target.ownerId === casterId) {
       const timeEffect = target.appliedEffects.find(effect => effect.id === 'summon-time');
@@ -237,8 +238,8 @@ window.removeCasterEffects = function(casterId) {
     // Смерть источника снимает его эффекты; чужая приостановленная Слабость возвращается.
     if (lostAdrenaline) restoreSuspendedWeakness(target);
     resolveStateSuppression(target);
-    recalculateStateStats(target);
     target.appliedEffects = target.appliedEffects.filter(effect => effect.casterId !== casterId);
+    recalculateStateStats(target);
     target.esBonuses = target.esBonuses.filter(bonus => bonus.casterId !== casterId);
     target.evaBonuses = target.evaBonuses.filter(bonus => bonus.casterId !== casterId);
     const oldMpCount = (target.mpBonuses ?? []).length;
@@ -281,6 +282,7 @@ window.applySpellOnEntity = function(entity, spellOnMe) {
     id: applied.stateId, duration: applied.stateDuration ?? applied.duration,
     casterId: applied.casterId, casterName: applied.casterName
   });
+  if (applied.modifiers?.vit) recalculateStateStats(entity, true);
   window.updatePanel?.();
 };
 

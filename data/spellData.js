@@ -21,6 +21,15 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'power-hour', abilityType: 'spell', magicSchool: 'light',
+  name: 'Час силы', stackable: false, target: 'ally',
+  description: 'Все союзные существа в области вокруг заклинателя временно получают основные параметры.',
+  effectDescription: '+3 ALL STATS',
+  range: 0, minRange: 0, modifiable: false, noLOS: false,
+  apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 5,
+  isAOE: true, aoeSize: 7, isDiamond: true, isPowerHour: true, effectDuration: 2,
+  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="9" fill="#ffdc36" stroke="#fff9c4" stroke-width="2"/><path d="M20 2 V7 M20 33 V38 M2 20 H7 M33 20 H38 M7 7 L11 11 M29 29 L33 33 M7 33 L11 29 M29 11 L33 7" fill="none" stroke="#fff9c4" stroke-width="3" stroke-linecap="round"/><path d="M20 12 L17 21 H22 L20 28" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>`
+}, {
   id: 'apply-old-age', abilityType: 'spell', magicSchool: 'dark',
   name: 'Наложить Старость', stackable: false, target: 'enemy',
   description: 'Накладывает Старость на вражескую цель.', effectDescription: 'Старость',

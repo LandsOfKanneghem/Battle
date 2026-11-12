@@ -305,3 +305,11 @@ window.playOldAgeAnimation = function(cell) {
   cell.appendChild(icon);
   setTimeout(() => icon.remove(), 500);
 };
+
+window.playPowerHourAnimation = function(cell) {
+  const flash = document.createElement('span');
+  flash.className = 'power-hour-flash';
+  flash.setAttribute('aria-hidden', 'true');
+  cell.appendChild(flash);
+  setTimeout(() => flash.remove(), 500);
+};

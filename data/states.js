@@ -100,4 +100,11 @@ const LEVITATION = {
   casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 6 Q22 14 26 16 Q34 20 30 28 Q26 36 20 36 Q14 36 10 28 Q6 20 14 16 Q18 14 20 6 Z" fill="#d5edf6" stroke="#829ea9" stroke-width="2"/><path d="M12 30 Q16 26 20 30 M20 30 Q24 26 28 30" fill="none" stroke="#a0d4ff" stroke-width="2"/></svg>`
 };
-const stateTypes = new Map([[LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+const OLD_AGE = {
+  id: 'old-age', name: 'Старость', duration: 2, mpBonus: 0, initiativeBonus: 0,
+  description: 'Понижает все базовые характеристики живого существа на 2 ед.',
+  modifiers: { vit: -2, str: -2, att: -2, int: -2, wis: -2, cha: -2, luc: -2 },
+  casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 3 H28 V7 H12 Z M12 37 H28 V33 H12 Z" fill="#8a6f4a"/><path d="M13 7 H27 L27 14 Q27 18 20 20 Q13 18 13 14 Z M13 33 H27 L27 26 Q27 22 20 20 Q13 22 13 26 Z" fill="#d5b98a" stroke="#8a6f4a" stroke-width="1.5"/><path d="M20 20 V26 M20 20 V14" stroke="#8a6f4a" stroke-width="1.5"/></svg>`
+};
+const stateTypes = new Map([[OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

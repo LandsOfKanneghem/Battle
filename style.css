@@ -59,6 +59,7 @@
     .spell-slot.school-air { border-color: #7fd8ff; background-color: #0f2430; }
     .spell-slot.school-earth { border-color: #8a5a2b; background-color: #2a1d10; }
     .spell-slot.school-body { border-color: #e2b48c; background-color: #2e241c; }
+    .spell-slot.school-dark { border-color: #000; background-color: #1a1a1a; }
     .spell-slot.school-light { border-color: #ffe000; background-color: #3a3410; }
     .cooldown-badge {
       position: absolute; inset: 0; z-index: 1;

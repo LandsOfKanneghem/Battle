@@ -21,6 +21,15 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'apply-old-age', abilityType: 'spell', magicSchool: 'dark',
+  name: 'Наложить Старость', stackable: false, target: 'enemy',
+  description: 'Накладывает Старость на вражескую цель.', effectDescription: 'Старость',
+  stateId: 'old-age', stateDuration: 2, effectDuration: 2,
+  range: 6, minRange: 1, modifiable: false, noLOS: true,
+  apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 4,
+  isAOE: false, aoeSize: 1,
+  svg: OLD_AGE.icon.replace('aria-hidden="true">', 'aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="3" fill="#101015"/>')
+}, {
   id: 'water-walk', abilityType: 'spell', magicSchool: 'air',
   name: 'Хождение по воде', stackable: false, target: 'ally',
   description: 'Накладывает Левитацию на союзную цель.', effectDescription: 'Левитация',

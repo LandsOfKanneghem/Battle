@@ -71,7 +71,9 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
   const stateDuration = input.duration ?? template.duration;
   // Подавленные состояния не дают иммунитетов через blocks.
   if (entity.states.some(state => !state.suppressed && (state.blocks ?? []).includes(input.id))) return false;
-  if (stateDuration <= 0) return false;
+  // Перманентное состояние не тикает и может иметь нулевую длительность.
+  const isPermanent = input.permanent ?? template.permanent;
+  if (stateDuration < 0 || (stateDuration === 0 && !isPermanent)) return false;
   // Иммунитет Адреналина действует самостоятельно, без Бодрости.
   if (['weakness', 'exhaustion'].includes(input.id) && hasActiveState(entity, 'adrenaline')) return false;
   if (input.id === 'weakness' && hasActiveState(entity, 'vigor')) return false;

@@ -1,4 +1,6 @@
 // Шаблоны существ и фабрика. Счётчики типов приватны; изменяемые данные не разделяются.
+window.BASE_SPELL_CASTS = 5;
+
 (() => {
   window.createAttributes = function(overrides = {}) {
     // Только врождённые атрибуты; боевые характеристики хранятся у существа.
@@ -176,6 +178,9 @@
       appliedEffects: [],
       states: [],
       availableSpells: [],
+      spellCastCount: 0,
+      // Лимит фиксируется по базовой WIS при создании и не пересчитывается в бою.
+      maxSpellCasts: (window.BASE_SPELL_CASTS ?? 5) + attributes.wis,
       attributes,
       position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };

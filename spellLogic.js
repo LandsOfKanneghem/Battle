@@ -442,7 +442,7 @@ window.castSpell = function(targetCell, deps) {
   const {
     canPrepareSpell, canTarget,
     findSparkTargets, applySpellEffect, updatePanel, removeDefeatedEntities,
-    cancelSpell, getEffectiveStat, playFailureAnimation, setTimeout, queueMicrotask
+    cancelSpell, getEffectiveStat, hasActiveState, applyState, playFailureAnimation, setTimeout, queueMicrotask
   } = deps;
   if (gameState.isCasting) return false;
   const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
@@ -472,6 +472,16 @@ window.castSpell = function(targetCell, deps) {
 
   // Фаза 1: фиксируем цель и оплачиваем попытку каста независимо от результата SFC.
   caster.ap -= spell.apCost;
+  // Считаем оплаченные заклинания, включая провалы SFC; способности не расходуют лимит.
+  if (spell.abilityType === 'spell') {
+    caster.spellCastCount = (caster.spellCastCount ?? 0) + 1;
+    if (caster.spellCastCount >= caster.maxSpellCasts && !hasActiveState(caster, 'exhaustion')) {
+      applyState(caster, {
+        id: 'exhaustion', duration: 0, permanent: true,
+        casterId: caster.id, casterName: caster.name
+      });
+    }
+  }
   spell.usesThisTurn++;
   if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
   spell.cooldown = spell.maxCooldown;

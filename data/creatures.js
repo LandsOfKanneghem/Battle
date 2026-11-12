@@ -1,5 +1,6 @@
 // Шаблоны существ и фабрика. Счётчики типов приватны; изменяемые данные не разделяются.
 window.BASE_SPELL_CASTS = 5;
+window.BASE_HIT_COUNT = 5;
 
 (() => {
   window.createAttributes = function(overrides = {}) {
@@ -181,6 +182,9 @@ window.BASE_SPELL_CASTS = 5;
       spellCastCount: 0,
       // Лимит фиксируется по базовой WIS при создании и не пересчитывается в бою.
       maxSpellCasts: (window.BASE_SPELL_CASTS ?? 5) + attributes.wis,
+      hitCount: 0,
+      // Как и SCC, лимит ударов фиксируется по базовому атрибуту при создании.
+      maxHitCount: (window.BASE_HIT_COUNT ?? 5) + attributes.vit,
       attributes,
       position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };

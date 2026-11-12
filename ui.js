@@ -61,7 +61,8 @@ window.showSpellTooltip = function(icon, spell) {
     line.append(caption, ` ${value}`);
     tooltip.appendChild(line);
   };
-  const typeName = spell.abilityType === 'ability' ? 'Способность' : 'Заклинание';
+  const typeName = spell.abilityType === 'weapon-strike' ? 'Атака оружием'
+    : spell.abilityType === 'ability' ? 'Способность' : 'Заклинание';
   const schoolNames = { fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля',
     body: 'Тело', light: 'Свет', dark: 'Тьма' };
   const schoolLabel = spell.magicSchool ? ` [${schoolNames[spell.magicSchool] ?? spell.magicSchool}]` : '';
@@ -362,6 +363,11 @@ window.updatePanel = function() {
   const maxSpellCasts = displayed?.maxSpellCasts ?? 0;
   sccEl.textContent = displayed ? `SCC: ${spellCastCount} / ${maxSpellCasts}` : '—';
   sccEl.style.color = displayed && spellCastCount >= maxSpellCasts ? '#ff4d4d' : '';
+  const hcEl = document.getElementById('hc');
+  const hitCount = displayed?.hitCount ?? 0;
+  const maxHitCount = displayed?.maxHitCount ?? 0;
+  hcEl.textContent = displayed ? `HC: ${hitCount} / ${maxHitCount}` : '—';
+  hcEl.style.color = displayed && hitCount >= maxHitCount ? '#ff4d4d' : '';
   writeAttribute('sfc', `SFC: ${window.getEffectiveStat(displayed, 'sfc')}%`);
   writeAttribute('eva', `EVA: ${window.getEffectiveStat(displayed, 'eva')}% / ${displayed?.baseEVA}`);
   writeAttribute('blo', `BLO: ${window.getEffectiveStat(displayed, 'blo')}% / ${displayed?.baseBLO}`);

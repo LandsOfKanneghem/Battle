@@ -62,8 +62,8 @@ const ADRENALINE_CRASH = {
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 36 Q0 23 4 12 Q10 1 20 10 Q30 1 36 12 Q40 23 20 36 Z" fill="#665477" stroke="#b9a9cb" stroke-width="2"/><path d="M20 10 V29 M13 22 L20 29 L27 22" fill="none" stroke="#ded3eb" stroke-width="3"/></svg>`
 };
 const WEAKNESS = {
-  id: 'weakness', name: 'Слабость', duration: 2, mpBonus: 0, initiativeBonus: 0,
-  description: 'Слабость — пока без дополнительных эффектов', casterName: '', suppressed: false,
+  id: 'weakness', name: 'Слабость', duration: 2, accuracyBonus: -30, mpBonus: 0, initiativeBonus: 0,
+  description: 'Точность уменьшается на 30%, урон от атак и умений уменьшается на 20%.', casterName: '', suppressed: false,
   overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#626f63" stroke="#b5c0b1" stroke-width="2"/><path d="M20 8 V31 M11 22 L20 31 L29 22" fill="none" stroke="#e5e8d7" stroke-width="3" stroke-linecap="round"/></svg>`
 };

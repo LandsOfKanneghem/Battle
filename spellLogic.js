@@ -104,8 +104,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     resolveStateSuppression, recalculateStateStats
   } = deps;
   const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
-  // Округляем штраф до защиты/ES; данные заклинания и урон способностей не меняем.
-  const damageMultiplier = spell.abilityType === 'spell' && caster && hasActiveState(caster, 'exhaustion') ? 0.8 : 1;
+  // Округляем штраф до защиты/ES, сохраняя исходные данные заклинания или атаки.
+  const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
+  const damageMultiplier = caster && ((spell.abilityType === 'spell' && hasActiveState(caster, 'exhaustion'))
+    || (isNonSpell && hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
   const adjustedSpell = damageMultiplier === 1 ? spell
     : { ...spell, damage: Math.floor((spell.damage ?? 0) * damageMultiplier) };
   // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
@@ -440,6 +442,20 @@ const spellAnimationHandlers = {
   }
 };
 
+// Общий учёт оплаченных попыток атаки игрока и ИИ, включая промахи.
+window.recordHitAttempt = function(spell, caster, deps) {
+  if ((spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike')
+    && (caster.hitCount ?? 0) < caster.maxHitCount) {
+    caster.hitCount = (caster.hitCount ?? 0) + 1;
+    if (caster.hitCount >= caster.maxHitCount && !deps.hasActiveState(caster, 'weakness')) {
+      deps.applyState(caster, {
+        id: 'weakness', duration: 0, permanent: true,
+        casterId: caster.id, casterName: caster.name
+      });
+    }
+  }
+};
+
 window.castSpell = function(targetCell, deps) {
   const gameState = window.gameState;
   const { entities, cells, SIZE, keyOf, activeEntity, isAlly } = gameState;
@@ -489,6 +505,7 @@ window.castSpell = function(targetCell, deps) {
   spell.usesThisTurn++;
   if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
   spell.cooldown = spell.maxCooldown;
+  window.recordHitAttempt(spell, caster, deps);
   // Расходуем бафф после проверки цели и оплаты, даже при промахе или провале SFC.
   // Срок и смерть источника обслуживаются общим механизмом spellsOnMe.
   if (spell.isShot) caster.appliedEffects = caster.appliedEffects.filter(effect => !effect.isSkyShot);

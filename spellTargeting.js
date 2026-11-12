@@ -110,7 +110,9 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
   // Бейдж нужен только для урона; дальность и зона подсвечиваются отдельно.
   if (!(spell.damage > 0)) return;
   const caster = window.gameState.activeEntity();
-  const mult = spell.abilityType === 'spell' && caster && window.hasActiveState(caster, 'exhaustion') ? 0.8 : 1;
+  const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
+  const mult = caster && ((spell.abilityType === 'spell' && window.hasActiveState(caster, 'exhaustion'))
+    || (isNonSpell && window.hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
   const dmgSpell = mult === 1 ? spell : { ...spell, damage: Math.floor(spell.damage * mult) };
   const keys = new Set(area.map(window.gameState.keyOf));
   const primary = spell.isSparks ? window.gameState.entities.find(entity => window.gameState.keyOf(entity.position) === window.gameState.keyOf(center)) : null;

@@ -136,6 +136,7 @@
     spell.usesThisTurn++;
     if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
     spell.cooldown = spell.maxCooldown;
+    window.recordHitAttempt(spell, caster, window.spellDeps);
     const cell = state().cells[target.position.y * state().SIZE + target.position.x];
     window.updatePanel();
     function finish() {

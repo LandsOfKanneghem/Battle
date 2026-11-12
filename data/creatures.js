@@ -144,14 +144,17 @@
       id = `${template.type}-${next}`;
     }
     const attributes = window.createAttributes(template.attributes);
+    // При создании учитываем только гарантированную часть; шанс бросается в начале хода.
+    const wisBonus = Math.floor(attributes.wis / 20);
+    const strBonus = Math.floor(attributes.str / 20);
     const level = template.level ?? 1;
     const maxHP = template.baseHP + template.hpPerLevel * (level + attributes.vit);
     const creature = {
       id, name: template.name, type: template.type,
       level, baseHP: template.baseHP, hpPerLevel: template.hpPerLevel, hp: maxHP, maxHP,
       baseWP: template.baseWP, wp: template.baseWP, maxWP: template.baseWP,
-      baseAP: template.baseAP, ap: template.baseAP, maxAP: template.baseAP,
-      baseMP: template.baseMP, mp: template.baseMP, maxMP: template.baseMP,
+      baseAP: template.baseAP, ap: template.baseAP + wisBonus, maxAP: template.baseAP + wisBonus,
+      baseMP: template.baseMP, mp: template.baseMP + strBonus, maxMP: template.baseMP + strBonus,
       baseES: template.baseES, esBonuses: [], evaBonuses: [],
       baseVS: template.baseVS, vs: template.baseVS, maxVS: template.baseVS,
       baseINI: template.baseINI, ini: template.baseINI,

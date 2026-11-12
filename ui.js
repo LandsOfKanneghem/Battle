@@ -68,8 +68,11 @@ window.showSpellTooltip = function(icon, spell) {
   addLine('Тип', `${typeName}${schoolLabel}`);
   addLine('ОД', spell.apCost);
   addLine('КД', spellTurnLabel(spell.maxCooldown));
-  if (spell.maxUsesPerBattle !== undefined) addLine('Раз за бой', spell.maxUsesPerBattle);
-  else addLine('Раз в ход', spell.maxUsesPerTurn);
+  if (spell.maxUsesPerBattle !== undefined) {
+    addLine('Раз за бой', spell.maxUsesPerBattle);
+  } else if (spell.maxUsesPerTurn > 1) {
+    addLine('Раз в ход', spell.maxUsesPerTurn);
+  }
   // Совпадающие границы показываем одним числом, сохраняя отметку изменяемости.
   const range = spell.minRange === undefined || spell.minRange === spell.range
     ? spell.range : `${spell.minRange}–${spell.range}`;

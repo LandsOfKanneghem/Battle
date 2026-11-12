@@ -294,6 +294,8 @@
     renderPosition();
     window.renderSpellPanel();
     window.updatePanel();
+    // Стартовый ход проходит те же проверки и броски WIS/STR, что и последующие.
+    window.beginTurn(window.gameState.activeEntity());
     // На мобильном остаток высоты отдаётся полю; длинная панель прокручивается сама.
     new ResizeObserver(([entry]) => {
       document.documentElement.style.setProperty('--panel-height', `${Math.ceil(entry.target.getBoundingClientRect().height)}px`);

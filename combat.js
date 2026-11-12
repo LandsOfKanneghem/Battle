@@ -369,10 +369,14 @@ window.getEffectiveStat = function(entity, statName) {
     ? elementalBlockAmount(entity, statName) : 0;
   const temporaryEvasion = statName === 'eva'
     ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
-  return base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
+  const total = base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
     // Данные состояний сохраняют прежний формат вложенных модификаторов защиты.
     ?? (protectionStats.includes(statName) ? effect.modifiers?.resistances?.[statName] : undefined)
     // ini уже включает initiativeBonus состояний после recalculateStateStats.
     ?? (statName === 'ini' ? (entity.states.includes(effect) ? 0 : effect.initiativeBonus ?? 0) : statName === 'eva' ? effect.evaBonus ?? 0
       : statName === 'acc' ? effect.accuracyBonus ?? 0 : statName === 'sfc' ? effect.sfcBonus ?? 0 : 0)), 0);
+  // Бонусы ATT дополняют итог со всеми эффектами; точность может превышать 100%.
+  if (statName === 'ra') return total + Math.floor(getEffectiveStat(entity, 'att') / 10);
+  if (statName === 'acc') return total + getEffectiveStat(entity, 'att');
+  return total;
 };

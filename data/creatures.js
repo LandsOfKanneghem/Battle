@@ -32,8 +32,8 @@
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
       spellPages: [
-        ['fire-cube', 'heal-harm', 'light-flash', 'haste', 'weakness-vigor',
-          'sprint', null, null, null, null,
+        ['fire-cube', 'heal-harm', 'light-flash', 'weakness-vigor', null,
+          null, null, null, null, null,
           null, null, null, null, null,
           null, null, null, null, null]
       ]

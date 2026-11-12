@@ -56,7 +56,7 @@ window.effectiveSpellRange = function(spell, caster = window.gameState.activeEnt
   // RANGE и бонус следующего выстрела меняют только модифицируемую верхнюю границу.
   const skyBonus = spell.isShot && window.hasSkyShotBuff(caster) ? 2 : 0;
   return spell.modifiable
-    ? Math.max(spell.minRange ?? 0, spell.range + (caster?.ra ?? 0) + skyBonus)
+    ? Math.max(spell.minRange ?? 0, spell.range + window.getEffectiveStat(caster, 'ra') + skyBonus)
     : spell.range;
 };
 

@@ -99,11 +99,15 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
 window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = null, shotHit = null) {
   const { entities, cells, SIZE, keyOf, obstacles, terrain, isAlly } = window.gameState;
   const {
-    stateTypes, applyState, applyDamage, applySpellOnEntity, shotHits, playMissAnimation,
+    stateTypes, applyState, applyDamage, applySpellOnEntity, hasActiveState, shotHits, playMissAnimation,
     renderPosition, findSparkTargets, affectedCells, addElementalShield,
     resolveStateSuppression, recalculateStateStats
   } = deps;
   const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
+  // Округляем штраф до защиты/ES; данные заклинания и урон способностей не меняем.
+  const damageMultiplier = spell.abilityType === 'spell' && caster && hasActiveState(caster, 'exhaustion') ? 0.8 : 1;
+  const adjustedSpell = damageMultiplier === 1 ? spell
+    : { ...spell, damage: Math.floor((spell.damage ?? 0) * damageMultiplier) };
   // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
   if (spell.isShot && !directTarget) return;
   // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
@@ -193,16 +197,16 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     if (directTarget) {
       // Выбираем отскоки до урона: смерть основной цели не меняет уже выбранную цепь.
       const targets = sparkTargets ?? findSparkTargets(directTarget, spell.sparkRadius, spell.sparkCount, entities);
-      applyDamage(spell, directTarget);
+      applyDamage(adjustedSpell, directTarget);
       for (const secondary of targets) {
-        if (secondary.hp > 0) applyDamage({ damage: Math.floor(spell.damage / 2), damageType: spell.damageType }, secondary);
+        if (secondary.hp > 0) applyDamage({ ...adjustedSpell, damage: Math.floor(adjustedSpell.damage / 2) }, secondary);
       }
     }
   } else if (spell.id === 'ice-arrow') {
     if (directTarget) {
       // Сначала сопротивление → ES → HP, затем Охлаждение у выжившей цели.
       // Общая проверка попадания выше не допускает состояния при промахе.
-      applyDamage(spell, directTarget);
+      applyDamage(adjustedSpell, directTarget);
       if (directTarget.hp > 0) applyState(directTarget, {
         id: spell.stateId, duration: spell.stateDuration, casterId: caster.id, casterName: caster.name
       });
@@ -245,14 +249,14 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       resolveStateSuppression(directTarget);
       recalculateStateStats(directTarget);
     } else if (directTarget) {
-      applyDamage(spell, directTarget);
+      applyDamage(adjustedSpell, directTarget);
       if (directTarget.hp > 0) applyState(directTarget, {
         id: spell.stateId, duration: spell.bleedDuration, casterId: caster.id, casterName: caster.name
       });
     }
   } else if (spell.id === 'bite') {
     if (directTarget) {
-      applyDamage(spell, directTarget);
+      applyDamage(adjustedSpell, directTarget);
       if (directTarget.hp > 0 && Math.random() * 100 < spell.bleedChance) {
         applyState(directTarget, { id: spell.stateId, duration: spell.bleedDuration,
           casterId: caster.id, casterName: caster.name });
@@ -276,7 +280,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     for (const victim of entities) {
       if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)
         && (spell.target !== 'enemy' || !isAlly(victim))) {
-        applyDamage(spell, victim);
+        applyDamage(adjustedSpell, victim);
         if (spell.id === 'burning-hands') {
           // Сначала урон: Влага и Заморозка ещё защищают от текущего удара.
           // Затем прямое снятие у всех задетых целей, даже при поглощении/иммунитете.

@@ -109,6 +109,9 @@ window.highlightSpellRange = function(center = null) {
 window.showEffectPreview = function(area, spell, center = area[0]) {
   // Бейдж нужен только для урона; дальность и зона подсвечиваются отдельно.
   if (!(spell.damage > 0)) return;
+  const caster = window.gameState.activeEntity();
+  const mult = spell.abilityType === 'spell' && caster && window.hasActiveState(caster, 'exhaustion') ? 0.8 : 1;
+  const dmgSpell = mult === 1 ? spell : { ...spell, damage: Math.floor(spell.damage * mult) };
   const keys = new Set(area.map(window.gameState.keyOf));
   const primary = spell.isSparks ? window.gameState.entities.find(entity => window.gameState.keyOf(entity.position) === window.gameState.keyOf(center)) : null;
   for (const entity of window.gameState.entities) {
@@ -122,7 +125,8 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
     } else {
       // Защита учитывается как в настоящем уроне; текущий HP не ограничивает превью.
       badge.className = 'effect-preview damage';
-      const previewSpell = spell.isSparks && entity !== primary ? { ...spell, damage: Math.floor(spell.damage / 2) } : spell;
+      // Отскок — половина уже уменьшенного урона, как и в applySpellEffect.
+      const previewSpell = spell.isSparks && entity !== primary ? { ...dmgSpell, damage: Math.floor(dmgSpell.damage / 2) } : dmgSpell;
       badge.textContent = `-${window.spellDamage(previewSpell, entity)}`;
     }
     window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x].appendChild(badge);

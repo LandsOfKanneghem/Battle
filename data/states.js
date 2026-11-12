@@ -68,8 +68,8 @@ const WEAKNESS = {
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#626f63" stroke="#b5c0b1" stroke-width="2"/><path d="M20 8 V31 M11 22 L20 31 L29 22" fill="none" stroke="#e5e8d7" stroke-width="3" stroke-linecap="round"/></svg>`
 };
 const EXHAUSTION = {
-  id: 'exhaustion', name: 'Истощение', duration: 2, mpBonus: 0, initiativeBonus: 0,
-  description: 'Истощение — пока без дополнительных эффектов', casterName: '', suppressed: false,
+  id: 'exhaustion', name: 'Истощение', duration: 2, sfcBonus: 30, mpBonus: 0, initiativeBonus: 0,
+  description: 'Шанс провала заклинания увеличивается на 30%, урон от заклинаний уменьшается на 20%.', casterName: '', suppressed: false,
   overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="11" r="6" fill="#9ca6b4" stroke="#d5dce6"/><path d="M8 35 L11 24 Q20 16 29 24 L32 35 M12 24 L7 30 M28 24 L33 30" fill="none" stroke="#9ca6b4" stroke-width="4" stroke-linecap="round"/><path d="M16 12 H18 M22 12 H24 M17 16 H23" stroke="#455265" stroke-width="1.5" stroke-linecap="round"/></svg>`
 };

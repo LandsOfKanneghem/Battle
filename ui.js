@@ -329,7 +329,7 @@ window.updatePanel = function() {
   document.getElementById('effects-panel').hidden = !viewingEffects;
   if (viewingEffects) renderEffectPanel();
   else { effectPanelKey = null; hideEffectTooltip(); }
-  document.getElementById('character-name').textContent = displayed?.name ?? '—';
+  document.getElementById('character-name').textContent = displayed ? `${displayed.name} ${displayed.level} ур.` : '—';
   document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp} / ${displayed.maxHP}` : '—';
   document.getElementById('ap').textContent = displayed ? `AP: ${displayed.ap} / ${displayed.maxAP}` : '—';
   document.getElementById('mp').textContent = displayed ? `MP: ${displayed.mp} / ${displayed.maxMP}` : '—';

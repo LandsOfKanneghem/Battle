@@ -35,6 +35,14 @@ window.recalculateStateStats = function(entity, allowNegativeMP = false) {
     // Наложение допускает долг MP; при снятии/истечении остаток не ниже нуля.
     entity.mp = allowNegativeMP ? adjusted : Math.max(0, adjusted);
   }
+  const oldMaxHP = entity.maxHP;
+  const effectiveVit = window.getEffectiveStat(entity, 'vit');
+  entity.maxHP = entity.baseHP + entity.hpPerLevel * (entity.level + effectiveVit);
+  const hpDelta = entity.maxHP - oldMaxHP;
+  // Сохраняем полученные ранения; снятие дебаффа не оживляет погибшее существо.
+  if (hpDelta !== 0 && entity.hp > 0) {
+    entity.hp = Math.max(0, entity.hp + hpDelta);
+  }
 };
 
 window.resolveStateSuppression = function(entity) {

@@ -8,7 +8,7 @@
   const CREATURE_TEMPLATES = {
     wizard: {
       name: 'Волшебник', type: 'wizard',
-      baseHP: 12, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -26,7 +26,7 @@
     },
     monk: {
       name: 'Монах', type: 'monk',
-      baseHP: 12, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 8, hpPerLevel: 5, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -39,7 +39,7 @@
     },
     'lake-spirit': {
       name: 'Дух озера', type: 'lake-spirit',
-      baseHP: 1, baseWP: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 1, hpPerLevel: 0, baseWP: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -52,11 +52,11 @@
     },
     'hill-giant': {
       name: 'Холмовой Великан', type: 'hill-giant', ai: 'hill-giant',
-      baseHP: 30, baseWP: 10, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 25, hpPerLevel: 10, baseWP: 10, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { str: 5, att: 1, cha: 1, luc: 0 },
+      attributes: { vit: 4, str: 5, att: 1, cha: 1, luc: 0 },
       innateStates: [{ id: 'heavy', permanent: true }],
       spellPages: [
         ['club-smash', 'boulder-throw', null, null,
@@ -66,7 +66,7 @@
     },
     wolf: {
       name: 'Волк', type: 'wolf', ai: 'wolf',
-      baseHP: 6, baseWP: 4, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 4, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -137,9 +137,12 @@
       typeCounters.set(template.type, next);
       id = `${template.type}-${next}`;
     }
+    const attributes = window.createAttributes(template.attributes);
+    const level = template.level ?? 1;
+    const maxHP = template.baseHP + template.hpPerLevel * (level + attributes.vit);
     const creature = {
       id, name: template.name, type: template.type,
-      baseHP: template.baseHP, hp: template.baseHP, maxHP: template.baseHP,
+      level, baseHP: template.baseHP, hpPerLevel: template.hpPerLevel, hp: maxHP, maxHP,
       baseWP: template.baseWP, wp: template.baseWP, maxWP: template.baseWP,
       baseAP: template.baseAP, ap: template.baseAP, maxAP: template.baseAP,
       baseMP: template.baseMP, mp: template.baseMP, maxMP: template.baseMP,
@@ -163,7 +166,7 @@
       appliedEffects: [],
       states: [],
       availableSpells: [],
-      attributes: window.createAttributes(template.attributes),
+      attributes,
       position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };
     if (template.ai) creature.ai = template.ai;

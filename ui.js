@@ -357,6 +357,11 @@ window.updatePanel = function() {
   writeAttribute('wp', `WP: ${window.getEffectiveStat(displayed, 'wp')} / ${window.getEffectiveStat(displayed, 'maxWP')}`);
   writeAttribute('acc', `ACC: ${window.getEffectiveStat(displayed, 'acc')}%`);
   writeAttribute('cri', `CRI: ${window.getEffectiveStat(displayed, 'cri')}%`);
+  const sccEl = document.getElementById('scc');
+  const spellCastCount = displayed?.spellCastCount ?? 0;
+  const maxSpellCasts = displayed?.maxSpellCasts ?? 0;
+  sccEl.textContent = displayed ? `SCC: ${spellCastCount} / ${maxSpellCasts}` : '—';
+  sccEl.style.color = displayed && spellCastCount >= maxSpellCasts ? '#ff4d4d' : '';
   writeAttribute('sfc', `SFC: ${window.getEffectiveStat(displayed, 'sfc')}%`);
   writeAttribute('eva', `EVA: ${window.getEffectiveStat(displayed, 'eva')}% / ${displayed?.baseEVA}`);
   writeAttribute('blo', `BLO: ${window.getEffectiveStat(displayed, 'blo')}% / ${displayed?.baseBLO}`);

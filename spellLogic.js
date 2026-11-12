@@ -476,8 +476,8 @@ window.castSpell = function(targetCell, deps) {
 
   // Фаза 1: фиксируем цель и оплачиваем попытку каста независимо от результата SFC.
   caster.ap -= spell.apCost;
-  // Считаем оплаченные заклинания, включая провалы SFC; способности не расходуют лимит.
-  if (spell.abilityType === 'spell') {
+  // Считаем оплаченные заклинания до лимита, включая провалы SFC; способности не учитываем.
+  if (spell.abilityType === 'spell' && (caster.spellCastCount ?? 0) < caster.maxSpellCasts) {
     caster.spellCastCount = (caster.spellCastCount ?? 0) + 1;
     if (caster.spellCastCount >= caster.maxSpellCasts && !hasActiveState(caster, 'exhaustion')) {
       applyState(caster, {

@@ -61,7 +61,11 @@ window.showSpellTooltip = function(icon, spell) {
     line.append(caption, ` ${value}`);
     tooltip.appendChild(line);
   };
-  addLine('Тип', spell.abilityType === 'ability' ? 'Способность' : 'Заклинание');
+  const typeName = spell.abilityType === 'ability' ? 'Способность' : 'Заклинание';
+  const schoolNames = { fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля',
+    body: 'Тело', light: 'Свет', dark: 'Тьма' };
+  const schoolLabel = spell.magicSchool ? ` [${schoolNames[spell.magicSchool] ?? spell.magicSchool}]` : '';
+  addLine('Тип', `${typeName}${schoolLabel}`);
   addLine('ОД', spell.apCost);
   addLine('КД', spellTurnLabel(spell.maxCooldown));
   if (spell.maxUsesPerBattle !== undefined) addLine('Раз за бой', spell.maxUsesPerBattle);

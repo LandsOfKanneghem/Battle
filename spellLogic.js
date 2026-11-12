@@ -274,6 +274,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'apply-old-age': ctx => {
+    ctx.deps.playOldAgeAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
   'teleport': ctx => {
     ctx.deps.playTeleportAnimation(ctx.fromCell);
     ctx.deps.playTeleportAnimation(ctx.targetCell);

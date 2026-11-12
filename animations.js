@@ -295,3 +295,13 @@ window.playTeleportAnimation = function(cell) {
   cell.appendChild(flash);
   setTimeout(() => flash.remove(), 500);
 };
+
+// Песочные часы переворачиваются на цели; снаряд от заклинателя не используется.
+window.playOldAgeAnimation = function(cell) {
+  const icon = document.createElement('span');
+  icon.className = 'old-age-animation';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.innerHTML = stateTypes.get('old-age').icon;
+  cell.appendChild(icon);
+  setTimeout(() => icon.remove(), 500);
+};

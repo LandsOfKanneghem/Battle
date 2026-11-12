@@ -2,7 +2,7 @@
 (() => {
   window.createAttributes = function(overrides = {}) {
     // Только врождённые атрибуты; боевые характеристики хранятся у существа.
-    return { vit: 2, str: 2, att: 2, int: 2, wis: 2, cha: 2, luc: 2, ...overrides };
+    return { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0, ...overrides };
   };
 
   const CREATURE_TEMPLATES = {
@@ -12,7 +12,7 @@
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { str: 0, att: 1, cha: 1, luc: 0 },
+      attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
       spellPages: [
         ['fire-shot', 'burning-hands', 'reckless', null,
           'liquid-membrane', 'rain', 'ice-arrow', 'lake-spirit',
@@ -30,7 +30,7 @@
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { str: 0, att: 1, cha: 1, luc: 0 },
+      attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
       spellPages: [
         ['fire-cube', 'heal-harm', 'light-flash', 'haste',
           'weakness-vigor', 'sprint', null, null,
@@ -56,7 +56,7 @@
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 4, str: 5, att: 1, cha: 1, luc: 0 },
+      attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
       innateStates: [{ id: 'heavy', permanent: true }],
       spellPages: [
         ['club-smash', 'boulder-throw', null, null,
@@ -70,7 +70,7 @@
       baseACC: 100, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 1, str: 1, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
+      attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },
       spellPages: [
         ['bite', null, null, null, null, null, null, null,
           null, null, null, null, null, null, null, null]

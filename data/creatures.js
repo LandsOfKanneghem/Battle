@@ -33,10 +33,10 @@ window.BASE_HIT_COUNT = 5;
       baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
+      attributes: { vit: 2, str: 2, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
       spellPages: [
-        ['fire-cube', 'heal-harm', 'light-flash', 'weakness-vigor', 'power-hour',
-          null, null, null, null, null,
+        ['sprint', 'heal-harm', 'weakness-vigor', null, null,
+          'light-flash', 'power-hour', null, null, null,
           null, null, null, null, null,
           null, null, null, null, null]
       ]

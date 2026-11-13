@@ -284,7 +284,7 @@ window.applySpellOnEntity = function(entity, spellOnMe) {
   }
   if (hadMpBonus || applied.mpAmount) recalculateStateStats(entity, true);
   if (applied.stateId) applyState(entity, {
-    id: applied.stateId, duration: applied.stateDuration ?? applied.duration,
+    id: applied.stateId, duration: applied.duration,
     casterId: applied.casterId, casterName: applied.casterName
   });
   if (applied.modifiers?.vit) recalculateStateStats(entity, true);
@@ -302,9 +302,9 @@ window.storeElementalShields = function(entity, effects) {
   entity.elementalShields = effects;
 };
 
-window.addElementalShield = function(entity, spell, caster = window.gameState.activeEntity()) {
+window.addElementalShield = function(entity, spell, caster = window.gameState.activeEntity(), duration = window.getSpellDuration(spell, caster)) {
   const effects = elementalShieldEffects(entity);
-  const fresh = { damageType: spell.damageType, amount: spell.shieldAmount, turnsLeft: spell.shieldDuration, sourceId: spell.id,
+  const fresh = { damageType: spell.damageType, amount: spell.shieldAmount, turnsLeft: duration, sourceId: spell.id,
     casterId: caster?.id, casterName: caster?.name ?? 'Неизвестно', name: spell.name,
     svg: spell.svg, appliedOrder: ++window.gameState.effectOrder };
   const index = effects.findIndex(effect => effect.sourceId === spell.id);
@@ -331,11 +331,11 @@ window.getSpellDamage = function(spell, caster) {
   return spell.damage;
 };
 
-window.getSpellDuration = function(spell, caster, baseField) {
+window.getSpellDuration = function(spell, caster) {
   if (spell.durationBase !== undefined && caster) {
     return Math.floor(spell.durationBase + (spell.durationPerInt ?? 0) * window.getEffectiveStat(caster, 'int'));
   }
-  return spell[baseField];
+  return spell.durationBase ?? 0;
 };
 
 window.damageBreakdown = function(spell, entity) {

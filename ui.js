@@ -118,13 +118,13 @@ window.showSpellTooltip = function(icon, spell) {
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
   if (spell.isSummon) {
     addLine('Призыв', spell.name);
-    addLine('Длительность', spellTurnLabel(spell.summonDuration));
+    addLine('Длительность', spellTurnLabel(window.getSpellDuration(spell, caster)));
   }
   const effects = [];
   if (spell.isHealHarm) effects.push('Кровотечение [враг] / Снимает 1 стак кровотечения [союз]');
   else if (spell.effectDescription) effects.push(spell.effectDescription);
   else if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
-  if (spell.burnDuration) effects.push(stateTypes.get('burning').name);
+  if (spell.appliesBurning) effects.push(stateTypes.get('burning').name);
   if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
   if (spell.isMembrane) effects.push(`+${spell.esAmount} ES, +${spell.evaAmount}% уклонения`);
   if (spell.isMpBuff) effects.push(`+${spell.mpAmount} MP`);
@@ -133,18 +133,17 @@ window.showSpellTooltip = function(icon, spell) {
       if (index === 0) addLine('Эффекты', effect);
       else { const line = document.createElement('p'); line.textContent = effect; tooltip.appendChild(line); }
     });
-    const durationField = ['stateDuration', 'shieldDuration', 'effectDuration', 'burnDuration', 'bleedDuration']
-      .find(field => spell[field] !== undefined);
-    const duration = window.getSpellDuration(spell, caster, durationField);
-    if (spell.durationBase !== undefined) {
-      const durationText = window.shiftHeld ? `${spell.durationBase} + ${spell.durationPerInt ?? 0}*INT`
+    const duration = window.getSpellDuration(spell, caster);
+    if (spell.isHealHarm) addLine('Длительность', `${spell.bleedDuration} [враг]`);
+    else if (spell.isSkyShot) addLine('Длительность', '1 ход или до первого применения');
+    else if (spell.durationBase !== undefined) {
+      const showFormula = window.shiftHeld && (spell.durationPerInt ?? 0) !== 0;
+      const durationText = showFormula ? `${spell.durationBase} + ${spell.durationPerInt ?? 0}*INT`
         : spellTurnLabel(duration);
-      const baseDuration = spell[durationField];
+      const baseDuration = spell.durationBase;
       const durationColor = window.shiftHeld ? '' : duration > baseDuration ? '#4ade80' : duration < baseDuration ? '#ff4d4d' : '';
       addLine('Длительность', durationText, durationColor);
-    } else {
-      addLine('Длительность', spell.isHealHarm ? `${spell.bleedDuration} [враг]` : spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(duration));
-    }
+    } else if (spell.bleedDuration !== undefined) addLine('Длительность', spellTurnLabel(spell.bleedDuration));
   }
   document.body.appendChild(tooltip);
   // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.

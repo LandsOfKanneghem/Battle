@@ -110,12 +110,8 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   const damageMultiplier = caster && ((spell.abilityType === 'spell' && hasActiveState(caster, 'exhaustion'))
     || (isNonSpell && hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
   const adjustedSpell = { ...spell, damage: Math.floor((baseDamage ?? 0) * damageMultiplier) };
-  if (spell.durationBase !== undefined) {
-    // Фиксируем сроки до эффектов: собственный бафф INT от Часа силы их не продлевает.
-    for (const field of ['stateDuration', 'effectDuration', 'shieldDuration']) {
-      if (spell[field] !== undefined) adjustedSpell[field] = window.getSpellDuration(spell, caster, field);
-    }
-  }
+  // Фиксируем срок один раз до эффектов: собственный бафф INT от Часа силы его не меняет.
+  const duration = window.getSpellDuration(spell, caster);
   // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
   if (spell.isShot && !directTarget) return;
   // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
@@ -127,7 +123,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   if (spell.isSummon) {
     const creature = window.createCreature('lake-spirit', target);
     creature.ownerId = caster.id;
-    creature.summonDuration = spell.summonDuration;
+    creature.summonDuration = duration;
     entities.push(creature);
     const gameState = window.gameState;
     const casterIndex = gameState.turnOrderIds.indexOf(caster.id);
@@ -163,7 +159,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     applySpellOnEntity(creature, {
       id: 'summon-time', sourceId: 'summon-time', name: 'Время жизни',
       icon: window.SUMMON_TIME_ICON, stackable: false,
-      duration: spell.summonDuration, casterId: caster.id, casterName: caster.name
+      duration, casterId: caster.id, casterName: caster.name
     });
     return;
   } else if (spell.isTeleport) {
@@ -178,7 +174,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
         applySpellOnEntity(victim, {
           id: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
           modifiers: { vit: 3, str: 3, att: 3, int: 3, wis: 3, cha: 3, luc: 3 },
-          duration: adjustedSpell.effectDuration, casterId: caster.id, casterName: caster.name,
+          duration, casterId: caster.id, casterName: caster.name,
           description: spell.effectDescription
         });
       }
@@ -186,19 +182,19 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   } else if (spell.isWeaknessVigor) {
     // Общие правила иммунитета, снятия Слабости и обновления срока остаются в applyState.
     if (directTarget) applyState(directTarget, {
-      id: isAlly(directTarget) ? 'vigor' : 'weakness', duration: spell.stateDuration,
+      id: isAlly(directTarget) ? 'vigor' : 'weakness', duration,
       casterId: caster.id, casterName: caster.name
     });
   } else if (spell.isMpBuff) {
     if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
-      duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
+      duration, casterId: caster.id, casterName: caster.name,
       mpAmount: spell.mpAmount, description: `+${spell.mpAmount} MP`
     });
   } else if (spell.isSkyShot) {
     if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
       id: spell.id, name: spell.name, icon: spell.svg, isSkyShot: true,
-      description: spell.effectDescription, duration: spell.effectDuration,
+      description: spell.effectDescription, duration,
       casterId: caster.id, casterName: caster.name
     });
   } else if (spell.isSparks) {
@@ -216,7 +212,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       // Общая проверка попадания выше не допускает состояния при промахе.
       applyDamage(adjustedSpell, directTarget);
       if (directTarget.hp > 0) applyState(directTarget, {
-        id: spell.stateId, duration: spell.stateDuration, casterId: caster.id, casterName: caster.name
+        id: spell.stateId, duration, casterId: caster.id, casterName: caster.name
       });
     }
   } else if (spell.isWindRose) {
@@ -238,13 +234,13 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
     for (const victim of entities) {
       if (victim.hp > 0 && area.has(keyOf(victim.position))) applyState(victim, {
-        id: spell.stateId, duration: spell.stateDuration, casterId: caster.id, casterName: caster.name
+        id: spell.stateId, duration, casterId: caster.id, casterName: caster.name
       });
     }
   } else if (spell.isMembrane) {
     if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
-      duration: adjustedSpell.effectDuration, casterId: caster.id, casterName: caster.name,
+      duration, casterId: caster.id, casterName: caster.name,
       esAmount: spell.esAmount, evaAmount: spell.evaAmount,
       description: `+${spell.esAmount} ES, +${spell.evaAmount} EVA`
     });
@@ -276,13 +272,13 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     if (recipient) applySpellOnEntity(recipient, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
       description: stateTypes.get(spell.stateId).name,
-      duration: adjustedSpell.effectDuration, casterId: caster.id, casterName: caster.name,
-      stateId: spell.stateId, stateDuration: adjustedSpell.stateDuration, stackable: spell.stackable
+      duration, casterId: caster.id, casterName: caster.name,
+      stateId: spell.stateId, stackable: spell.stackable
     });
   } else if (spell.isElementalShield) {
     const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
       && keyOf(entity.position) === keyOf(target));
-    if (ally) addElementalShield(ally, adjustedSpell, caster);
+    if (ally) addElementalShield(ally, spell, caster, duration);
   } else {
     const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
     for (const victim of entities) {
@@ -297,9 +293,9 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
           resolveStateSuppression(victim);
           recalculateStateStats(victim);
         }
-        // Горение по-прежнему накладывают заклинания с burnDuration (например, куб).
-        if (spell.burnDuration && victim.hp > 0) applyState(victim, {
-          id: 'burning', duration: spell.burnDuration, casterId: caster.id, casterName: caster.name
+        // Горение использует общий срок заклинания (например, у Огненного куба).
+        if (spell.appliesBurning && victim.hp > 0) applyState(victim, {
+          id: 'burning', duration, casterId: caster.id, casterName: caster.name
         });
       }
     }

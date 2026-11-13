@@ -108,13 +108,15 @@ window.showSpellTooltip = function(icon, spell) {
   if (spell.appliesBurning) effects.push(stateTypes.get('burning').name);
   if (spell.isElementalShield) {
     const shieldAmount = Math.floor(spell.shieldAmount + (spell.effectValuePerLvl ?? 0) * (caster?.level ?? 1));
-    effects.push(spell.damageType === 'physical' ? `Блокирует ${shieldAmount} ед. физического урона` : `Блокирует ${shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
-    if (shieldAmount > spell.shieldAmount) effectColor = '#4ade80';
+    const shieldText = window.shiftHeld ? `${spell.shieldAmount} + ${spell.effectValuePerLvl ?? 0}*LVL` : shieldAmount;
+    effects.push(spell.damageType === 'physical' ? `Блокирует ${shieldText} ед. физического урона` : `Блокирует ${shieldText} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
+    if (!window.shiftHeld && shieldAmount > spell.shieldAmount) effectColor = '#4ade80';
   }
   if (spell.isMembrane) {
     const esAmount = Math.floor(spell.esAmount + (spell.effectValuePerLvl ?? 0) * (caster?.level ?? 1));
-    effects.push(`+${esAmount} ES, +${spell.evaAmount}% уклонения`);
-    if (esAmount > spell.esAmount) effectColor = '#4ade80';
+    const esText = window.shiftHeld ? `${spell.esAmount} + ${spell.effectValuePerLvl ?? 0}*LVL` : esAmount;
+    effects.push(`+${esText} ES, +${spell.evaAmount}% уклонения`);
+    if (!window.shiftHeld && esAmount > spell.esAmount) effectColor = '#4ade80';
   }
   if (spell.isMpBuff) effects.push(`+${spell.mpAmount} MP`);
   if (effects.length) {

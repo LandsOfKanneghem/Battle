@@ -101,7 +101,7 @@ window.showSpellTooltip = function(icon, spell) {
   addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
   const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', physical: 'физический' };
   if (spell.damageBase !== undefined || spell.damage > 0) {
-    const damage = caster ? window.getSpellDamage(spell, caster) : spell.damage;
+    const damage = window.getSpellDamage(spell, caster);
     const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
     const hasDebuff = caster && ((spell.abilityType === 'spell' && window.hasActiveState(caster, 'exhaustion'))
       || (isNonSpell && window.hasActiveState(caster, 'weakness')));

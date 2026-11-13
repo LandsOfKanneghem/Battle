@@ -339,6 +339,7 @@ window.getSpellDuration = function(spell, caster) {
 };
 
 window.damageBreakdown = function(spell, entity) {
+  // Здесь damage уже вычислен вызывающим кодом: INT и штрафы повторно не применяем.
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) {
     return { absorbed: 0, hpDamage: 0 }; // Иммунитет сохраняет и HP, и ES.

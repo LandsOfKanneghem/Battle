@@ -135,7 +135,21 @@
     document.addEventListener('keyup', event => {
       if (event.key === 'Shift') setSpellTooltipShift(false);
     });
-    window.addEventListener('blur', () => setSpellTooltipShift(false));
+    document.addEventListener('keydown', event => {
+      // Одиночный левый Alt не активирует меню; Tab/F4 и Alt с модификаторами не перехватываем.
+      if (event.key === 'Alt' && event.code === 'AltLeft' && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
+        event.preventDefault();
+      }
+    });
+    window.addEventListener('blur', () => {
+      window.shiftHeld = false;
+      const spell = window.spellTooltipSpell;
+      const icon = window.spellTooltipIcon;
+      if (spell && icon) {
+        window.hideSpellTooltip();
+        window.showSpellTooltip(icon, spell);
+      }
+    });
 
     for (const id of gameState.turnOrderIds) {
       const entity = gameState.entities.find(item => item.id === id);

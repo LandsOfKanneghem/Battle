@@ -80,7 +80,7 @@ const SPELL_DEFINITIONS = [{
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8 Q10 4 14 6 L18 10 Q20 8 22 10 L26 6 Q30 4 32 8 L28 18 L32 28 Q30 32 26 30 L22 26 Q20 28 18 26 L14 30 Q10 32 8 28 L12 18 Z" fill="#c93650" stroke="#ffadb6" stroke-width="2"/><circle cx="16" cy="14" r="2" fill="#fff"/><circle cx="24" cy="14" r="2" fill="#fff"/></svg>`
 }, {
   id: 'water-shot', abilityType: 'spell', magicSchool: 'water', isShot: true,
-  name: 'Водный выстрел', stackable: false, damage: 3, damageType: 'water', target: 'any',
+  name: 'Водный выстрел', stackable: false, damageBase: 3, damageType: 'water', target: 'any',
   description: 'Наносит небольшой урон водой.',
   range: 4, minRange: 1, modifiable: false, noLOS: false,
   apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
@@ -105,7 +105,7 @@ const SPELL_DEFINITIONS = [{
   maxCooldown: 2, isAOE: true, aoeSize: 3,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24 Q0 14 8 3 L12 12 L20 1 L25 12 L34 4 Q42 19 35 31" fill="#f65a25"/><path d="M8 17 L20 10 L33 17 L33 31 L20 38 L8 31 Z" fill="#ff9d28" stroke="#ffdc36" stroke-width="2"/><path d="M8 17 L20 24 L33 17 M20 24 V38" fill="none" stroke="#ffe995" stroke-width="2"/></svg>`
 }, {
-  id: 'armageddon', abilityType: 'spell', magicSchool: 'fire', name: 'Армагеддон', stackable: false, damage: 5, damageType: 'fire', target: 'any',
+  id: 'armageddon', abilityType: 'spell', magicSchool: 'fire', name: 'Армагеддон', stackable: false, damageBase: 5, damageType: 'fire', target: 'any',
   range: 0, minRange: 0, apCost: 6, maxUsesPerTurn: 1,
   maxCooldown: 8, maxUsesPerBattle: 1,
   isAOE: true, isGlobal: true, aoeSize: 16,
@@ -214,11 +214,11 @@ const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cub
   description: 'Исцеляет хп дружественной цели и снимает 1 стак кровотечения, либо наносит физический урон и накладывает 1 стак кровотечения.',
   minRange: 0, range: 4, modifiable: false, noLOS: false, apCost: 2,
   maxCooldown: 1, maxUsesPerTurn: 1, isAOE: false, aoeSize: 1,
-  damage: 4, damageType: 'physical', healAmount: 4, bleedDuration: 2, stateId: 'bleeding',
+  damageBase: 4, damageType: 'physical', healAmount: 4, bleedDuration: 2, stateId: 'bleeding',
   effectDescription: 'Исцеляет 4 HP и снимает 1 стак кровотечения [союзник] / Наносит 4 физ. урона и накладывает 1 стак кровотечения [враг]',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M15 3 H20 V37 H15 V25 H3 V15 H15 Z" fill="#74ef9e"/><path d="M20 3 H25 V15 H37 V25 H25 V37 H20 Z" fill="#ed5d70"/><path d="M20 3 V37" stroke="#fff1d2" stroke-width="1.5"/></svg>`
 }, {
-  id: 'light-flash', abilityType: 'spell', magicSchool: 'light', name: 'Вспышка света', stackable: false, damage: 2, damageType: 'light', target: 'enemy',
+  id: 'light-flash', abilityType: 'spell', magicSchool: 'light', name: 'Вспышка света', stackable: false, damageBase: 2, damageType: 'light', target: 'enemy',
   minRange: 1, range: 6, modifiable: true, apCost: 3, maxUsesPerTurn: 2,
   maxCooldown: 0, noLOS: true, isAOE: true, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 1 L24 13 L35 5 L28 17 L39 20 L28 24 L35 35 L24 28 L20 39 L16 28 L5 35 L12 24 L1 20 L12 16 L5 5 L16 12 Z" fill="#ffdb62"/><path d="M20 9 L23 17 L31 20 L23 23 L20 31 L17 23 L9 20 L17 17 Z" fill="#fffbe2"/></svg>`

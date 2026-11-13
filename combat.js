@@ -330,13 +330,11 @@ window.isMagicalDamage = function(damageType) {
 
 // Базовый урон: INT для заклинаний, STR для атак/умений — до штрафов, сопротивлений и ES.
 window.getSpellDamage = function(spell, caster) {
-  if (spell.damageBase !== undefined) {
-    const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
-    const stat = window.getEffectiveStat(caster, isNonSpell ? 'str' : 'int');
-    const per = isNonSpell ? (spell.damagePerStr ?? 0) : (spell.damagePerInt ?? 0);
-    return Math.floor(spell.damageBase + per * stat);
-  }
-  return spell.damage;
+  if (spell.damageBase === undefined) return 0;
+  const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
+  const stat = window.getEffectiveStat(caster, isNonSpell ? 'str' : 'int');
+  const per = isNonSpell ? (spell.damagePerStr ?? 0) : (spell.damagePerInt ?? 0);
+  return Math.floor(spell.damageBase + per * stat);
 };
 
 window.getSpellDuration = function(spell, caster) {

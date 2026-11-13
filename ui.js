@@ -85,8 +85,10 @@ window.showSpellTooltip = function(icon, spell) {
     addLine('Раз в ход', spell.maxUsesPerTurn);
   }
   const finalRange = spell.modifiable && caster ? window.effectiveSpellRange(spell, caster) : spell.range;
-  // В обычном режиме сохраняем минимальную границу; Shift показывает базовую дальность.
-  const range = window.shiftHeld ? spell.range
+  // Минимальную границу сохраняем в обоих режимах; Shift использует базовый максимум.
+  const baseRangeText = spell.minRange === undefined || spell.minRange === spell.range
+    ? spell.range : `${spell.minRange}–${spell.range}`;
+  const range = window.shiftHeld ? baseRangeText
     : spell.minRange === undefined || spell.minRange === finalRange ? finalRange : `${spell.minRange}–${finalRange}`;
   const rangeColor = window.shiftHeld || !spell.modifiable ? ''
     : finalRange > spell.range ? '#4ade80' : finalRange < spell.range ? '#ff4d4d' : '';

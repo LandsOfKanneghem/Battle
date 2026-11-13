@@ -78,27 +78,6 @@ window.showSpellTooltip = function(icon, spell) {
   const schoolLabel = spell.magicSchool ? ` [${schoolNames[spell.magicSchool] ?? spell.magicSchool}]` : '';
   addLine('Тип', `${typeName}${schoolLabel}`);
   addLine('ОД', spell.apCost);
-  addLine('КД', spellTurnLabel(spell.maxCooldown));
-  if (spell.maxUsesPerBattle !== undefined) {
-    addLine('Раз за бой', spell.maxUsesPerBattle);
-  } else if (spell.maxUsesPerTurn > 1) {
-    addLine('Раз в ход', spell.maxUsesPerTurn);
-  }
-  const finalRange = spell.modifiable && caster ? window.effectiveSpellRange(spell, caster) : spell.range;
-  // Минимальную границу сохраняем в обоих режимах; Shift использует базовый максимум.
-  const baseRangeText = spell.minRange === undefined || spell.minRange === spell.range
-    ? spell.range : `${spell.minRange}–${spell.range}`;
-  const range = window.shiftHeld ? baseRangeText
-    : spell.minRange === undefined || spell.minRange === finalRange ? finalRange : `${spell.minRange}–${finalRange}`;
-  const rangeColor = window.shiftHeld || !spell.modifiable ? ''
-    : finalRange > spell.range ? '#4ade80' : finalRange < spell.range ? '#ff4d4d' : '';
-  addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`, rangeColor);
-  const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.isDiamond ? `ромб D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
-  // Тип атаки дополняет форму АОЕ.
-  const typeLabel = spell.isShot ? ' [тип: Выстрел]' : spell.isHit ? ' [тип: Удар]' : '';
-  addLine('АОЕ', `${areaLabel}${typeLabel}`);
-  addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг', none: 'нет' }[spell.target] ?? 'нет');
-  addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
   const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', physical: 'физический' };
   if (spell.damageBase !== undefined || spell.damage > 0) {
     const damage = window.getSpellDamage(spell, caster);
@@ -146,6 +125,27 @@ window.showSpellTooltip = function(icon, spell) {
       addLine('Длительность', durationText, durationColor);
     } else if (spell.bleedDuration !== undefined) addLine('Длительность', spellTurnLabel(spell.bleedDuration));
   }
+  addLine('КД', spellTurnLabel(spell.maxCooldown));
+  if (spell.maxUsesPerBattle !== undefined) {
+    addLine('Раз за бой', spell.maxUsesPerBattle);
+  } else if (spell.maxUsesPerTurn > 1) {
+    addLine('Раз в ход', spell.maxUsesPerTurn);
+  }
+  const finalRange = spell.modifiable && caster ? window.effectiveSpellRange(spell, caster) : spell.range;
+  // Минимальную границу сохраняем в обоих режимах; Shift использует базовый максимум.
+  const baseRangeText = spell.minRange === undefined || spell.minRange === spell.range
+    ? spell.range : `${spell.minRange}–${spell.range}`;
+  const range = window.shiftHeld ? baseRangeText
+    : spell.minRange === undefined || spell.minRange === finalRange ? finalRange : `${spell.minRange}–${finalRange}`;
+  const rangeColor = window.shiftHeld || !spell.modifiable ? ''
+    : finalRange > spell.range ? '#4ade80' : finalRange < spell.range ? '#ff4d4d' : '';
+  addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`, rangeColor);
+  const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.isDiamond ? `ромб D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
+  // Тип атаки дополняет форму АОЕ.
+  const typeLabel = spell.isShot ? ' [тип: Выстрел]' : spell.isHit ? ' [тип: Удар]' : '';
+  addLine('АОЕ', `${areaLabel}${typeLabel}`);
+  addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг', none: 'нет' }[spell.target] ?? 'нет');
+  addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
   document.body.appendChild(tooltip);
   // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.
   const r = icon.getBoundingClientRect();

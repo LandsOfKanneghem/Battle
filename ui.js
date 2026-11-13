@@ -88,7 +88,8 @@ window.showSpellTooltip = function(icon, spell) {
     const finalDamage = Math.floor(damage * mult);
     if (finalDamage > 0) {
       const showFormula = window.shiftHeld && spell.damageBase !== undefined;
-      const damageText = showFormula ? `${spell.damageBase} + ${spell.damagePerInt ?? 0}*INT`
+      const damageText = showFormula ? (isNonSpell ? `${spell.damageBase} + ${spell.damagePerStr ?? 0}*STR`
+        : `${spell.damageBase} + ${spell.damagePerInt ?? 0}*INT`)
         : `${finalDamage} ${elements[spell.damageType] ?? spell.damageType}`;
       const isDamageModifiable = spell.damageBase !== undefined;
       const damageColor = showFormula ? '' : !isDamageModifiable ? '' : hasDebuff ? '#ff4d4d' : '#4ade80';

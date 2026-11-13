@@ -328,11 +328,13 @@ window.isMagicalDamage = function(damageType) {
   return !['physical', 'poison', 'pure'].includes(damageType);
 };
 
-// Базовый урон кастера: INT учитываем до штрафов, сопротивлений и ES.
+// Базовый урон: INT для заклинаний, STR для атак/умений — до штрафов, сопротивлений и ES.
 window.getSpellDamage = function(spell, caster) {
   if (spell.damageBase !== undefined) {
-    const intelligence = window.getEffectiveStat(caster, 'int');
-    return Math.floor(spell.damageBase + (spell.damagePerInt ?? 0) * intelligence);
+    const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
+    const stat = window.getEffectiveStat(caster, isNonSpell ? 'str' : 'int');
+    const per = isNonSpell ? (spell.damagePerStr ?? 0) : (spell.damagePerInt ?? 0);
+    return Math.floor(spell.damageBase + per * stat);
   }
   return spell.damage;
 };

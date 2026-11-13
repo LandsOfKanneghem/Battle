@@ -57,14 +57,14 @@ const SPELL_DEFINITIONS = [{
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14" fill="none" stroke="#a7eced" stroke-width="2" stroke-dasharray="4 3"/><path d="M20 6 V14 M14 10 L20 16 L26 10" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><path d="M20 34 V26 M14 30 L20 24 L26 30" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="3" fill="#86e8ff"/></svg>`
 }, {
   id: 'club-smash', isHit: true, abilityType: 'weapon-strike', name: 'Удар дубиной', stackable: false,
-  damage: 24, damageType: 'physical', target: 'any',
+  damageBase: 18, damagePerStr: 2, damageType: 'physical', target: 'any',
   range: 1, minRange: 1, modifiable: false, noLOS: false,
   apCost: 4, maxUsesPerTurn: 1, maxCooldown: 1,
   isAOE: false, aoeSize: 1, isShot: false,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M10 36 L23 13" stroke="#a77b4b" stroke-width="6" stroke-linecap="round"/><path d="M19 4 L31 2 L37 13 L25 23 L16 15 Z" fill="#775035" stroke="#d3ad76" stroke-width="2"/><path d="M24 7 L29 15 M30 6 L33 11" stroke="#493326" stroke-width="2"/></svg>`
 }, {
   id: 'boulder-throw', abilityType: 'weapon-strike', name: 'Бросок булыжника', stackable: false,
-  damage: 16, damageType: 'physical', target: 'any',
+  damageBase: 10, damagePerStr: 1.5, damageType: 'physical', target: 'any',
   range: 4, minRange: 1, modifiable: false, noLOS: false,
   apCost: 4, maxUsesPerTurn: 1, maxCooldown: 3,
   isAOE: false, aoeSize: 1, isShot: true,
@@ -72,7 +72,7 @@ const SPELL_DEFINITIONS = [{
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 12 L22 5 L34 13 L36 28 L24 36 L7 30 L3 20 Z" fill="#8b8f96" stroke="#d1d5dc" stroke-width="2"/><path d="M9 12 L17 22 L7 30 M17 22 L31 18 L34 13 M17 22 L24 36" fill="none" stroke="#565d68" stroke-width="2"/></svg>`
 }, {
   id: 'bite', isHit: true, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', magicSchool: null, name: 'Укус волка', stackable: false,
-  damage: 4, damageType: 'physical', target: 'any',
+  damageBase: 2, damagePerStr: 1, damageType: 'physical', target: 'any',
   description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
   stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,
   range: 1, minRange: 1, modifiable: false, noLOS: false,

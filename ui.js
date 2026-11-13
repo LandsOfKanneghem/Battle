@@ -111,7 +111,8 @@ window.showSpellTooltip = function(icon, spell) {
       const showFormula = window.shiftHeld && spell.damageBase !== undefined;
       const damageText = showFormula ? `${spell.damageBase} + ${spell.damagePerInt ?? 0}*INT`
         : `${finalDamage} ${elements[spell.damageType] ?? spell.damageType}`;
-      const damageColor = showFormula ? '' : hasDebuff ? '#ff4d4d' : window.shiftHeld ? '' : '#4ade80';
+      const isDamageModifiable = spell.damageBase !== undefined;
+      const damageColor = showFormula ? '' : !isDamageModifiable ? '' : hasDebuff ? '#ff4d4d' : '#4ade80';
       addLine('Урон', damageText, damageColor);
     }
   }

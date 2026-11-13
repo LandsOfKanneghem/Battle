@@ -114,13 +114,13 @@ const SPELL_DEFINITIONS = [{
   id: 'haste', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', effectDescription: 'Скорость', name: 'Ускорение', stackable: false, magicSchool: 'air', stateId: 'speed', target: 'ally',
   description: 'Накладывает на союзную цель Скорость.',
   minRange: 0, range: 4, modifiable: true, apCost: 3, maxUsesPerTurn: 1,
-  maxCooldown: 2, isAOE: false, aoeSize: 1,
+  maxCooldown: 3, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 12 H26 Q36 12 33 6 Q30 2 27 6 M4 20 H32 Q40 20 36 27 Q32 31 29 26 M6 29 H20 Q28 29 23 35" fill="none" stroke="#a7eced" stroke-width="3" stroke-linecap="round"/></svg>`
 }, {
-  id: 'slow', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Медлительность', name: 'Замедление', stackable: false, magicSchool: 'earth', stateId: 'slowness', target: 'enemy',
+  id: 'slow', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', effectDescription: 'Медлительность', name: 'Замедление', stackable: false, magicSchool: 'earth', stateId: 'slowness', target: 'enemy',
   description: 'Накладывает на вражескую цель Медлительность.',
   minRange: 0, range: 4, modifiable: true, apCost: 3, maxUsesPerTurn: 1,
-  maxCooldown: 2, isAOE: false, aoeSize: 1,
+  maxCooldown: 3, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 24 Q0 17 12 17 Q17 9 25 17 Q39 15 37 25 Q40 35 21 35 Q4 38 3 24" fill="#78522f" stroke="#bc8c50"/><ellipse cx="20" cy="24" rx="10" ry="4" fill="none" stroke="#c49e68"/><circle cx="29" cy="11" r="3" fill="#916337"/></svg>`
 }, {
   id: 'deep-freeze', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Заморозка', magicSchool: 'water', name: 'Глубокая заморозка', stackable: false, stateId: 'freeze', target: 'any',
@@ -136,14 +136,14 @@ const SPELL_DEFINITIONS = [{
 }, {
   id: 'rain', durationBase: 3, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Влага', magicSchool: 'water', name: 'Дождь', stackable: false, isRain: true, stateId: 'wet', target: 'any',
   description: 'Накладывает на все цели в области действия Влагу.',
-  minRange: 0, range: 4, modifiable: true, noLOS: true,
+  minRange: 0, range: 4, modifiable: false, noLOS: true,
   apCost: 3, maxUsesPerTurn: 1, maxCooldown: 3,
   isAOE: true, aoeSize: 3,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 22 Q1 21 4 14 Q6 9 12 11 Q13 2 22 5 Q29 4 31 12 Q39 11 37 19 Q36 23 30 22 Z" fill="#427fb6" stroke="#a0d4ff" stroke-width="2"/><path d="M11 27 L8 33 M21 27 L18 36 M31 27 L28 33" fill="none" stroke="#58b5ff" stroke-width="3" stroke-linecap="round"/></svg>`
 }, {
   id: 'wind-rose', abilityType: 'spell', magicSchool: 'air', name: 'Роза ветров', stackable: false, isWindRose: true, target: 'any',
   description: 'Отталкивает существ, стоящих на соседних клетках от целевой клетки, на расстояние 1 клетки, если это возможно.',
-  minRange: 0, range: 4, modifiable: true, noLOS: true,
+  minRange: 0, range: 4, modifiable: false, noLOS: true,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 3,
   // Подсвечиваем только центр; толчок проверяет четыре соседние клетки отдельно.
   isAOE: true, aoeSize: 1,
@@ -151,7 +151,7 @@ const SPELL_DEFINITIONS = [{
 }, {
   id: 'dead-weight', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Тяжесть', magicSchool: 'earth', name: 'Мёртвый груз', stackable: false, target: 'any', stateId: 'heavy',
   description: 'Накладывает на одиночную цель Тяжесть.',
-  minRange: 0, range: 4, modifiable: true, noLOS: false,
+  minRange: 0, range: 4, modifiable: false, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 3,
   isAOE: false, aoeSize: 1, svg: HEAVY.icon
 }, {
@@ -188,7 +188,7 @@ const SPELL_DEFINITIONS = [{
   id: 'sky-shot', durationBase: 1, durationPerInt: 0, abilityType: 'spell', magicSchool: 'air', name: 'Выстрел в небо', stackable: false, isSkyShot: true, target: 'ally',
   description: 'Следующая дальнобойная атака цели или заклинание с типом Выстрел не требует LOS, а дальность применения увеличивается (если дальность атаки или заклинания модифицируема).',
   effectDescription: 'Следующая дальнобойная атака цели или заклинание с типом Выстрел не требует LOS, а ее дальность увеличивается на 2 клетки.',
-  minRange: 0, range: 4, modifiable: true, noLOS: false,
+  minRange: 0, range: 4, modifiable: false, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 29 Q0 27 4 23 Q7 20 11 22 Q12 16 18 18 Q24 16 27 22 Q35 20 36 27 Q35 31 29 30 Z" fill="#729cbf" stroke="#c4e7ff"/><path d="M20 35 V6 M11 15 L20 5 L29 15" fill="none" stroke="#ffe7a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 3 V11 M28 7 H36" stroke="#d5f8ff" stroke-width="2"/></svg>`
@@ -196,7 +196,7 @@ const SPELL_DEFINITIONS = [{
   id: 'reckless', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', effectDescription: 'Адреналин', magicSchool: 'fire', name: 'Сорвиголова', stackable: false, target: 'ally',
   description: 'Накладывает на союзную цель состояние Адреналин.',
   stateId: 'adrenaline',
-  minRange: 0, range: 4, modifiable: true, noLOS: false,
+  minRange: 0, range: 4, modifiable: false, noLOS: false,
   apCost: 1, maxUsesPerTurn: 1, maxCooldown: 4,
   isAOE: false, aoeSize: 1, svg: ADRENALINE.icon
 }];

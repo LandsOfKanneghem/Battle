@@ -331,6 +331,13 @@ window.getSpellDamage = function(spell, caster) {
   return spell.damage;
 };
 
+window.getSpellDuration = function(spell, caster, baseField) {
+  if (spell.durationBase !== undefined && caster) {
+    return Math.floor(spell.durationBase + (spell.durationPerInt ?? 0) * window.getEffectiveStat(caster, 'int'));
+  }
+  return spell[baseField];
+};
+
 window.damageBreakdown = function(spell, entity) {
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) {

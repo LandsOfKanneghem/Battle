@@ -110,6 +110,12 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   const damageMultiplier = caster && ((spell.abilityType === 'spell' && hasActiveState(caster, 'exhaustion'))
     || (isNonSpell && hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
   const adjustedSpell = { ...spell, damage: Math.floor((baseDamage ?? 0) * damageMultiplier) };
+  if (spell.durationBase !== undefined) {
+    // Фиксируем сроки до эффектов: собственный бафф INT от Часа силы их не продлевает.
+    for (const field of ['stateDuration', 'effectDuration', 'shieldDuration']) {
+      if (spell[field] !== undefined) adjustedSpell[field] = window.getSpellDuration(spell, caster, field);
+    }
+  }
   // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
   if (spell.isShot && !directTarget) return;
   // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
@@ -172,7 +178,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
         applySpellOnEntity(victim, {
           id: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
           modifiers: { vit: 3, str: 3, att: 3, int: 3, wis: 3, cha: 3, luc: 3 },
-          duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
+          duration: adjustedSpell.effectDuration, casterId: caster.id, casterName: caster.name,
           description: spell.effectDescription
         });
       }
@@ -238,7 +244,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   } else if (spell.isMembrane) {
     if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
-      duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
+      duration: adjustedSpell.effectDuration, casterId: caster.id, casterName: caster.name,
       esAmount: spell.esAmount, evaAmount: spell.evaAmount,
       description: `+${spell.esAmount} ES, +${spell.evaAmount} EVA`
     });
@@ -270,13 +276,13 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     if (recipient) applySpellOnEntity(recipient, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
       description: stateTypes.get(spell.stateId).name,
-      duration: spell.effectDuration, casterId: caster.id, casterName: caster.name,
-      stateId: spell.stateId, stateDuration: spell.stateDuration, stackable: spell.stackable
+      duration: adjustedSpell.effectDuration, casterId: caster.id, casterName: caster.name,
+      stateId: spell.stateId, stateDuration: adjustedSpell.stateDuration, stackable: spell.stackable
     });
   } else if (spell.isElementalShield) {
     const ally = entities.find(entity => entity.hp > 0 && isAlly(entity)
       && keyOf(entity.position) === keyOf(target));
-    if (ally) addElementalShield(ally, spell, caster);
+    if (ally) addElementalShield(ally, adjustedSpell, caster);
   } else {
     const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
     for (const victim of entities) {

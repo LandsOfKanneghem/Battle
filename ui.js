@@ -112,7 +112,10 @@ window.showSpellTooltip = function(icon, spell) {
       if (index === 0) addLine('Эффекты', effect);
       else { const line = document.createElement('p'); line.textContent = effect; tooltip.appendChild(line); }
     });
-    addLine('Длительность', spell.isHealHarm ? `${spell.bleedDuration} [враг]` : spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(spell.stateDuration ?? spell.shieldDuration ?? spell.effectDuration ?? spell.burnDuration ?? spell.bleedDuration));
+    const durationField = ['stateDuration', 'shieldDuration', 'effectDuration', 'burnDuration', 'bleedDuration']
+      .find(field => spell[field] !== undefined);
+    const duration = window.getSpellDuration(spell, window.gameState.activeEntity(), durationField);
+    addLine('Длительность', spell.isHealHarm ? `${spell.bleedDuration} [враг]` : spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(duration));
   }
   document.body.appendChild(tooltip);
   // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.

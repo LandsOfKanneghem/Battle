@@ -14,14 +14,14 @@ const ELEMENTAL_SHIELD_SPELLS = [
   id: `${element.damageType}-shield`, abilityType: 'spell', name: `Защита от ${element.name}`,
   stackable: false, isElementalShield: true, magicSchool: element.damageType, damageType: element.damageType, target: 'ally',
   description: `Союзная цель блокирует часть урона от ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[element.damageType]}.`,
-  shieldAmount: 2, shieldDuration: 3, minRange: 0, range: 4, modifiable: true,
+  shieldAmount: 2, shieldDuration: 3, durationBase: 3, durationPerInt: 0.05, minRange: 0, range: 4, modifiable: true,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: element.svg ?? `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 10 L20 3 L33 10 L31 27 Q28 34 20 38 Q12 34 9 27 Z" fill="${element.color}" stroke="${element.edge}" stroke-width="2"/>${element.symbol}</svg>`
 }));
 
 const SPELL_DEFINITIONS = [{
-  id: 'power-hour', abilityType: 'spell', magicSchool: 'light',
+  id: 'power-hour', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', magicSchool: 'light',
   name: 'Час силы', stackable: false, target: 'ally',
   description: 'Все союзные существа в области вокруг заклинателя временно получают основные параметры.',
   effectDescription: '+3 ALL STATS',
@@ -30,7 +30,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, aoeSize: 7, isDiamond: true, isPowerHour: true, effectDuration: 2,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="9" fill="#ffdc36" stroke="#fff9c4" stroke-width="2"/><path d="M20 2 V7 M20 33 V38 M2 20 H7 M33 20 H38 M7 7 L11 11 M29 29 L33 33 M7 33 L11 29 M29 11 L33 7" fill="none" stroke="#fff9c4" stroke-width="3" stroke-linecap="round"/><path d="M20 12 L17 21 H22 L20 28" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>`
 }, {
-  id: 'apply-old-age', abilityType: 'spell', magicSchool: 'dark',
+  id: 'apply-old-age', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', magicSchool: 'dark',
   name: 'Наложить Старость', stackable: false, target: 'enemy',
   description: 'Накладывает Старость на вражескую цель.', effectDescription: 'Старость',
   stateId: 'old-age', stateDuration: 2, effectDuration: 2,
@@ -111,7 +111,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, isGlobal: true, aoeSize: 16,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 16 Q0 10 8 8 Q10 1 17 6 Q24 0 28 7 Q37 5 38 12 Q40 18 32 18 H10 Z" fill="#f65a25"/><path d="M11 14 L14 8 L18 13 L23 6 L26 14" fill="#ffc04c"/><g stroke-linecap="round"><path d="M5 22 L10 29 M16 21 L22 30 M28 22 L34 31 M9 32 L13 38 M24 33 L28 38" stroke="#ff6425" stroke-width="4"/><path d="M9 27 L11 30 M21 28 L23 31 M33 29 L35 32 M12 36 L13 38 M27 36 L28 38" stroke="#ffdd75" stroke-width="2"/></g></svg>`
 }, {
-  id: 'haste', abilityType: 'spell', effectDescription: 'Скорость', name: 'Ускорение', stackable: false, magicSchool: 'air', stateId: 'speed', stateDuration: 2, effectDuration: 2, target: 'ally',
+  id: 'haste', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', effectDescription: 'Скорость', name: 'Ускорение', stackable: false, magicSchool: 'air', stateId: 'speed', stateDuration: 2, effectDuration: 2, target: 'ally',
   description: 'Накладывает на союзную цель Скорость.',
   minRange: 0, range: 4, modifiable: true, apCost: 3, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 2, isAOE: false, aoeSize: 1,
@@ -127,7 +127,7 @@ const SPELL_DEFINITIONS = [{
   minRange: 1, range: 5, modifiable: true, apCost: 4, maxUsesPerTurn: 1, usesThisTurn: 0,
   cooldown: 0, maxCooldown: 4, isAOE: false, aoeSize: 1, svg: FREEZE.icon
 }, ...ELEMENTAL_SHIELD_SPELLS, {
-  id: 'liquid-membrane', abilityType: 'spell', magicSchool: 'water', name: 'Жидкая мембрана', stackable: false, isMembrane: true, target: 'ally',
+  id: 'liquid-membrane', durationBase: 2, durationPerInt: 0.05, abilityType: 'spell', magicSchool: 'water', name: 'Жидкая мембрана', stackable: false, isMembrane: true, target: 'ally',
   description: 'Дает союзной цели бонусное уклонение и энергощит.',
   esAmount: 4, evaAmount: 10, effectDuration: 2, minRange: 0, range: 4, modifiable: true, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
@@ -172,7 +172,7 @@ const SPELL_DEFINITIONS = [{
 }, {
   id: 'stone-skin', abilityType: 'spell', magicSchool: 'earth', name: 'Каменная кожа', stackable: false, isElementalShield: true, damageType: 'physical', target: 'ally',
   description: 'Союзная цель блокирует часть физического урона.',
-  shieldAmount: 2, shieldDuration: 3, minRange: 0, range: 4, modifiable: true, noLOS: false,
+  shieldAmount: 2, shieldDuration: 3, durationBase: 3, durationPerInt: 0.05, minRange: 0, range: 4, modifiable: true, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, usesThisTurn: 0, cooldown: 0, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 5 L20 2 L32 7 L35 21 L29 33 L20 38 L8 32 L4 18 Z" fill="#858e98" stroke="#cdd4db" stroke-width="2"/><path d="M20 3 L17 13 L23 20 L17 28 L20 37 M17 13 L5 17 M23 20 L34 16 M17 28 L9 32 M23 20 L29 32" fill="none" stroke="#434e5a" stroke-width="2"/><path d="M10 8 L14 7 M27 9 L29 12" stroke="#e3e7eb" stroke-width="2" stroke-linecap="round"/></svg>`
@@ -193,7 +193,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 29 Q0 27 4 23 Q7 20 11 22 Q12 16 18 18 Q24 16 27 22 Q35 20 36 27 Q35 31 29 30 Z" fill="#729cbf" stroke="#c4e7ff"/><path d="M20 35 V6 M11 15 L20 5 L29 15" fill="none" stroke="#ffe7a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 3 V11 M28 7 H36" stroke="#d5f8ff" stroke-width="2"/></svg>`
 }, {
-  id: 'reckless', abilityType: 'spell', effectDescription: 'Адреналин', magicSchool: 'fire', name: 'Сорвиголова', stackable: false, target: 'ally',
+  id: 'reckless', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', effectDescription: 'Адреналин', magicSchool: 'fire', name: 'Сорвиголова', stackable: false, target: 'ally',
   description: 'Накладывает на союзную цель состояние Адреналин.',
   stateId: 'adrenaline', stateDuration: 2, effectDuration: 2,
   minRange: 0, range: 4, modifiable: true, noLOS: false,

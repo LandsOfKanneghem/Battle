@@ -101,16 +101,25 @@ window.showSpellTooltip = function(icon, spell) {
     addLine('Длительность', spellTurnLabel(window.getSpellDuration(spell, caster)));
   }
   const effects = [];
+  let effectColor;
   if (spell.isHealHarm) effects.push('Кровотечение [враг] / Снимает 1 стак кровотечения [союз]');
   else if (spell.effectDescription) effects.push(spell.effectDescription);
   else if (spell.stateId) effects.push(stateTypes.get(spell.stateId)?.name ?? spell.stateId);
   if (spell.appliesBurning) effects.push(stateTypes.get('burning').name);
-  if (spell.isElementalShield) effects.push(spell.damageType === 'physical' ? `Блокирует ${spell.shieldAmount} ед. физического урона` : `Блокирует ${spell.shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
-  if (spell.isMembrane) effects.push(`+${spell.esAmount} ES, +${spell.evaAmount}% уклонения`);
+  if (spell.isElementalShield) {
+    const shieldAmount = Math.floor(spell.shieldAmount + (spell.effectValuePerLvl ?? 0) * (caster?.level ?? 1));
+    effects.push(spell.damageType === 'physical' ? `Блокирует ${shieldAmount} ед. физического урона` : `Блокирует ${shieldAmount} ед. урона ${{ fire: 'огнём', water: 'водой', earth: 'землёй', air: 'воздухом' }[spell.damageType]}`);
+    if (shieldAmount > spell.shieldAmount) effectColor = '#4ade80';
+  }
+  if (spell.isMembrane) {
+    const esAmount = Math.floor(spell.esAmount + (spell.effectValuePerLvl ?? 0) * (caster?.level ?? 1));
+    effects.push(`+${esAmount} ES, +${spell.evaAmount}% уклонения`);
+    if (esAmount > spell.esAmount) effectColor = '#4ade80';
+  }
   if (spell.isMpBuff) effects.push(`+${spell.mpAmount} MP`);
   if (effects.length) {
     effects.forEach((effect, index) => {
-      if (index === 0) addLine('Эффекты', effect);
+      if (index === 0) addLine('Эффекты', effect, effectColor);
       else { const line = document.createElement('p'); line.textContent = effect; tooltip.appendChild(line); }
     });
     const duration = window.getSpellDuration(spell, caster);
@@ -276,27 +285,9 @@ window.showEffectTooltip = function(icon, effect, kind = 'spell') {
       ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable || weaknessLocked ? [effect.id === 'weakness' ? 'Неснимаемая' : 'Неснимаемое'] : [])]
     : [...(spellDescription === undefined ? [] : [spellDescription]), `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
       `Источник: ${effect.casterName ?? 'Неизвестно'}`];
-  for (const [index, text] of lines.entries()) {
+  for (const text of lines) {
     const line = document.createElement('p');
-    let boostedValue;
-    let start = -1;
-    // Только число в описании усиленной защиты/ES; остальные строки и эффекты не меняем.
-    if (kind === 'spell' && index === 0) {
-      if (effect.baseAmount !== undefined && effect.amount > effect.baseAmount) {
-        boostedValue = String(effect.amount);
-        start = text.indexOf(boostedValue);
-      } else if (effect.baseEsAmount !== undefined && effect.esAmount > effect.baseEsAmount) {
-        boostedValue = String(effect.esAmount);
-        const marker = text.indexOf(`+${boostedValue} ES`);
-        if (marker !== -1) start = marker + 1;
-      }
-    }
-    if (start !== -1) {
-      const value = document.createElement('span');
-      value.textContent = boostedValue;
-      value.style.color = '#4ade80';
-      line.append(text.slice(0, start), value, text.slice(start + boostedValue.length));
-    } else line.textContent = text;
+    line.textContent = text;
     tooltip.appendChild(line);
   }
   if (effect.suppressed) {

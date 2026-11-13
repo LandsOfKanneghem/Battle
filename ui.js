@@ -1,5 +1,9 @@
 // Интерфейс игры: панели, страницы заклинаний и тултипы. Обычный скрипт window.*.
-// gameState и функции других скриптов используются только при вызове обработчиков.
+// Расчёт характеристик доступен после combat.js; обработчики читают актуальный gameState.
+
+// init.js создаёт стартовых существ раньше combat.js; теперь расчёт доступен,
+// а первый ход и боевые эффекты ещё не начались. Призывы делают снимок в фабрике.
+for (const creature of window.gameState.entities) window.captureInitialStats(creature);
 
 // Текущие тултипы и ключ кэша панели эффектов принадлежат UI.
 window.SUMMON_TIME_ICON = `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#1a1e24" stroke="#a9b1bf" stroke-width="2"/><path d="M20 8 V20 L27 24" fill="none" stroke="#ffdc36" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="2" fill="#ffdc36"/></svg>`;
@@ -404,13 +408,27 @@ window.updatePanel = function() {
     } else element.textContent = '—';
   }
   const attributes = displayed?.attributes;
-  const writeAttribute = (id, text) => { document.getElementById(id).textContent = attributes ? text : '—'; };
+  const statColor = (current, key) => {
+    const initial = displayed?.initialStats?.[key];
+    if (initial === undefined) return undefined;
+    return current > initial ? '#4ade80' : current < initial ? '#ff4d4d' : undefined;
+  };
+  const writeAttribute = (id, text, color) => {
+    const element = document.getElementById(id);
+    element.textContent = attributes ? text : '—';
+    // Сбрасываем прежний цвет при возврате к норме, смене цели или пустой панели.
+    element.style.color = attributes ? color ?? '' : '';
+  };
   for (const key of ['ra', 'vs', 'es', 'vit', 'str', 'att', 'int', 'wis', 'cha', 'luc', 'ini']) {
-    writeAttribute(key, `${key.toUpperCase()}: ${window.getEffectiveStat(displayed, key)}`);
+    const value = window.getEffectiveStat(displayed, key);
+    writeAttribute(key, `${key.toUpperCase()}: ${value}`, statColor(value, key));
   }
   writeAttribute('wp', `WP: ${window.getEffectiveStat(displayed, 'wp')} / ${window.getEffectiveStat(displayed, 'maxWP')}`);
-  writeAttribute('acc', `ACC: ${window.getEffectiveStat(displayed, 'acc')}%`);
-  writeAttribute('cri', `CRI: ${window.getEffectiveStat(displayed, 'cri')}%`);
+  for (const key of ['acc', 'cri', 'sfc', 'eva', 'blo']) {
+    const value = window.getEffectiveStat(displayed, key);
+    const base = key === 'eva' || key === 'blo' ? ` / ${displayed?.[`base${key.toUpperCase()}`]}` : '';
+    writeAttribute(key, `${key.toUpperCase()}: ${value}%${base}`, statColor(value, key));
+  }
   const sccEl = document.getElementById('scc');
   const spellCastCount = displayed?.spellCastCount ?? 0;
   const maxSpellCasts = displayed?.maxSpellCasts ?? 0;
@@ -421,14 +439,11 @@ window.updatePanel = function() {
   const maxHitCount = displayed?.maxHitCount ?? 0;
   hcEl.textContent = displayed ? `HC: ${hitCount} / ${maxHitCount}` : '—';
   hcEl.style.color = displayed && hitCount >= maxHitCount ? '#ff4d4d' : '';
-  writeAttribute('sfc', `SFC: ${window.getEffectiveStat(displayed, 'sfc')}%`);
-  writeAttribute('eva', `EVA: ${window.getEffectiveStat(displayed, 'eva')}% / ${displayed?.baseEVA}`);
-  writeAttribute('blo', `BLO: ${window.getEffectiveStat(displayed, 'blo')}% / ${displayed?.baseBLO}`);
   for (const [key, label] of Object.entries({ ac: 'Броня', physical: 'Физика', fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля', mind: 'Разум', poison: 'Яд' })) {
     const id = `res-${key}`;
     // Базовая защита и бонусы читаются по имени характеристики в корне.
     const value = window.getEffectiveStat(displayed, key);
-    writeAttribute(id, String(value));
+    writeAttribute(id, String(value), statColor(value, key));
     document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);
   }
   window.gameState.endTurnButton.disabled = !displayed || window.gameState.isMoving || window.gameState.isCasting || window.gameState.isSkippingTurn || window.isFrozen(window.gameState.activeEntity()) || !window.activeMover();

@@ -2,6 +2,16 @@
 window.BASE_SPELL_CASTS = 5;
 window.BASE_HIT_COUNT = 5;
 
+// Снимок фиксируется один раз и учитывает врождённые состояния и производные статы.
+window.captureInitialStats = function(creature) {
+  if (creature.initialStats || !window.getEffectiveStat || !window.getCurrentES) return;
+  const keys = ['ra', 'acc', 'cri', 'sfc', 'eva', 'blo', 'vs', 'es', 'ini',
+    'str', 'vit', 'att', 'int', 'wis', 'cha', 'luc',
+    'ac', 'physical', 'fire', 'water', 'air', 'earth', 'mind', 'poison'];
+  creature.initialStats = Object.fromEntries(keys.map(key => [key, key === 'es'
+    ? window.getCurrentES(creature) : window.getEffectiveStat(creature, key)]));
+};
+
 (() => {
   window.createAttributes = function(overrides = {}) {
     // Только врождённые атрибуты; боевые характеристики хранятся у существа.
@@ -222,6 +232,7 @@ window.BASE_HIT_COUNT = 5;
         blocks: [...(overrides.blocks ?? templateState.blocks)] });
     }
     creature.svg.setAttribute('aria-label', creature.name);
+    window.captureInitialStats(creature);
     return creature;
   };
 })();

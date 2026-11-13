@@ -93,7 +93,20 @@
     // Проверка в консоли: gameState.entities.find(e => e.id === gameState.activeEntityId).hp = 0;
     // window.removeDefeatedEntities(); // Следующий участник должен стать активным сразу.
 
+    function setSpellTooltipShift(held) {
+      if (window.shiftHeld === held) return;
+      window.shiftHeld = held;
+      // showSpellTooltip очищает старый тултип, поэтому сохраняем обе ссылки заранее.
+      const spell = window.spellTooltipSpell;
+      const icon = window.spellTooltipIcon;
+      if (spell && icon) window.showSpellTooltip(icon, spell);
+    }
+
     document.addEventListener('keydown', event => {
+      if (event.key === 'Shift') {
+        setSpellTooltipShift(true);
+        return;
+      }
       if (event.key === 'Escape' && gameState.preparedSpellId) {
         window.cancelSpell();
         return;
@@ -118,6 +131,11 @@
       window.highlightSpellRange();
       window.updatePanel();
     });
+
+    document.addEventListener('keyup', event => {
+      if (event.key === 'Shift') setSpellTooltipShift(false);
+    });
+    window.addEventListener('blur', () => setSpellTooltipShift(false));
 
     for (const id of gameState.turnOrderIds) {
       const entity = gameState.entities.find(item => item.id === id);

@@ -5,7 +5,9 @@
 window.SUMMON_TIME_ICON = `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#1a1e24" stroke="#a9b1bf" stroke-width="2"/><path d="M20 8 V20 L27 24" fill="none" stroke="#ffdc36" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="2" fill="#ffdc36"/></svg>`;
 
 let spellTooltip = null;
-let spellTooltipIcon = null;
+window.spellTooltipIcon = null;
+window.spellTooltipSpell = null;
+window.shiftHeld = false;
 let effectPanelKey = null;
 let effectTooltip = null;
 
@@ -26,9 +28,10 @@ window.changeSpellPage = function(offset) {
 
 window.hideSpellTooltip = function() {
   spellTooltip?.remove();
-  spellTooltipIcon?.removeAttribute('aria-describedby');
+  window.spellTooltipIcon?.removeAttribute('aria-describedby');
   spellTooltip = null;
-  spellTooltipIcon = null;
+  window.spellTooltipIcon = null;
+  window.spellTooltipSpell = null;
 };
 
 window.spellTurnLabel = function(n) {
@@ -40,6 +43,7 @@ window.spellTurnLabel = function(n) {
 
 window.showSpellTooltip = function(icon, spell) {
   hideSpellTooltip();
+  const caster = window.gameState.activeEntity();
   const tooltip = document.createElement('div');
   tooltip.className = 'spell-tooltip';
   tooltip.id = 'spell-tooltip';
@@ -54,11 +58,17 @@ window.showSpellTooltip = function(icon, spell) {
     description.textContent = spell.description;
     tooltip.appendChild(description);
   }
-  const addLine = (label, value) => {
+  const addLine = (label, value, color) => {
     const line = document.createElement('p');
     const caption = document.createElement('strong');
     caption.textContent = `${label}:`;
-    line.append(caption, ` ${value}`);
+    if (color === undefined) line.append(caption, ` ${value}`);
+    else {
+      const span = document.createElement('span');
+      span.textContent = value;
+      span.style.color = color;
+      line.append(caption, ' ', span);
+    }
     tooltip.appendChild(line);
   };
   const typeName = spell.abilityType === 'weapon-strike' ? 'Атака оружием'
@@ -74,10 +84,13 @@ window.showSpellTooltip = function(icon, spell) {
   } else if (spell.maxUsesPerTurn > 1) {
     addLine('Раз в ход', spell.maxUsesPerTurn);
   }
-  // Совпадающие границы показываем одним числом, сохраняя отметку изменяемости.
-  const range = spell.minRange === undefined || spell.minRange === spell.range
-    ? spell.range : `${spell.minRange}–${spell.range}`;
-  addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`);
+  const finalRange = spell.modifiable && caster ? window.effectiveSpellRange(spell, caster) : spell.range;
+  // В обычном режиме сохраняем минимальную границу; Shift показывает базовую дальность.
+  const range = window.shiftHeld ? spell.range
+    : spell.minRange === undefined || spell.minRange === finalRange ? finalRange : `${spell.minRange}–${finalRange}`;
+  const rangeColor = window.shiftHeld || !spell.modifiable ? ''
+    : finalRange > spell.range ? '#4ade80' : finalRange < spell.range ? '#ff4d4d' : '';
+  addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`, rangeColor);
   const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.isDiamond ? `ромб D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
   // Тип атаки дополняет форму АОЕ.
   const typeLabel = spell.isShot ? ' [тип: Выстрел]' : spell.isHit ? ' [тип: Удар]' : '';
@@ -86,13 +99,19 @@ window.showSpellTooltip = function(icon, spell) {
   addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
   const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', physical: 'физический' };
   if (spell.damageBase !== undefined || spell.damage > 0) {
-    const caster = window.gameState.activeEntity();
     const damage = caster ? window.getSpellDamage(spell, caster) : spell.damage;
     const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
-    const mult = caster && ((spell.abilityType === 'spell' && window.hasActiveState(caster, 'exhaustion'))
-      || (isNonSpell && window.hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
+    const hasDebuff = caster && ((spell.abilityType === 'spell' && window.hasActiveState(caster, 'exhaustion'))
+      || (isNonSpell && window.hasActiveState(caster, 'weakness')));
+    const mult = hasDebuff ? 0.8 : 1;
     const finalDamage = Math.floor(damage * mult);
-    if (finalDamage > 0) addLine('Урон', `${finalDamage} ${elements[spell.damageType] ?? spell.damageType}`);
+    if (finalDamage > 0) {
+      const showFormula = window.shiftHeld && spell.damageBase !== undefined;
+      const damageText = showFormula ? `${spell.damageBase} + ${spell.damagePerInt ?? 0}*INT`
+        : `${finalDamage} ${elements[spell.damageType] ?? spell.damageType}`;
+      const damageColor = showFormula ? '' : hasDebuff ? '#ff4d4d' : window.shiftHeld ? '' : '#4ade80';
+      addLine('Урон', damageText, damageColor);
+    }
   }
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
   if (spell.isSummon) {
@@ -114,8 +133,16 @@ window.showSpellTooltip = function(icon, spell) {
     });
     const durationField = ['stateDuration', 'shieldDuration', 'effectDuration', 'burnDuration', 'bleedDuration']
       .find(field => spell[field] !== undefined);
-    const duration = window.getSpellDuration(spell, window.gameState.activeEntity(), durationField);
-    addLine('Длительность', spell.isHealHarm ? `${spell.bleedDuration} [враг]` : spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(duration));
+    const duration = window.getSpellDuration(spell, caster, durationField);
+    if (spell.durationBase !== undefined) {
+      const durationText = window.shiftHeld ? `${spell.durationBase} + ${spell.durationPerInt ?? 0}*INT`
+        : spellTurnLabel(duration);
+      const baseDuration = spell[durationField];
+      const durationColor = window.shiftHeld ? '' : duration > baseDuration ? '#4ade80' : duration < baseDuration ? '#ff4d4d' : '';
+      addLine('Длительность', durationText, durationColor);
+    } else {
+      addLine('Длительность', spell.isHealHarm ? `${spell.bleedDuration} [враг]` : spell.isSkyShot ? '1 ход или до первого применения' : spellTurnLabel(duration));
+    }
   }
   document.body.appendChild(tooltip);
   // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.
@@ -135,7 +162,8 @@ window.showSpellTooltip = function(icon, spell) {
   tooltip.style.top = `${Math.max(8, Math.min(top, innerHeight - t.height - 8))}px`;
   icon.setAttribute('aria-describedby', tooltip.id);
   spellTooltip = tooltip;
-  spellTooltipIcon = icon;
+  window.spellTooltipIcon = icon;
+  window.spellTooltipSpell = spell;
 };
 
 // Обновляем только бейдж, сохраняя сам слот, фокус и обработчики тултипа.

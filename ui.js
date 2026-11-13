@@ -276,9 +276,27 @@ window.showEffectTooltip = function(icon, effect, kind = 'spell') {
       ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable || weaknessLocked ? [effect.id === 'weakness' ? 'Неснимаемая' : 'Неснимаемое'] : [])]
     : [...(spellDescription === undefined ? [] : [spellDescription]), `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
       `Источник: ${effect.casterName ?? 'Неизвестно'}`];
-  for (const text of lines) {
+  for (const [index, text] of lines.entries()) {
     const line = document.createElement('p');
-    line.textContent = text;
+    let boostedValue;
+    let start = -1;
+    // Только число в описании усиленной защиты/ES; остальные строки и эффекты не меняем.
+    if (kind === 'spell' && index === 0) {
+      if (effect.baseAmount !== undefined && effect.amount > effect.baseAmount) {
+        boostedValue = String(effect.amount);
+        start = text.indexOf(boostedValue);
+      } else if (effect.baseEsAmount !== undefined && effect.esAmount > effect.baseEsAmount) {
+        boostedValue = String(effect.esAmount);
+        const marker = text.indexOf(`+${boostedValue} ES`);
+        if (marker !== -1) start = marker + 1;
+      }
+    }
+    if (start !== -1) {
+      const value = document.createElement('span');
+      value.textContent = boostedValue;
+      value.style.color = '#4ade80';
+      line.append(text.slice(0, start), value, text.slice(start + boostedValue.length));
+    } else line.textContent = text;
     tooltip.appendChild(line);
   }
   if (effect.suppressed) {

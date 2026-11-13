@@ -14,7 +14,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
   id: `${element.damageType}-shield`, abilityType: 'spell', name: `Защита от ${element.name}`,
   stackable: false, isElementalShield: true, magicSchool: element.damageType, damageType: element.damageType, target: 'ally',
   description: `Союзная цель блокирует часть урона от ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[element.damageType]}.`,
-  shieldAmount: 2, durationBase: 3, durationPerInt: 0.05, minRange: 0, range: 4, modifiable: true,
+  shieldAmount: 2, effectValuePerLvl: 0.25, durationBase: 3, durationPerInt: 0.05, minRange: 0, range: 4, modifiable: true,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: element.svg ?? `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 10 L20 3 L33 10 L31 27 Q28 34 20 38 Q12 34 9 27 Z" fill="${element.color}" stroke="${element.edge}" stroke-width="2"/>${element.symbol}</svg>`
@@ -129,7 +129,7 @@ const SPELL_DEFINITIONS = [{
 }, ...ELEMENTAL_SHIELD_SPELLS, {
   id: 'liquid-membrane', durationBase: 2, durationPerInt: 0.05, abilityType: 'spell', magicSchool: 'water', name: 'Жидкая мембрана', stackable: false, isMembrane: true, target: 'ally',
   description: 'Дает союзной цели бонусное уклонение и энергощит.',
-  esAmount: 4, evaAmount: 10, minRange: 0, range: 4, modifiable: true, noLOS: false,
+  esAmount: 4, effectValuePerLvl: 0.25, evaAmount: 10, minRange: 0, range: 4, modifiable: true, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><radialGradient id="membrane-glow"><stop offset="0" stop-color="#e8ffff" stop-opacity=".25"/><stop offset=".75" stop-color="#70d4eb" stop-opacity=".5"/><stop offset="1" stop-color="#d3b4ff" stop-opacity=".8"/></radialGradient></defs><circle cx="20" cy="20" r="17" fill="url(#membrane-glow)" stroke="#a7f4ed" stroke-width="2"/><path d="M9 16 Q10 8 18 7 M24 33 Q32 31 33 24" fill="none" stroke="#ffdfae" stroke-width="2" stroke-linecap="round"/></svg>`
@@ -172,7 +172,7 @@ const SPELL_DEFINITIONS = [{
 }, {
   id: 'stone-skin', abilityType: 'spell', magicSchool: 'earth', name: 'Каменная кожа', stackable: false, isElementalShield: true, damageType: 'physical', target: 'ally',
   description: 'Союзная цель блокирует часть физического урона.',
-  shieldAmount: 2, durationBase: 3, durationPerInt: 0.05, minRange: 0, range: 4, modifiable: true, noLOS: false,
+  shieldAmount: 2, effectValuePerLvl: 0.2, durationBase: 3, durationPerInt: 0.05, minRange: 0, range: 4, modifiable: true, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 2,
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 5 L20 2 L32 7 L35 21 L29 33 L20 38 L8 32 L4 18 Z" fill="#858e98" stroke="#cdd4db" stroke-width="2"/><path d="M20 3 L17 13 L23 20 L17 28 L20 37 M17 13 L5 17 M23 20 L34 16 M17 28 L9 32 M23 20 L29 32" fill="none" stroke="#434e5a" stroke-width="2"/><path d="M10 8 L14 7 M27 9 L29 12" stroke="#e3e7eb" stroke-width="2" stroke-linecap="round"/></svg>`

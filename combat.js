@@ -304,7 +304,8 @@ window.storeElementalShields = function(entity, effects) {
 
 window.addElementalShield = function(entity, spell, caster = window.gameState.activeEntity(), duration = window.getSpellDuration(spell, caster)) {
   const effects = elementalShieldEffects(entity);
-  const fresh = { damageType: spell.damageType, amount: spell.shieldAmount, turnsLeft: duration, sourceId: spell.id,
+  const amount = Math.floor(spell.shieldAmount + (spell.effectValuePerLvl ?? 0) * (caster?.level ?? 1));
+  const fresh = { damageType: spell.damageType, amount, baseAmount: spell.shieldAmount, turnsLeft: duration, sourceId: spell.id,
     casterId: caster?.id, casterName: caster?.name ?? 'Неизвестно', name: spell.name,
     svg: spell.svg, appliedOrder: ++window.gameState.effectOrder };
   const index = effects.findIndex(effect => effect.sourceId === spell.id);

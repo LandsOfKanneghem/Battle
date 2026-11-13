@@ -238,12 +238,15 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       });
     }
   } else if (spell.isMembrane) {
-    if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
-      id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
-      duration, casterId: caster.id, casterName: caster.name,
-      esAmount: spell.esAmount, evaAmount: spell.evaAmount,
-      description: `+${spell.esAmount} ES, +${spell.evaAmount} EVA`
-    });
+    if (directTarget && isAlly(directTarget)) {
+      const esAmount = Math.floor(spell.esAmount + (spell.effectValuePerLvl ?? 0) * (caster?.level ?? 1));
+      applySpellOnEntity(directTarget, {
+        id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
+        duration, casterId: caster.id, casterName: caster.name,
+        esAmount, baseEsAmount: spell.esAmount, evaAmount: spell.evaAmount,
+        description: `+${esAmount} ES, +${spell.evaAmount} EVA`
+      });
+    }
   } else if (spell.isHealHarm) {
     if (directTarget && isAlly(directTarget)) {
       directTarget.hp = Math.min(directTarget.maxHP ?? directTarget.hp, directTarget.hp + spell.healAmount);

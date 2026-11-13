@@ -322,6 +322,15 @@ window.isMagicalDamage = function(damageType) {
   return !['physical', 'poison', 'pure'].includes(damageType);
 };
 
+// Базовый урон кастера: INT учитываем до штрафов, сопротивлений и ES.
+window.getSpellDamage = function(spell, caster) {
+  if (spell.damageBase !== undefined) {
+    const intelligence = window.getEffectiveStat(caster, 'int');
+    return Math.floor(spell.damageBase + (spell.damagePerInt ?? 0) * intelligence);
+  }
+  return spell.damage;
+};
+
 window.damageBreakdown = function(spell, entity) {
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) {

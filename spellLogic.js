@@ -104,12 +104,12 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     resolveStateSuppression, recalculateStateStats
   } = deps;
   const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
+  const baseDamage = window.getSpellDamage(spell, caster);
   // Округляем штраф до защиты/ES, сохраняя исходные данные заклинания или атаки.
   const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
   const damageMultiplier = caster && ((spell.abilityType === 'spell' && hasActiveState(caster, 'exhaustion'))
     || (isNonSpell && hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
-  const adjustedSpell = damageMultiplier === 1 ? spell
-    : { ...spell, damage: Math.floor((spell.damage ?? 0) * damageMultiplier) };
+  const adjustedSpell = { ...spell, damage: Math.floor((baseDamage ?? 0) * damageMultiplier) };
   // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
   if (spell.isShot && !directTarget) return;
   // Один бросок по основной цели; Искры передают уже полученный в анимации результат.

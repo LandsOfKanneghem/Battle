@@ -85,7 +85,15 @@ window.showSpellTooltip = function(icon, spell) {
   addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг', none: 'нет' }[spell.target] ?? 'нет');
   addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
   const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', physical: 'физический' };
-  if (spell.damage > 0) addLine('Урон', `${spell.damage} ${elements[spell.damageType] ?? spell.damageType}`);
+  if (spell.damageBase !== undefined || spell.damage > 0) {
+    const caster = window.gameState.activeEntity();
+    const damage = caster ? window.getSpellDamage(spell, caster) : spell.damage;
+    const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
+    const mult = caster && ((spell.abilityType === 'spell' && window.hasActiveState(caster, 'exhaustion'))
+      || (isNonSpell && window.hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
+    const finalDamage = Math.floor(damage * mult);
+    if (finalDamage > 0) addLine('Урон', `${finalDamage} ${elements[spell.damageType] ?? spell.damageType}`);
+  }
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
   if (spell.isSummon) {
     addLine('Призыв', spell.name);

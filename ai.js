@@ -33,7 +33,7 @@
         const range = spell.modifiable ? window.effectiveSpellRange(spell, entity) : spell.range;
         if (distance < (spell.minRange ?? 1) || distance > range
           || (!spell.noLOS && !window.checkLOS(entity.position, target.position))) continue;
-        const factDamage = window.spellDamage(spell, target);
+        const factDamage = window.spellDamage({ ...spell, damage: window.getSpellDamage(spell, entity) }, target);
         const hitChance = (spell.isShot || spell.isHit) ? Math.max(0, Math.min(100,
           window.getEffectiveStat(entity, 'acc') - window.getEffectiveStat(target, 'eva'))) / 100 : 1;
         pairs.push({ spell, target, factDamage,

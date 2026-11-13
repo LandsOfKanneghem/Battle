@@ -8,8 +8,12 @@ window.captureInitialStats = function(creature) {
   const keys = ['ra', 'acc', 'cri', 'sfc', 'eva', 'blo', 'vs', 'es', 'ini',
     'str', 'vit', 'att', 'int', 'wis', 'cha', 'luc',
     'ac', 'physical', 'fire', 'water', 'air', 'earth', 'mind', 'poison'];
-  creature.initialStats = Object.fromEntries(keys.map(key => [key, key === 'es'
-    ? window.getCurrentES(creature) : window.getEffectiveStat(creature, key)]));
+  creature.initialStats = {
+    ...Object.fromEntries(keys.map(key => [key, key === 'es'
+      ? window.getCurrentES(creature) : window.getEffectiveStat(creature, key)])),
+    maxHP: creature.maxHP, maxWP: creature.maxWP,
+    maxAP: creature.maxAP, maxMP: creature.maxMP
+  };
 };
 
 (() => {

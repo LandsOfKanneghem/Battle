@@ -394,25 +394,29 @@ window.updatePanel = function() {
   document.getElementById('effects-panel').hidden = !viewingEffects;
   if (viewingEffects) renderEffectPanel();
   else { effectPanelKey = null; hideEffectTooltip(); }
-  document.getElementById('character-name').textContent = displayed ? `${displayed.name} ${displayed.level} ур.` : '—';
-  document.getElementById('hp').textContent = displayed ? `HP: ${displayed.hp} / ${displayed.maxHP}` : '—';
-  // Подсвечиваем только текущий ресурс; максимум сохраняет обычный цвет.
-  for (const [stat, label, bonus] of [['ap', 'AP', 'bonusAP'], ['mp', 'MP', 'bonusMP']]) {
-    const element = document.getElementById(stat);
-    element.textContent = '';
-    if (displayed) {
-      const current = document.createElement('span');
-      current.textContent = `${label}: ${displayed[stat]}`;
-      if (displayed[bonus] > 0) current.style.color = '#4ade80';
-      element.append(current, document.createTextNode(` / ${displayed[`max${label}`]}`));
-    } else element.textContent = '—';
-  }
-  const attributes = displayed?.attributes;
   const statColor = (current, key) => {
     const initial = displayed?.initialStats?.[key];
     if (initial === undefined) return undefined;
     return current > initial ? '#4ade80' : current < initial ? '#ff4d4d' : undefined;
   };
+  document.getElementById('character-name').textContent = displayed ? `${displayed.name} ${displayed.level} ур.` : '—';
+  // Максимумы сравниваем со стартовыми; текущие AP/MP сохраняют подсветку бонуса хода.
+  for (const [stat, label, bonus] of [['hp', 'HP'], ['wp', 'WP'], ['ap', 'AP', 'bonusAP'], ['mp', 'MP', 'bonusMP']]) {
+    const element = document.getElementById(stat);
+    element.textContent = '';
+    if (displayed) {
+      const maxKey = `max${label}`;
+      const maxValue = stat === 'wp' ? window.getEffectiveStat(displayed, maxKey) : displayed[maxKey];
+      const current = document.createElement('span');
+      current.textContent = `${label}: ${stat === 'wp' ? window.getEffectiveStat(displayed, stat) : displayed[stat]}`;
+      if (bonus && displayed[bonus] > 0) current.style.color = '#4ade80';
+      const maximum = document.createElement('span');
+      maximum.textContent = String(maxValue);
+      maximum.style.color = statColor(maxValue, maxKey) ?? '';
+      element.append(current, document.createTextNode(' / '), maximum);
+    } else element.textContent = '—';
+  }
+  const attributes = displayed?.attributes;
   const writeAttribute = (id, text, color) => {
     const element = document.getElementById(id);
     element.textContent = attributes ? text : '—';
@@ -423,7 +427,6 @@ window.updatePanel = function() {
     const value = window.getEffectiveStat(displayed, key);
     writeAttribute(key, `${key.toUpperCase()}: ${value}`, statColor(value, key));
   }
-  writeAttribute('wp', `WP: ${window.getEffectiveStat(displayed, 'wp')} / ${window.getEffectiveStat(displayed, 'maxWP')}`);
   for (const key of ['acc', 'cri', 'sfc', 'eva', 'blo']) {
     const value = window.getEffectiveStat(displayed, key);
     const base = key === 'eva' || key === 'blo' ? ` / ${displayed?.[`base${key.toUpperCase()}`]}` : '';

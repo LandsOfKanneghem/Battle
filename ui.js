@@ -397,6 +397,9 @@ window.updatePanel = function() {
   const statColor = (current, key) => {
     const initial = displayed?.initialStats?.[key];
     if (initial === undefined) return undefined;
+    if (key === 'sfc') {
+      return current > initial ? '#ff4d4d' : current < initial ? '#4ade80' : undefined;
+    }
     return current > initial ? '#4ade80' : current < initial ? '#ff4d4d' : undefined;
   };
   document.getElementById('character-name').textContent = displayed ? `${displayed.name} ${displayed.level} ур.` : '—';

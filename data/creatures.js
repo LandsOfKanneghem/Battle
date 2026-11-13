@@ -11,7 +11,7 @@ window.BASE_HIT_COUNT = 5;
   const CREATURE_TEMPLATES = {
     wizard: {
       name: 'Волшебник', type: 'wizard',
-      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 15, wpPerLevel: 6, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -29,7 +29,7 @@ window.BASE_HIT_COUNT = 5;
     },
     monk: {
       name: 'Монах', type: 'monk',
-      level: 1, baseHP: 8, hpPerLevel: 5, baseWP: 10, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 8, hpPerLevel: 5, baseWP: 12, wpPerLevel: 5, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -43,7 +43,7 @@ window.BASE_HIT_COUNT = 5;
     },
     'lake-spirit': {
       name: 'Дух озера', type: 'lake-spirit',
-      level: 1, baseHP: 1, hpPerLevel: 0, baseWP: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 1, hpPerLevel: 0, baseWP: 10, wpPerLevel: 4, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -58,7 +58,7 @@ window.BASE_HIT_COUNT = 5;
     },
     'hill-giant': {
       name: 'Холмовой Великан', type: 'hill-giant', ai: 'hill-giant',
-      level: 1, baseHP: 25, hpPerLevel: 10, baseWP: 10, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 25, hpPerLevel: 10, baseWP: 15, wpPerLevel: 6, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -73,7 +73,7 @@ window.BASE_HIT_COUNT = 5;
     },
     wolf: {
       name: 'Волк', type: 'wolf', ai: 'wolf',
-      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 4, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 10, wpPerLevel: 4, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -152,10 +152,11 @@ window.BASE_HIT_COUNT = 5;
     const strBonus = Math.floor(attributes.str / 20);
     const level = template.level ?? 1;
     const maxHP = template.baseHP + template.hpPerLevel * (level + attributes.vit);
+    const maxWP = template.baseWP + template.wpPerLevel * (level + attributes.cha);
     const creature = {
       id, name: template.name, type: template.type,
       level, baseHP: template.baseHP, hpPerLevel: template.hpPerLevel, hp: maxHP, maxHP,
-      baseWP: template.baseWP, wp: template.baseWP, maxWP: template.baseWP,
+      baseWP: template.baseWP, wpPerLevel: template.wpPerLevel, wp: maxWP, maxWP,
       baseAP: template.baseAP, ap: template.baseAP + wisBonus, maxAP: template.baseAP + wisBonus,
       baseMP: template.baseMP, mp: template.baseMP + strBonus, maxMP: template.baseMP + strBonus,
       baseES: template.baseES, esBonuses: [], evaBonuses: [],

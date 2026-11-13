@@ -46,6 +46,11 @@ window.recalculateStateStats = function(entity, allowNegativeMP = false) {
   if (hpDelta !== 0 && entity.hp > 0) {
     entity.hp = Math.max(0, entity.hp + hpDelta);
   }
+  const oldMaxWP = entity.maxWP;
+  entity.maxWP = entity.baseWP + entity.wpPerLevel * (entity.level + window.getEffectiveStat(entity, 'cha'));
+  const wpDelta = entity.maxWP - oldMaxWP;
+  // Сохраняем потраченный WP; долг ресурса допустим и не означает смерть.
+  if (wpDelta !== 0) entity.wp += wpDelta;
 };
 
 window.resolveStateSuppression = function(entity) {
@@ -287,7 +292,7 @@ window.applySpellOnEntity = function(entity, spellOnMe) {
     id: applied.stateId, duration: applied.duration,
     casterId: applied.casterId, casterName: applied.casterName
   });
-  if (applied.modifiers?.vit) recalculateStateStats(entity, true);
+  if (applied.modifiers?.vit || applied.modifiers?.cha) recalculateStateStats(entity, true);
   window.updatePanel?.();
 };
 

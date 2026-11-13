@@ -202,7 +202,7 @@ window.BASE_HIT_COUNT = 5;
           // Часть старых способностей монаха пока определена только в MONK_SPELLS.
           const spell = SPELL_DEFINITIONS.find(spell => spell.id === id)
             ?? MONK_SPELLS.find(spell => spell.id === id);
-          resolved.set(id, spell ? { ...spell } : null);
+          resolved.set(id, spell ? { ...spell, cooldown: 0, usesThisTurn: 0, usesTotal: 0 } : null);
         }
         return resolved.get(id);
       }));

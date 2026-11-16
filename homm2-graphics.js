@@ -1,8 +1,8 @@
-// Presentation only: original pixel artwork, portraits and terrain decoration.
+// Presentation only: painted raster artwork, portraits and terrain decoration.
 // Spell/state values, targeting, timing and creature registration stay in their modules.
 (() => {
   const artRoot = 'assets/homm2/';
-  const sprite = name => `<svg viewBox="0 0 40 40" aria-hidden="true"><image href="${artRoot}${name}.png" width="40" height="40" style="image-rendering:pixelated"/></svg>`;
+  const sprite = name => `<svg viewBox="0 0 40 40" aria-hidden="true"><image href="${artRoot}${name}.png" width="40" height="40"/></svg>`;
   const spellArt = new Set(`fire-shot burning-hands reckless fire-cube armageddon
     water-shot liquid-membrane rain ice-arrow deep-freeze lake-spirit
     haste wind-rose sparks sky-shot teleport water-walk slow dead-weight stone-skin
@@ -19,23 +19,27 @@
   const createSvg = window.createCreatureSvg;
   window.createCreatureSvg = function(kind) {
     const svg = createSvg(kind);
-    if (kinds.has(kind)) svg.innerHTML = `<image href="${artRoot}${kind}.png" width="40" height="40" style="image-rendering:pixelated"/>`;
+    if (kinds.has(kind)) svg.innerHTML = `<image href="${artRoot}${kind}.png" width="40" height="40"/>`;
     return svg;
   };
 
   document.addEventListener('DOMContentLoaded', () => {
     window.SUMMON_TIME_ICON = sprite('state-summon-time');
     for (const svg of document.querySelectorAll('#battlefield .obstacle')) {
-      svg.innerHTML = `<image href="${artRoot}crate.png" width="40" height="40" style="image-rendering:pixelated"/>`;
+      svg.innerHTML = `<image href="${artRoot}crate.png" width="40" height="40"/>`;
     }
     for (const stat of document.querySelectorAll('.resistance-stat')) {
       const key = stat.querySelector('span').id.replace('res-', '');
-      stat.querySelector('svg').innerHTML = `<image href="${artRoot}res-${key}.png" width="16" height="16" style="image-rendering:pixelated"/>`;
+      stat.querySelector('svg').innerHTML = `<image href="${artRoot}res-${key}.png" width="16" height="16"/>`;
     }
     // Shore edging follows the existing terrain map and never changes passability.
     for (const cell of window.gameState.cells) {
-      if (cell.dataset.terrain !== 'deep-water') continue;
+      // Every cell samples its position in the same painting, rather than repeating
+      // a small grass stamp. Only CSS coordinates change; the terrain map is read-only.
       const x = Number(cell.dataset.x), y = Number(cell.dataset.y);
+      cell.querySelector('.terrain').style.setProperty('--land-x', `${x / (window.gameState.SIZE - 1) * 100}%`);
+      cell.querySelector('.terrain').style.setProperty('--land-y', `${y / (window.gameState.SIZE - 1) * 100}%`);
+      if (cell.dataset.terrain !== 'deep-water') continue;
       const edges = [[0, -1, '0 2px'], [0, 1, '0 -2px'], [-1, 0, '2px 0'], [1, 0, '-2px 0']];
       const shadows = edges.filter(([dx, dy]) => {
         const terrain = window.gameState.terrain.get(`${x + dx},${y + dy}`);
@@ -56,6 +60,19 @@
     };
     new MutationObserver(updatePortrait).observe(name, { childList: true });
     updatePortrait();
+
+    // Queue thumbnails use the matching painted face; battlefield SVGs remain intact.
+    const updateQueueArtwork = () => {
+      for (const [id, slot] of window.gameState.turnSlots) {
+        const creature = window.gameState.entities.find(item => item.id === id);
+        if (!kinds.has(creature?.type)) continue;
+        const image = slot.querySelector('svg image');
+        const url = `${artRoot}portrait-${creature.type}.png`;
+        if (image && image.getAttribute('href') !== url) image.setAttribute('href', url);
+      }
+    };
+    new MutationObserver(updateQueueArtwork).observe(window.gameState.turnOrder, { childList: true });
+    updateQueueArtwork();
 
     // On the long mobile layout, native focus can scroll a spell into view.
     // The existing scroll listener hides its tooltip; restore the visual focus

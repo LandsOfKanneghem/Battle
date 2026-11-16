@@ -1,0 +1,71 @@
+// Presentation only: original pixel artwork, portraits and terrain decoration.
+// Spell/state values, targeting, timing and creature registration stay in their modules.
+(() => {
+  const artRoot = 'assets/homm2/';
+  const sprite = name => `<svg viewBox="0 0 40 40" aria-hidden="true"><image href="${artRoot}${name}.png" width="40" height="40" style="image-rendering:pixelated"/></svg>`;
+  const spellArt = new Set(`fire-shot burning-hands reckless fire-cube armageddon
+    water-shot liquid-membrane rain ice-arrow deep-freeze lake-spirit
+    haste wind-rose sparks sky-shot teleport water-walk slow dead-weight stone-skin
+    heal-harm weakness-vigor sprint light-flash power-hour apply-old-age
+    bite club-smash boulder-throw fire-shield water-shield earth-shield air-shield`.split(/\s+/));
+  // Some book entries are copies of definitions. Decorate each distinct object,
+  // preserving all references subsequently used as keys by spellSlots.
+  for (const spell of new Set([...SPELL_DEFINITIONS, ...MONK_SPELLS, ...ELEMENTAL_SHIELD_SPELLS])) {
+    if (spellArt.has(spell.id)) spell.svg = sprite(`spell-${spell.id}`);
+  }
+  for (const state of stateTypes.values()) state.icon = sprite(`state-${state.id}`);
+
+  const kinds = new Set(['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit']);
+  const createSvg = window.createCreatureSvg;
+  window.createCreatureSvg = function(kind) {
+    const svg = createSvg(kind);
+    if (kinds.has(kind)) svg.innerHTML = `<image href="${artRoot}${kind}.png" width="40" height="40" style="image-rendering:pixelated"/>`;
+    return svg;
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    window.SUMMON_TIME_ICON = sprite('state-summon-time');
+    for (const svg of document.querySelectorAll('#battlefield .obstacle')) {
+      svg.innerHTML = `<image href="${artRoot}crate.png" width="40" height="40" style="image-rendering:pixelated"/>`;
+    }
+    for (const stat of document.querySelectorAll('.resistance-stat')) {
+      const key = stat.querySelector('span').id.replace('res-', '');
+      stat.querySelector('svg').innerHTML = `<image href="${artRoot}res-${key}.png" width="16" height="16" style="image-rendering:pixelated"/>`;
+    }
+    // Shore edging follows the existing terrain map and never changes passability.
+    for (const cell of window.gameState.cells) {
+      if (cell.dataset.terrain !== 'deep-water') continue;
+      const x = Number(cell.dataset.x), y = Number(cell.dataset.y);
+      const edges = [[0, -1, '0 2px'], [0, 1, '0 -2px'], [-1, 0, '2px 0'], [1, 0, '-2px 0']];
+      const shadows = edges.filter(([dx, dy]) => {
+        const terrain = window.gameState.terrain.get(`${x + dx},${y + dy}`);
+        return terrain && terrain !== 'deep-water';
+      }).map(([, , offset]) => `inset ${offset} #a9985a`);
+      cell.querySelector('.terrain').style.boxShadow = shadows.join(', ');
+    }
+
+    const portrait = document.getElementById('creature-portrait');
+    const name = document.getElementById('character-name');
+    const updatePortrait = () => {
+      const state = window.gameState;
+      const creature = state.entities.find(item => item.id === (state.selectedEntityId ?? state.hoveredEntityId ?? state.activeEntityId));
+      const kind = kinds.has(creature?.type) ? creature.type : 'wizard';
+      const url = `${artRoot}portrait-${kind}.png`;
+      if (portrait.getAttribute('src') !== url) portrait.setAttribute('src', url);
+      portrait.hidden = !creature;
+    };
+    new MutationObserver(updatePortrait).observe(name, { childList: true });
+    updatePortrait();
+
+    // On the long mobile layout, native focus can scroll a spell into view.
+    // The existing scroll listener hides its tooltip; restore the visual focus
+    // after that scroll, using the icon's existing tooltip handler.
+    document.addEventListener('focusin', event => {
+      const icon = event.target;
+      if (!icon.matches('button.spell-slot')) return;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (icon.isConnected && document.activeElement === icon) icon.dispatchEvent(new FocusEvent('focus'));
+      }));
+    });
+  });
+})();

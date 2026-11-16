@@ -1,0 +1,213 @@
+/* An independent visual skin. Grid coordinates, hit areas and gameplay are unchanged. */
+:root {
+  color-scheme: dark;
+  --gold: #b99a5b;
+  --gold-light: #e9cf8a;
+  --stone: #343a35;
+  --ink: #1c201f;
+  --parchment: #e5d2a4;
+}
+body {
+  background: #232723 url('assets/homm2/stone.png') repeat;
+  color: var(--parchment);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 100px 28px #0c1012b0;
+}
+.game {
+  position: relative; display: grid;
+  grid-template-columns: auto 306px;
+  grid-template-areas: 'banner banner' 'arena panel' 'footer footer';
+  gap: 12px 16px;
+  max-width: calc(100vw - 40px);
+}
+.campaign-banner {
+  grid-area: banner; position: relative; min-height: 66px;
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  padding: 10px 22px; border: 3px ridge var(--gold);
+  background: linear-gradient(90deg, #162128e8, #16212888), url('assets/homm2/valley.png') center/cover;
+  box-shadow: 0 3px 0 #151a16, inset 0 0 0 2px #101b1a;
+}
+.campaign-title { font-size: 23px; font-weight: bold; color: #f0d89d; text-shadow: 2px 2px #101817; letter-spacing: .7px; }
+.campaign-eyebrow { color: #b4b29a; font: 10px/1.7 Georgia, serif; text-transform: uppercase; letter-spacing: 2.4px; }
+.campaign-mark { font-size: 24px; color: var(--gold-light); text-shadow: 2px 2px #111; }
+.campaign-subtitle { color: #c2c0a8; font-size: 11px; text-align: right; line-height: 1.6; }
+.arena {
+  grid-area: arena; width: auto; align-self: start;
+  gap: 9px; padding: 10px; border: 3px ridge var(--gold);
+  background: #35392f url('assets/homm2/wood.png');
+  box-shadow: 0 4px 0 #141917, inset 0 0 0 2px #24271d;
+}
+.arena::before {
+  content: 'П О Л Е   Б О Я'; align-self: stretch; text-align: center;
+  font-size: 10px; line-height: 15px; color: #e0c283;
+  text-shadow: 1px 1px #161c18;
+}
+#battlefield {
+  width: min(calc(100vw - 406px), calc(100dvh - 246px));
+  gap: 0; padding: 0; border: 3px solid #222b22;
+  outline: 1px solid #ac9155;
+  background: #3d502c; box-shadow: 0 0 0 2px #151c18;
+}
+.cell { background: #526333; }
+.cell::before {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  border-right: 1px solid #15241215; border-bottom: 1px solid #15241215;
+  pointer-events: none;
+}
+.terrain { background: #536431 url('assets/homm2/grass-0.png') center/100% 100%; image-rendering: pixelated; }
+.terrain svg { display: none; }
+.cell:nth-child(4n+2)[data-terrain='grass'] .terrain { background-image: url('assets/homm2/grass-1.png'); }
+.cell:nth-child(4n+3)[data-terrain='grass'] .terrain { background-image: url('assets/homm2/grass-2.png'); }
+.cell:nth-child(4n)[data-terrain='grass'] .terrain { background-image: url('assets/homm2/grass-3.png'); }
+.cell[data-terrain='sand'] .terrain { background-image: url('assets/homm2/sand.png'); }
+.cell[data-terrain='deep-water'] .terrain { background-image: url('assets/homm2/water.png'); }
+svg, svg image, #creature-portrait { image-rendering: pixelated; }
+#battlefield :is(.wizard,.monk,.wolf,.lake-spirit,.hill-giant,.obstacle) { filter: drop-shadow(1px 2px 0 #15201465); }
+#turn-order {
+  min-height: 55px; height: 55px; border-radius: 0;
+  background: #292c25 url('assets/homm2/leather.png');
+  box-shadow: inset 0 0 0 1px #7c6b43, inset 0 0 0 3px #161d17;
+  scrollbar-color: #8c774a #1b211c;
+}
+#turn-order::-webkit-scrollbar-track { background: #1b211c; border-radius: 0; }
+#turn-order::-webkit-scrollbar-thumb { background: #8c774a; border-radius: 0; }
+.turn-slot {
+  border-radius: 0; border-color: #79765c; padding: 0;
+  background: linear-gradient(#44504a, #252e2a);
+  box-shadow: inset 1px 1px #a39668, inset -1px -1px #141c19;
+}
+.turn-slot.active { border-color: #edce77; background: linear-gradient(#74633d,#413d28); box-shadow: 0 0 0 1px #c29a4a, inset 1px 1px #ead58f; }
+.panel {
+  grid-area: panel; width: 306px; align-self: stretch;
+  max-height: calc(100dvh - 136px); padding: 13px;
+  background: #32382f url('assets/homm2/stone.png');
+  border: 3px ridge var(--gold); border-radius: 0;
+  box-shadow: 0 4px 0 #131a17, inset 0 0 0 2px #1b251e;
+  scrollbar-width: thin; scrollbar-color: #8c774a #202820;
+}
+.hero-masthead {
+  display: flex; align-items: center; gap: 12px;
+  margin: 0 0 12px; padding-bottom: 12px; border-bottom: 1px solid #8c8050;
+}
+.portrait-frame {
+  width: 58px; height: 62px; flex: 0 0 58px;
+  border: 3px ridge var(--gold); background: #1b2929;
+  box-shadow: 0 2px #17211c;
+}
+#creature-portrait { display: block; width: 100%; height: 100%; object-fit: cover; }
+.hero-caption { color: #aaa78a; text-transform: uppercase; font-size: 9px; letter-spacing: 1.8px; margin-bottom: 6px; }
+.panel h1 { margin: 0; color: #ead194; font: bold 17px/1.3 Georgia, serif; text-shadow: 1px 2px #161b19; }
+.stats { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 12px; line-height: 1.26; gap: 9px 10px; color: #e1d9bc; }
+.stat-column h2 { color: #ddc184; font: bold 11px/1.6 Georgia, serif; margin-bottom: 4px; }
+.stat-column:nth-child(even), .stat-column:nth-child(n+3) { border-color: #7d77534d; }
+.stat-column > span { min-height: 15px; }
+.resistance-stat svg { width: 14px; height: 14px; flex-basis: 14px; }
+button { -webkit-tap-highlight-color: transparent; }
+#end-turn, .spell-pages button, .close-effects {
+  border: 2px outset #b8a16a; border-radius: 0;
+  background: linear-gradient(#68734c, #485333 48%, #35412a 49%, #414c31);
+  color: #f0dfad; text-shadow: 1px 1px #1c261b;
+  box-shadow: inset 0 0 0 1px #222d20, 0 2px #1a211a;
+  font-family: Georgia, serif;
+}
+#end-turn { padding: 9px; font-size: 14px; letter-spacing: .4px; }
+#end-turn:hover:not(:disabled), .spell-pages button:hover:not(:disabled), .close-effects:hover { background: linear-gradient(#8b8f58, #52603b); border-color: #e2cb8e; }
+#end-turn:active:not(:disabled), .spell-pages button:active:not(:disabled) { border-style: inset; }
+.spell-pages button:disabled { background: #30382b; color: #7d8066; border-color: #6e704e; }
+.spells {
+  width: 246px; gap: 4px; margin-top: 24px; position: relative;
+  padding: 8px; background: #b79c65 url('assets/homm2/parchment.png');
+  box-shadow: 0 0 0 1px #957e4e, 0 0 0 3px #1a231b;
+}
+.spells::before {
+  content: 'КНИГА ЗАКЛИНАНИЙ'; position: absolute; top: -19px; left: 0; right: 0;
+  text-align: center; color: #c9b77d; font: 9px/1.5 Georgia, serif; letter-spacing: 1.4px;
+}
+.spell-slot { padding: 1px; background: #202c27; border-color: #776f51; box-shadow: inset 1px 1px #d2b77933, inset -1px -1px #0c1618; }
+.spell-slot:not(button) { background: #19231e url('assets/homm2/leather.png'); border-color: #5e6048; opacity: .7; }
+.spell-slot.school-fire { border-color: #b85b35; background: #633024; }
+.spell-slot.school-water { border-color: #507b9a; background: #244459; }
+.spell-slot.school-air { border-color: #9eb7af; background: #3b5356; }
+.spell-slot.school-earth { border-color: #9a7c46; background: #54422b; }
+.spell-slot.school-body { border-color: #bb9470; background: #614936; }
+.spell-slot.school-light { border-color: #d8b856; background: #655729; }
+.spell-slot.school-dark { border-color: #554b69; background: #332a43; }
+.spell-slot.prepared { border-color: #f9da83; border-style: dashed; box-shadow: 0 0 0 1px #cbaa57; }
+button.spell-slot:hover:not(:disabled) { filter: brightness(1.22); }
+button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
+.spell-slot:disabled { opacity: .48; filter: saturate(.55); }
+.uses-badge, .summon-badge { border-radius: 0; color: #ffedb7; background: #17201cde; text-shadow: 1px 1px #000; font-family: 'Trebuchet MS', sans-serif; }
+.cooldown-badge { border-radius: 0; font-family: Georgia, serif; color: #f1d6a1; }
+.spell-pages { margin-top: 9px; }
+.spell-pages button { width: 44px; height: 25px; font-size: 18px; }
+.spell-tooltip, .effect-tooltip {
+  background: #263129 url('assets/homm2/leather.png');
+  border: 3px ridge #baa168; border-radius: 0; color: #e9dab7;
+  box-shadow: 3px 5px 0 #0e171c99, inset 0 0 0 1px #111d18;
+  font: 12px/1.5 'Trebuchet MS', Arial, sans-serif;
+}
+.spell-tooltip .spell-title, .effect-tooltip .effect-title { color: #f1d493; font: bold 16px/1.3 Georgia, serif; }
+.spell-tooltip .spell-description { color: #bfb79b; font-style: italic; }
+.spell-tooltip strong { color: #dbca9e; }
+.effects-panel, .effects-panel section + section { border-color: #908051; }
+.effects-panel h2 { font: bold 12px Georgia, serif; color: #d4bb7e; }
+.effect-icon { border-radius: 0; }
+.effect-icon.suppressed { opacity: .4; filter: grayscale(1); }
+.close-effects { top: 0; }
+.campaign-footer {
+  grid-area: footer; display: flex; justify-content: space-between; gap: 18px;
+  color: #b1ac8a; text-shadow: 1px 1px #141b16;
+  font: 10px/1.5 'Trebuchet MS', sans-serif; padding-inline: 4px;
+}
+.campaign-footer b { color: #d4c28c; font-weight: normal; }
+.path-cost, .effect-preview { border-radius: 0; background: #18221de8; }
+.damage-label, .bonus-label, .miss-label, .failure-label { font-family: Georgia, serif; text-shadow: 1px 1px #171a16, -1px 0 #171a16, 0 1px #171a16; }
+.spell-projectile[data-type='fire'] { background: url('assets/homm2/spell-fire-shot.png') center/contain; }
+.spell-projectile[data-type='fire'] svg { visibility: hidden; }
+.spell-projectile[data-type='fire-cube'] { background: url('assets/homm2/spell-fire-cube.png') center/contain; }
+.spell-projectile[data-type='rock'] { background: url('assets/homm2/spell-boulder-throw.png') center/contain; }
+.spell-projectile:is([data-type='fire-cube'],[data-type='rock']) svg { visibility: hidden; }
+.burning-hands-flame { background: url('assets/homm2/spell-fire-shot.png') center/contain no-repeat; image-rendering: pixelated; }
+.teleport-flash, .power-hour-flash, .cube-explosion { border-radius: 0; }
+.state-animation.wind-rose svg { visibility: hidden; }
+.state-animation.wind-rose { background: url('assets/homm2/spell-wind-rose.png') center/contain no-repeat; image-rendering: pixelated; }
+.state-animation:is(.wind,.mud) svg { visibility: hidden; }
+.state-animation.wind { background: url('assets/homm2/spell-haste.png') center/contain no-repeat; image-rendering: pixelated; }
+.state-animation.mud { background: url('assets/homm2/spell-slow.png') center/contain no-repeat; image-rendering: pixelated; }
+#defeat-overlay { background: #101713df url('assets/homm2/leather.png'); }
+.defeat-message { font-family: Georgia, serif; color: #d6b670; }
+.defeat-hint { color: #d4c49d; font-family: Georgia, serif; }
+@media (max-height: 760px) and (min-width: 641px) {
+  .campaign-banner { min-height: 48px; padding-block: 5px; }
+  .campaign-title { font-size: 19px; }
+  .hero-masthead { padding-bottom: 8px; margin-bottom: 8px; }
+  .portrait-frame { width: 44px; height: 46px; flex-basis: 44px; }
+  .panel { max-height: calc(100dvh - 100px); }
+  #battlefield { width: min(calc(100vw - 406px), calc(100dvh - 214px)); }
+}
+@media (max-width: 640px) {
+  html, body { overflow: auto; height: auto; min-height: 100%; }
+  body { display: block; }
+  .game {
+    display: flex; flex-direction: column; align-items: stretch;
+    max-width: none; width: calc(100% - 16px); margin: 8px auto 12px; gap: 10px;
+  }
+  .campaign-banner { min-height: 58px; padding: 8px 12px; gap: 9px; }
+  .campaign-title { font-size: 19px; }
+  .campaign-eyebrow { font-size: 8px; letter-spacing: 1.4px; }
+  .campaign-subtitle { display: none; }
+  .campaign-mark { font-size: 21px; }
+  .arena { padding: 7px; gap: 7px; align-self: stretch; }
+  #battlefield { width: 100%; }
+  #turn-order { width: 100%; }
+  .panel { width: 100%; max-height: none; overflow: visible; padding: 12px; }
+  .stats { grid-template-columns: repeat(2, minmax(0,1fr)); line-height: 1.3; gap: 10px 16px; font-size: 12px; }
+  .stat-column:nth-child(n+3) { padding-top: 8px; }
+  .hero-masthead { margin-bottom: 12px; }
+  .spells { width: 246px; margin-top: 25px; }
+  .panel h1 { font-size: 18px; margin: 0; }
+  .campaign-footer { font-size: 9px; flex-wrap: wrap; gap: 3px; }
+}

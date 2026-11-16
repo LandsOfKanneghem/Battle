@@ -17,9 +17,9 @@ def cell(image, column, row, columns=3, rows=2):
                        round((column+1)*image.width/columns), round((row+1)*image.height/rows)))
 
 
-def save(image, name, size=None):
+def save(image, name, size=None, resample=FILTER):
     if size:
-        image = image.resize(size, FILTER)
+        image = image.resize(size, resample)
     if image.mode == 'RGB':
         image = image.quantize(colors=256, method=Image.Quantize.MEDIANCUT)
     image.save(OUT / f'{name}.png', optimize=True)
@@ -77,7 +77,11 @@ STATES = {
 RESISTANCES = {'ac': (2,3), 'physical': (1,5), 'fire': (0,0), 'water': (0,1),
                'air': (1,2), 'earth': (2,5), 'mind': (4,4), 'poison': (3,5)}
 icons = Image.open(SOURCES / 'icons.png').convert('RGB')
-for prefix, coordinates in [('spell', SPELLS), ('state', STATES), ('res', RESISTANCES)]:
+spell_icons = Image.open(SOURCES / 'spell-icons-retro.png').convert('RGB')
+for name, (x,y) in SPELLS.items():
+    # Native 64×64 pixel icons: preserve crisp clusters and empty gradient corners.
+    save(cell(spell_icons, x, y, 6, 6), f'spell-{name}', (64,64), Image.Resampling.NEAREST)
+for prefix, coordinates in [('state', STATES), ('res', RESISTANCES)]:
     for name, (x,y) in coordinates.items():
         save(cell(icons, x, y, 6, 6), f'{prefix}-{name}', (64,64))
 

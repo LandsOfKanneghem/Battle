@@ -104,6 +104,8 @@ window.beginTurn = function(entity) {
     for (const bleed of entity.states.filter(state => state.id === 'bleeding' && !state.suppressed
       && (state.duration > 0 || state.permanent || state.innate))) {
       entity.hp = Math.max(0, entity.hp - 2);
+      const bleedCell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
+      window.playDamageAnimation?.(bleedCell, 2);
       if (entity.hp <= 0) {
         window.removeDefeatedEntities();
         return;

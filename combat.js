@@ -365,9 +365,13 @@ window.spellDamage = function(spell, entity) {
 
 window.applyDamage = function(spell, entity) {
   if (isFrozen(entity)) return; // Не расходуем ни HP, ни ES, ни бонусы защиты.
+  if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) return;
   const { absorbed, hpDamage } = damageBreakdown(spell, entity);
   consumeES(entity, absorbed);
   entity.hp = Math.max(0, entity.hp - hpDamage);
+  // Показываем и поглощение ES, и нулевой урон после сопротивления; иммунитеты выше.
+  const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
+  window.playDamageAnimation?.(cell, absorbed + hpDamage);
 };
 
 window.shotHits = function(caster, target) {

@@ -159,6 +159,15 @@ window.playMissAnimation = function(cell) {
   setTimeout(() => label.remove(), 500);
 };
 
+window.playDamageAnimation = function(cell, amount) {
+  const label = document.createElement('span');
+  label.className = 'damage-label';
+  label.textContent = `-${amount}`;
+  label.setAttribute('aria-hidden', 'true');
+  cell.appendChild(label);
+  setTimeout(() => label.remove(), 700);
+};
+
 window.playFailureAnimation = function(cell) {
   const label = document.createElement('span');
   label.className = 'failure-label';

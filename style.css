@@ -429,3 +429,16 @@
   from { opacity: 1; transform: translate(-50%, 0); }
   to { opacity: 0; transform: translate(-50%, -30px); }
 }
+
+.damage-label {
+  position: absolute; left: 50%; top: 35%; z-index: 8;
+  color: #ff4d4d; font: 800 clamp(11px, 1.6vmin, 16px)/1 system-ui, sans-serif;
+  white-space: nowrap;
+  text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 0 0 5px #000;
+  pointer-events: none;
+  animation: damage-float 0.7s ease-out both;
+}
+@keyframes damage-float {
+  from { transform: translate(-50%, 0); opacity: 1; }
+  to { transform: translate(-50%, -30px); opacity: 0; }
+}

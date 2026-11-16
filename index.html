@@ -9,11 +9,6 @@
 </head>
 <body>
   <main class="game">
-    <header class="campaign-banner">
-      <div><div class="campaign-eyebrow">Хроники волшебника</div><div class="campaign-title">Земли заклинаний</div></div>
-      <span class="campaign-mark" aria-hidden="true">✦</span>
-      <div class="campaign-subtitle">Клинок и колдовство<br>Тактическое сражение</div>
-    </header>
     <section class="arena" aria-label="Поле и очередь ходов">
       <div id="battlefield" aria-label="Поле боя 16 на 16 клеток"></div>
       <div id="turn-order" aria-label="Очередь ходов"></div>
@@ -21,7 +16,7 @@
     <aside class="panel" aria-labelledby="character-name">
       <div class="hero-masthead">
         <div class="portrait-frame" aria-hidden="true"><img id="creature-portrait" src="assets/homm2/portrait-wizard.png" alt=""></div>
-        <div><div class="hero-caption">Характеристики</div><h1 id="character-name">Волшебник</h1></div>
+        <h1 id="character-name">Волшебник</h1>
       </div>
       <div class="stats" aria-live="polite" aria-atomic="true">
         <section class="stat-column"><h2>Основные</h2>
@@ -75,7 +70,6 @@
         <section><h2>Состояния</h2><div id="state-effects" class="effect-grid"></div></section>
       </div>
     </aside>
-    <footer class="campaign-footer"><span><b>ЛКМ</b> — движение / заклинание · <b>ПКМ</b> — эффекты</span><span><b>1–0 / Ctrl+1–0</b> — книга · <b>← →</b> — страницы · <b>Shift</b> — формулы</span></footer>
   </main>
   <div id="defeat-overlay" hidden aria-live="assertive">
     <div class="defeat-message">Вы проиграли!</div>

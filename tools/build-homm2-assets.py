@@ -7,7 +7,8 @@ are performed here. The browser loads the small runtime files, not the atlases.
 from pathlib import Path
 from PIL import Image
 
-OUT = Path(__file__).resolve().parents[1] / 'assets' / 'homm2'
+PROJECT = Path(__file__).resolve().parents[1]
+OUT = PROJECT / 'assets' / 'homm2'
 SOURCES = OUT / 'sources'
 FILTER = Image.Resampling.LANCZOS
 
@@ -79,16 +80,13 @@ for index, name in enumerate(names):
     save(canvas, name)
     if name != 'crate':
         save(cell(portraits, index % 3, index // 3), 'portrait-'+name, (144,144))
-save(cell(portraits, 2, 1), 'crest', (128,128))
 
 materials = Image.open(SOURCES / 'materials.png').convert('RGB')
 grass = Image.open(SOURCES / 'meadow.png').convert('RGB')
 save(grass, 'grass-0', (512,512))
 save(cell(materials, 1, 0), 'sand', (512,512))
 save(cell(materials, 2, 0), 'water', (512,512))
-save(cell(materials, 0, 1), 'stone', (512,512))
 save(cell(materials, 1, 1), 'leather', (512,512))
-save(cell(materials, 2, 1), 'parchment', (512,512))
 
 # Atlas coordinates describe pictures only, never spell values or state behavior.
 SPELLS = {
@@ -129,7 +127,9 @@ for index, name in enumerate(edit_names):
     tile = fit_icon(edits.crop((left,top,right,bottom)), spell_icons)
     x,y = SPELLS[name]
     spell_icons.paste(tile, (x*64,y*64))
-spell_icons.save(SOURCES / 'spell-icons-retro.png', optimize=True)
+# Keep one compiled sheet for review; sources/ contains only actual build inputs.
+(PROJECT / 'docs').mkdir(exist_ok=True)
+spell_icons.save(PROJECT / 'docs' / 'spell-icons-64.png', optimize=True)
 for name, (x,y) in SPELLS.items():
     # The approved 384×384 indexed sheet already contains exact 64×64 tiles.
     # Keep its shared VGA palette and pixels intact: no RGB conversion or re-quantization.

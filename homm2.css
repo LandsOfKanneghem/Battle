@@ -92,7 +92,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 #creature-portrait { display: block; width: 100%; height: 100%; object-fit: cover; }
 .panel h1 { margin: 0; color: #ead194; font: bold 17px/1.3 Georgia, serif; text-shadow: 1px 2px #161b19; }
 .stats { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 12px; line-height: 1.26; gap: 9px 10px; color: #e1d9bc; padding: 5px 6px; border: 0; background: transparent; box-shadow: none; }
-.stat-column h2 { color: #ddc184; font: bold 11px/1.6 Georgia, serif; margin-bottom: 4px; }
+.stat-column h2 { display: none; }
 .stat-column:nth-child(even), .stat-column:nth-child(n+3) { border-color: #7d77534d; }
 .stat-column > span { min-height: 15px; }
 .resistance-stat svg { width: 14px; height: 14px; flex-basis: 14px; }

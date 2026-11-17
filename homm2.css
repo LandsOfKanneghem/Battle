@@ -6,6 +6,10 @@
   --stone: #343a35;
   --ink: #1c201f;
   --parchment: #e5d2a4;
+  --spell-image-size: 96px;
+  --spell-slot-size: calc(var(--spell-image-size) + 6px);
+  --spellbook-width: calc(5 * var(--spell-slot-size));
+  --panel-width: calc(var(--spellbook-width) + 26px);
 }
 html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
 body {
@@ -16,7 +20,7 @@ body {
 }
 .game {
   position: relative; display: grid;
-  grid-template-columns: auto 306px;
+  grid-template-columns: auto var(--panel-width);
   grid-template-areas: 'arena panel';
   gap: 16px;
   max-width: calc(100vw - 40px);
@@ -26,7 +30,7 @@ body {
 .arena {
   --queue-width: 60px;
   --queue-gap: 9px;
-  --battlefield-size: min(calc(100vw - 406px - var(--queue-width) - var(--queue-gap)), calc(100dvh - 246px));
+  --battlefield-size: min(calc(100vw - var(--panel-width) - 100px - var(--queue-width) - var(--queue-gap)), calc(100dvh - 246px));
   display: grid;
   grid-template-columns: var(--queue-width) minmax(0, 1fr);
   grid-template-areas: 'queue field';
@@ -72,7 +76,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 .turn-slot.active { border-color: #edce77; background: linear-gradient(#74633d,#413d28); box-shadow: 0 0 0 1px #c29a4a, inset 1px 1px #ead58f; }
 #turn-order .turn-slot.summon { margin-left: 7px; margin-top: -4px; }
 .panel {
-  grid-area: panel; width: 306px; align-self: stretch;
+  grid-area: panel; width: var(--panel-width); align-self: stretch;
   max-height: none; overflow: visible; padding: 13px;
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }
@@ -100,15 +104,17 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: inset 0 0 0 1px #222d20, 0 2px #1a211a;
   font-family: Georgia, serif;
 }
-#end-turn { padding: 9px; font-size: 14px; letter-spacing: .4px; }
+#end-turn { display: block; width: var(--spellbook-width); max-width: 100%; margin-inline: auto; padding: 5px 9px; font-size: 14px; letter-spacing: .4px; }
 #end-turn:hover:not(:disabled), .spell-pages button:hover:not(:disabled), .close-effects:hover { background: linear-gradient(#ba8350, #84462b); border-color: #e2cb8e; }
 #end-turn:active:not(:disabled), .spell-pages button:active:not(:disabled) { border-style: inset; }
 .spell-pages button:disabled { background: #30382b; color: #7d8066; border-color: #6e704e; }
 .spells {
-  /* Preserve slot size: 264 - 2×8 padding - 4×4 gaps = 232px. */
-  width: 232px; gap: 0; margin-top: 12px; position: relative;
+  /* Each 96px image has a 2px border and 1px padding on each side. */
+  width: var(--spellbook-width); grid-template-columns: repeat(5, var(--spell-slot-size));
+  overflow-x: auto; gap: 0; margin-top: 12px; position: relative;
   padding: 0; background: transparent; box-shadow: none;
 }
+#spells > .spell-slot { width: var(--spell-slot-size); height: var(--spell-slot-size); }
 .spell-slot { padding: 1px; background: #202c27; border-color: #776f51; box-shadow: inset 1px 1px #d2b77933, inset -1px -1px #0c1618; }
 .spell-slot:not(button) { background: #321920 url('assets/homm2/leather.png') center/cover; border-color: #8e6a3d; opacity: .75; }
 .spell-slot.school-fire { border-color: #b85b35; background: #633024; }
@@ -125,7 +131,7 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .uses-badge, .summon-badge { border-radius: 0; color: #ffedb7; background: #17201cde; text-shadow: 1px 1px #000; font-family: 'Trebuchet MS', sans-serif; }
 .uses-badge { background: transparent; font-size: clamp(10px, calc(1.2vmin + 2px), 13px); }
 .cooldown-badge { border-radius: 0; font-family: Georgia, serif; color: #f1d6a1; }
-.spell-pages { margin-top: 9px; }
+.spell-pages { display: none; margin-top: 9px; }
 .spell-pages button { width: 44px; height: 25px; font-size: 18px; }
 .spell-tooltip, .effect-tooltip {
   background: #171b22;
@@ -158,12 +164,12 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 #defeat-overlay { background: #101713df url('assets/homm2/leather.png') center/cover; }
 .defeat-message { font-family: Georgia, serif; color: #d6b670; }
 .defeat-hint { color: #d4c49d; font-family: Georgia, serif; }
-@media (max-height: 760px) and (min-width: 641px) {
+@media (max-height: 760px) and (min-width: 961px) {
   .hero-masthead { margin-bottom: 8px; }
   .portrait-frame { width: 44px; height: 46px; flex-basis: 44px; }
-  .arena { --battlefield-size: min(calc(100vw - 406px - var(--queue-width) - var(--queue-gap)), calc(100dvh - 214px)); }
+  .arena { --battlefield-size: min(calc(100vw - var(--panel-width) - 100px - var(--queue-width) - var(--queue-gap)), calc(100dvh - 214px)); }
 }
-@media (max-width: 640px) {
+@media (max-width: 960px) {
   html, body { overflow: auto; height: auto; min-height: 100%; }
   body { display: block; min-height: 100dvh; }
   .game {
@@ -179,6 +185,6 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
   .stats { grid-template-columns: repeat(2, minmax(0,1fr)); line-height: 1.3; gap: 10px 16px; font-size: 12px; }
   .stat-column:nth-child(n+3) { padding-top: 8px; }
   .hero-masthead { margin-bottom: 12px; }
-  .spells { width: 232px; margin-top: 12px; }
+  .spells { margin-top: 12px; }
   .panel h1 { font-size: 18px; margin: 0; }
 }

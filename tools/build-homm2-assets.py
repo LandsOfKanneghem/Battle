@@ -153,6 +153,16 @@ for source, entries in updates.items():
             spell_icons.paste(tile, (x*64,y*64))
         else:
             state_icons[name] = tile
+for kind, name in [('state', 'adrenaline-crash'), ('state', 'chill'),
+                   ('state', 'exhaustion'), ('state', 'weakness'), ('spell', 'slow')]:
+    tile = Image.open(SOURCES / 'refinements' / f'{kind}-{name}.png')
+    if tile.size != (64,64) or tile.mode != 'P' or tile.getpalette() != spell_icons.getpalette():
+        raise ValueError(f'{kind}-{name} must be 64×64 with the shared spell palette')
+    if kind == 'spell':
+        x,y = SPELLS[name]
+        spell_icons.paste(tile, (x*64,y*64))
+    else:
+        state_icons[name] = tile.copy()
 for name, spell in [('freeze', 'deep-freeze'), ('heavy', 'dead-weight'), ('old-age', 'apply-old-age')]:
     x,y = SPELLS[spell]
     state_icons[name] = spell_icons.crop((x*64,y*64,(x+1)*64,(y+1)*64))

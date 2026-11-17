@@ -166,6 +166,7 @@ for kind, name in [('state', 'adrenaline-crash'), ('state', 'chill'),
 for name, spell in [('freeze', 'deep-freeze'), ('heavy', 'dead-weight'), ('old-age', 'apply-old-age')]:
     x,y = SPELLS[spell]
     state_icons[name] = spell_icons.crop((x*64,y*64,(x+1)*64,(y+1)*64))
+state_icons['heavy'] = Image.open(SOURCES / 'refinements' / 'state-heavy.png')
 if set(state_icons) != set(STATES):
     raise ValueError('Every state must have a pixel-art icon')
 # Keep one compiled sheet for review; sources/ contains only actual build inputs.

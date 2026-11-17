@@ -96,7 +96,7 @@ window.playCubeExplosion = function(centerCell, spell) {
   const center = { x: Number(centerCell.dataset.x), y: Number(centerCell.dataset.y) };
   const flashes = [];
   // Зона берётся из той же функции, что и для урона, включая обрезку краёв.
-  for (const point of affectedCells(center, spell, window.gameState.activeEntity(), window.gameState.entities, window.gameState.obstacles, window.gameState.terrain, window.gameState.keyOf, window.gameState.SIZE)) {
+  for (const point of affectedCells(center, spell, window.gameState.activeEntity(), window.gameState.entities, window.gameState.obstacles, window.gameState.terrain, window.gameState.keyOf, window.gameState.SIZE, window.gameState.HEIGHT)) {
     const flash = document.createElement('span');
     flash.className = 'cube-explosion';
     flash.setAttribute('aria-hidden', 'true');
@@ -126,7 +126,7 @@ window.playArmageddonAnimation = function(water = false) {
 };
 
 window.playRainAnimation = function(center, spell) {
-  const area = affectedCells(center, spell, window.gameState.activeEntity(), window.gameState.entities, window.gameState.obstacles, window.gameState.terrain, window.gameState.keyOf, window.gameState.SIZE);
+  const area = affectedCells(center, spell, window.gameState.activeEntity(), window.gameState.entities, window.gameState.obstacles, window.gameState.terrain, window.gameState.keyOf, window.gameState.SIZE, window.gameState.HEIGHT);
   const layers = [];
   for (const point of area) {
     const cell = window.gameState.cells[point.y * window.gameState.SIZE + point.x];
@@ -264,7 +264,7 @@ window.playMembraneAnimation = function(cell) {
 
 window.playBurningHandsAnimation = function(centerCell, direction) {
   const origin = { x: Number(centerCell.dataset.x), y: Number(centerCell.dataset.y) };
-  const cone = getConeCells(origin, direction, window.gameState.SIZE);
+  const cone = getConeCells(origin, direction, window.gameState.SIZE, window.gameState.HEIGHT);
   const blocked = getBlockedConeCells(cone, direction, window.gameState.entities, window.gameState.obstacles, window.gameState.keyOf);
   const flames = [];
   for (const point of cone) {

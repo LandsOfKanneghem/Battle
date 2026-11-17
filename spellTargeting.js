@@ -64,7 +64,7 @@ window.inSpellReach = function(target, spell) {
   const caster = window.gameState.activeEntity();
   if (!caster || !spell || !caster.availableSpells.includes(spell)) return false;
   const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
-  return target.x >= 0 && target.x < window.gameState.SIZE && target.y >= 0 && target.y < window.gameState.SIZE
+  return target.x >= 0 && target.x < window.gameState.SIZE && target.y >= 0 && target.y < window.gameState.HEIGHT
     // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
     && (spell.isHeal || !window.gameState.obstacles.has(window.gameState.keyOf(target)))
     && !(spell.isSummon && window.gameState.terrain.get(window.gameState.keyOf(target)) === 'deep-water')
@@ -88,7 +88,7 @@ window.highlightSpellRange = function(center = null) {
   const spell = window.gameState.activeEntity()?.availableSpells.find(item => item.id === window.gameState.preparedSpellId);
   if (!spell) return;
   // Зелёный фон — допустимые центры; голубая обводка — зона удара.
-  for (let y = 0; y < window.gameState.SIZE; y++) for (let x = 0; x < window.gameState.SIZE; x++) {
+  for (let y = 0; y < window.gameState.HEIGHT; y++) for (let x = 0; x < window.gameState.SIZE; x++) {
     if (!window.canTarget({ x, y }, spell)) continue;
     const cell = window.gameState.cells[y * window.gameState.SIZE + x];
     // Дальность одинакова для всех заклинаний; размер зоны задаёт aoeSize.
@@ -96,7 +96,7 @@ window.highlightSpellRange = function(center = null) {
     window.gameState.rangeHighlightedCells.push(cell);
   }
   if (center && window.canTarget(center, spell)) {
-    const area = window.affectedCells(center, spell, window.gameState.activeEntity(), window.gameState.entities, window.gameState.obstacles, window.gameState.terrain, window.gameState.keyOf, window.gameState.SIZE);
+    const area = window.affectedCells(center, spell, window.gameState.activeEntity(), window.gameState.entities, window.gameState.obstacles, window.gameState.terrain, window.gameState.keyOf, window.gameState.SIZE, window.gameState.HEIGHT);
     for (const point of area) {
       const cell = window.gameState.cells[point.y * window.gameState.SIZE + point.x];
       cell.classList.add('spell-aoe');

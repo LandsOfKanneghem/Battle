@@ -38,7 +38,7 @@
       // a small grass stamp. Only CSS coordinates change; the terrain map is read-only.
       const x = Number(cell.dataset.x), y = Number(cell.dataset.y);
       cell.querySelector('.terrain').style.setProperty('--land-x', `${x / (window.gameState.SIZE - 1) * 100}%`);
-      cell.querySelector('.terrain').style.setProperty('--land-y', `${y / (window.gameState.SIZE - 1) * 100}%`);
+      cell.querySelector('.terrain').style.setProperty('--land-y', `${y / (window.gameState.HEIGHT - 1) * 100}%`);
       if (cell.dataset.terrain !== 'deep-water') continue;
       const edges = [[0, -1, '0 2px'], [0, 1, '0 -2px'], [-1, 0, '2px 0'], [1, 0, '-2px 0']];
       const shadows = edges.filter(([dx, dy]) => {

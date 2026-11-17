@@ -1,13 +1,13 @@
 // Обычный скрипт: глобальные точки входа; данные по-прежнему передаются аргументами.
 // Чистая геометрия и выбор целей: все данные поля и существ передаются явно.
-window.getConeCells = function(center, direction, SIZE) {
+window.getConeCells = function(center, direction, SIZE, HEIGHT = SIZE) {
   const points = [];
   if (Math.abs(direction.x) + Math.abs(direction.y) !== 1) return points;
   for (let depth = 1; depth <= 3; depth++) {
     for (let offset = 1 - depth; offset < depth; offset++) {
       const x = center.x + direction.x * depth - direction.y * offset;
       const y = center.y + direction.y * depth + direction.x * offset;
-      if (x >= 0 && x < SIZE && y >= 0 && y < SIZE) points.push({ x, y, depth });
+      if (x >= 0 && x < SIZE && y >= 0 && y < HEIGHT) points.push({ x, y, depth });
     }
   }
   return points;
@@ -58,7 +58,7 @@ window.findSparkTargets = function(primaryTarget, radius, count, entities) {
     .slice(0, count).map(candidate => candidate.entity);
 };
 
-window.affectedCells = function(center, spell, caster, entities, obstacles, terrain, keyOf, SIZE) {
+window.affectedCells = function(center, spell, caster, entities, obstacles, terrain, keyOf, SIZE, HEIGHT = SIZE) {
   if (spell.isSparks) {
     const primary = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(center));
     return primary ? [primary, ...findSparkTargets(primary, spell.sparkRadius, spell.sparkCount, entities)].map(entity => entity.position) : [center];
@@ -66,13 +66,13 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
   if (spell.isCone) {
     if (!caster) return [];
     const direction = { x: center.x - caster.position.x, y: center.y - caster.position.y };
-    const cone = getConeCells(caster.position, direction, SIZE);
+    const cone = getConeCells(caster.position, direction, SIZE, HEIGHT);
     const blocked = getBlockedConeCells(cone, direction, entities, obstacles, keyOf);
     return cone.filter(point => !blocked.has(keyOf(point)));
   }
   const points = [];
   if (spell.isGlobal) {
-    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) points.push({ x, y });
+    for (let y = 0; y < HEIGHT; y++) for (let x = 0; x < SIZE; x++) points.push({ x, y });
     return points;
   }
   const radius = Math.floor(spell.aoeSize / 2);
@@ -81,14 +81,14 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
     for (let y = center.y - radius; y <= center.y + radius; y++) {
       for (let x = center.x - radius; x <= center.x + radius; x++) {
         if (Math.abs(x - center.x) + Math.abs(y - center.y) <= radius
-          && x >= 0 && x < SIZE && y >= 0 && y < SIZE) points.push({ x, y });
+          && x >= 0 && x < SIZE && y >= 0 && y < HEIGHT) points.push({ x, y });
       }
     }
     return points;
   }
   for (let y = center.y - radius; y <= center.y + radius; y++) {
     for (let x = center.x - radius; x <= center.x + radius; x++) {
-      if (x >= 0 && x < SIZE && y >= 0 && y < SIZE) points.push({ x, y });
+      if (x >= 0 && x < SIZE && y >= 0 && y < HEIGHT) points.push({ x, y });
     }
   }
   return points;
@@ -97,7 +97,7 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
 // Данные берём из общего gameState; функции эффектов, UI и анимаций — из deps.
 // Только эффект: ресурсы уже оплачены в первой фазе каста.
 window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = null, shotHit = null) {
-  const { entities, cells, SIZE, keyOf, obstacles, terrain, isAlly } = window.gameState;
+  const { entities, cells, SIZE, HEIGHT, keyOf, obstacles, terrain, isAlly } = window.gameState;
   const {
     stateTypes, applyState, applyDamage, applySpellOnEntity, hasActiveState, shotHits, playMissAnimation,
     renderPosition, findSparkTargets, affectedCells, addElementalShield,
@@ -168,7 +168,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       renderPosition(); // Мгновенное перемещение без шагов и расхода MP.
     }
   } else if (spell.isPowerHour) {
-    const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
+    const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE, HEIGHT).map(keyOf));
     for (const victim of entities) {
       if (victim.hp > 0 && isAlly(victim) && area.has(keyOf(victim.position))) {
         applySpellOnEntity(victim, {
@@ -223,7 +223,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       const victim = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(source));
       // Тяжесть блокирует только толчок: обычная ходьба остаётся доступной.
       if (!victim || victim.states.some(state => state.id === 'heavy' && !state.suppressed
-        && (state.duration > 0 || state.permanent || state.innate)) || destination.x < 0 || destination.x >= SIZE || destination.y < 0 || destination.y >= SIZE
+        && (state.duration > 0 || state.permanent || state.innate)) || destination.x < 0 || destination.x >= SIZE || destination.y < 0 || destination.y >= HEIGHT
         || obstacles.get(keyOf(destination)) === 'crate' || terrain.get(keyOf(destination)) === 'deep-water'
         || entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(destination))) continue;
       victim.position = destination;
@@ -231,7 +231,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     renderPosition();
   } else if (spell.isRain) {
     // Влага действует на всех живых существ в квадрате, включая самого кастера.
-    const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
+    const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE, HEIGHT).map(keyOf));
     for (const victim of entities) {
       if (victim.hp > 0 && area.has(keyOf(victim.position))) applyState(victim, {
         id: spell.stateId, duration, casterId: caster.id, casterName: caster.name
@@ -283,7 +283,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       && keyOf(entity.position) === keyOf(target));
     if (ally) addElementalShield(ally, spell, caster, duration);
   } else {
-    const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
+    const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE, HEIGHT).map(keyOf));
     for (const victim of entities) {
       if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)
         && (spell.target !== 'enemy' || !isAlly(victim))) {
@@ -308,9 +308,9 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
   'power-hour': ctx => {
-    const { entities, obstacles, terrain, keyOf, SIZE, cells, isAlly } = window.gameState;
+    const { entities, obstacles, terrain, keyOf, SIZE, HEIGHT, cells, isAlly } = window.gameState;
     const area = new Set(ctx.deps.affectedCells(ctx.target, ctx.spell, ctx.caster,
-      entities, obstacles, terrain, keyOf, SIZE).map(keyOf));
+      entities, obstacles, terrain, keyOf, SIZE, HEIGHT).map(keyOf));
     for (const victim of entities) {
       if (victim.hp > 0 && isAlly(victim) && area.has(keyOf(victim.position))) {
         ctx.deps.playPowerHourAnimation(cells[victim.position.y * SIZE + victim.position.x]);

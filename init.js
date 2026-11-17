@@ -1,18 +1,19 @@
 // Начальное заполнение gameState: карта, существа, спрайты, клетки и очередь.
 // Выполняется после gameState.js; обработчики и первое обновление UI остаются в index.html.
 // Полная карта поверхностей независима от ящиков.
-for (let y = 0; y < window.gameState.SIZE; y++) for (let x = 0; x < window.gameState.SIZE; x++) {
-  window.gameState.terrain.set(`${x},${y}`, x >= 9 && x <= 12 && y >= 5 && y <= 11 ? 'sand' : 'grass');
+// Убраны прежние ряды 0, 1, 9 и 11; все существа, ящики и вода сохранены.
+for (let y = 0; y < window.gameState.HEIGHT; y++) for (let x = 0; x < window.gameState.SIZE; x++) {
+  window.gameState.terrain.set(`${x},${y}`, x >= 9 && x <= 12 && y >= 3 && y <= 7 ? 'sand' : 'grass');
 }
-const waterCells = [[5,7], [5,8], [6,8], [10,12], [11,12]];
-// Остров (14,14): восемь водных клеток делают его недоступным пешком.
-for (let y = 13; y <= 15; y++) for (let x = 13; x <= 15; x++) {
-  if (x !== 14 || y !== 14) waterCells.push([x, y]);
+const waterCells = [[5,5], [5,6], [6,6], [10,8], [11,8]];
+// Остров (14,10): восемь водных клеток делают его недоступным пешком.
+for (let y = 9; y <= 11; y++) for (let x = 13; x <= 15; x++) {
+  if (x !== 14 || y !== 10) waterCells.push([x, y]);
 }
 for (const [x,y] of waterCells) window.gameState.terrain.set(`${x},${y}`, 'deep-water');
 window.gameState.obstacles = new Map([
-  ['3,3', 'crate'], ['4,4', 'crate'], ['7,6', 'crate'],
-  ['11,10', 'crate'], ['12,4', 'crate'], ['4,12', 'crate'], ['15,15', 'crate']
+  ['3,1', 'crate'], ['4,2', 'crate'], ['7,4', 'crate'],
+  ['11,7', 'crate'], ['12,2', 'crate'], ['4,8', 'crate'], ['15,11', 'crate']
 ]);
 
 const terrainArt = {
@@ -38,12 +39,12 @@ function createObstacle() {
 }
 
 // Создаём и регистрируем участников сразу, в порядке ходов.
-const character = window.createCreature('wizard', { x: 8, y: 8 });
-const monk = window.createCreature('monk', { x: 7, y: 8 });
-const wolf1 = window.createCreature('wolf', { x: 3, y: 4 });
-const wolf2 = window.createCreature('wolf', { x: 7, y: 7 });
-const wolf3 = window.createCreature('wolf', { x: 12, y: 5 });
-const giant = window.createCreature('hill-giant', { x: 13, y: 2 });
+const character = window.createCreature('wizard', { x: 8, y: 6 });
+const monk = window.createCreature('monk', { x: 7, y: 6 });
+const wolf1 = window.createCreature('wolf', { x: 3, y: 2 });
+const wolf2 = window.createCreature('wolf', { x: 7, y: 5 });
+const wolf3 = window.createCreature('wolf', { x: 12, y: 3 });
+const giant = window.createCreature('hill-giant', { x: 13, y: 0 });
 
 window.gameState.entities.push(character);
 window.gameState.turnOrderIds.push(character.id);
@@ -77,7 +78,7 @@ for (const id of window.gameState.turnOrderIds) {
   window.gameState.turnOrder.appendChild(slot);
 }
 
-for (let y = 0; y < window.gameState.SIZE; y++) {
+for (let y = 0; y < window.gameState.HEIGHT; y++) {
   for (let x = 0; x < window.gameState.SIZE; x++) {
     const cell = document.createElement('div');
     cell.className = 'cell';

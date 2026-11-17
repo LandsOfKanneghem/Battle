@@ -1,7 +1,8 @@
 // Единый контейнер состояния: изменяемые значения хранятся только в его свойствах.
 // Карта и существа заполняются в index.html; подключение идёт после разметки DOM.
 window.gameState = {
-  SIZE: 16,
+  SIZE: 16, // Ширина поля и шаг строки в массиве cells.
+  HEIGHT: 12,
   STEP_MS: 90,
   entities: [],
   cells: [],
@@ -48,7 +49,7 @@ window.gameState = {
     return { grass: 1, sand: 2 }[terrain] ?? Infinity;
   },
   pathCost: (path, entity = gameState.activeEntity()) => path.reduce((cost, point) => cost + gameState.entryCost(point, entity), 0),
-  isFree: ({ x, y }, entity = gameState.activeEntity()) => x >= 0 && x < gameState.SIZE && y >= 0 && y < gameState.SIZE
+  isFree: ({ x, y }, entity = gameState.activeEntity()) => x >= 0 && x < gameState.SIZE && y >= 0 && y < gameState.HEIGHT
     && Number.isFinite(gameState.entryCost({ x, y }, entity)) && gameState.obstacles.get(`${x},${y}`) !== 'crate'
     && !gameState.entities.some(other => other.id !== (entity?.id ?? gameState.activeEntityId)
       && other.position.x === x && other.position.y === y),

@@ -148,7 +148,8 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .spell-tooltip strong { color: #dbca9e; }
 .effects-panel, .effects-panel section + section { border-color: #908051; }
 .effects-panel h2 { font: bold 12px Georgia, serif; color: #d4bb7e; }
-.effect-icon { border-radius: 0; }
+.effect-grid { width: calc(4 * var(--spell-slot-size) + 12px); grid-template-columns: repeat(4, var(--spell-slot-size)); }
+.effect-icon { width: var(--spell-slot-size); height: var(--spell-slot-size); border-radius: 0; }
 .effect-icon.suppressed { opacity: .4; filter: grayscale(1); }
 .close-effects { top: 0; }
 .path-cost, .effect-preview { border-radius: 0; background: transparent; }

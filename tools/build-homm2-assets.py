@@ -50,10 +50,10 @@ def atlas_spans(image, axis, panels):
     return spans
 
 
-def fit_icon(image, palette):
+def fit_icon(image, palette, size=(64,64)):
     """Contain the complete panel in 64×64, keeping its proportions and shared palette."""
     image = image.convert('RGB')
-    image.thumbnail((64,64), Image.Resampling.NEAREST)
+    image.thumbnail(size, Image.Resampling.NEAREST)
     image = image.quantize(palette=palette, dither=Image.Dither.NONE)
     colors = palette.getpalette()
     black = min(range(256), key=lambda i: sum(colors[i*3:i*3+3]))
@@ -102,13 +102,9 @@ SPELLS = {
     'light-flash': (3,4), 'power-hour': (4,4), 'apply-old-age': (5,4),
     'bite': (0,5), 'club-smash': (1,5), 'boulder-throw': (2,5)
 }
-STATES = {
-    'speed': (0,2), 'slowness': (0,3), 'freeze': (4,1), 'burning': (0,0),
-    'wet': (0,1), 'heavy': (1,3), 'light': (0,2), 'chill': (3,1),
-    'adrenaline': (2,0), 'adrenaline-crash': (4,5), 'weakness': (4,5),
-    'exhaustion': (4,5), 'vigor': (1,4), 'bleeding': (3,5),
-    'water-entity': (5,1), 'levitation': (5,2), 'old-age': (5,4), 'summon-time': (5,5)
-}
+STATES = ['speed', 'slowness', 'freeze', 'burning', 'wet', 'heavy',
+          'light', 'chill', 'adrenaline', 'adrenaline-crash', 'weakness', 'exhaustion',
+          'vigor', 'bleeding', 'water-entity', 'levitation', 'old-age', 'summon-time']
 RESISTANCES = {'ac': (2,3), 'physical': (1,5), 'fire': (0,0), 'water': (0,1),
                'air': (1,2), 'earth': (2,5), 'mind': (4,4), 'poison': (3,5)}
 icons = Image.open(SOURCES / 'icons.png').convert('RGB')
@@ -127,21 +123,56 @@ for index, name in enumerate(edit_names):
     tile = fit_icon(edits.crop((left,top,right,bottom)), spell_icons)
     x,y = SPELLS[name]
     spell_icons.paste(tile, (x*64,y*64))
-slow = Image.open(SOURCES / 'spell-slow-silver.png')
-if slow.size != (64,64) or slow.mode != 'P' or slow.getpalette() != spell_icons.getpalette():
+slowness = Image.open(SOURCES / 'state-slowness-silver.png')
+if slowness.size != (64,64) or slowness.mode != 'P' or slowness.getpalette() != spell_icons.getpalette():
     raise ValueError('Silver-chain icon must be 64×64 with the shared spell palette')
-x,y = SPELLS['slow']
-spell_icons.paste(slow, (x*64,y*64))
+# Keep the approved boot illustrations for states before replacing the spell art.
+x,y = SPELLS['haste']
+state_icons = {'speed': spell_icons.crop((x*64,y*64,(x+1)*64,(y+1)*64)),
+               'slowness': slowness.copy()}
+updates = {
+    'spell-state-updates.png': [('spell', name) for name in
+                              ['haste', 'slow', 'fire-shield', 'rain', 'apply-old-age']]
+                             + [('state', name) for name in ['burning', 'wet', 'light', 'chill']],
+    'state-icons.png': [('state', name) for name in
+                       ['adrenaline', 'adrenaline-crash', 'weakness', 'exhaustion', 'vigor',
+                        'bleeding', 'water-entity', 'levitation', 'summon-time']]
+}
+for source, entries in updates.items():
+    atlas = Image.open(SOURCES / source)
+    columns = atlas_spans(atlas, 'x', 3)
+    rows = atlas_spans(atlas, 'y', 3)
+    for index, (kind, name) in enumerate(entries):
+        left, right = columns[index % 3]
+        top, bottom = rows[index // 3]
+        # Match the fire shield's silhouette to the other elemental shields.
+        size = (60,60) if (kind, name) == ('spell', 'fire-shield') else (64,64)
+        tile = fit_icon(atlas.crop((left,top,right,bottom)), spell_icons, size)
+        if kind == 'spell':
+            x,y = SPELLS[name]
+            spell_icons.paste(tile, (x*64,y*64))
+        else:
+            state_icons[name] = tile
+for name, spell in [('freeze', 'deep-freeze'), ('heavy', 'dead-weight'), ('old-age', 'apply-old-age')]:
+    x,y = SPELLS[spell]
+    state_icons[name] = spell_icons.crop((x*64,y*64,(x+1)*64,(y+1)*64))
+if set(state_icons) != set(STATES):
+    raise ValueError('Every state must have a pixel-art icon')
 # Keep one compiled sheet for review; sources/ contains only actual build inputs.
 (PROJECT / 'docs').mkdir(exist_ok=True)
 spell_icons.save(PROJECT / 'docs' / 'spell-icons-64.png', optimize=True)
+state_sheet = Image.new('P', (384,192))
+state_sheet.putpalette(spell_icons.getpalette())
+for index, name in enumerate(STATES):
+    save(state_icons[name], f'state-{name}')
+    state_sheet.paste(state_icons[name], ((index % 6)*64,(index // 6)*64))
+state_sheet.save(PROJECT / 'docs' / 'state-icons-64.png', optimize=True)
 for name, (x,y) in SPELLS.items():
     # The approved 384×384 indexed sheet already contains exact 64×64 tiles.
     # Keep its shared VGA palette and pixels intact: no RGB conversion or re-quantization.
     # This atlas is assembled above with exact cells, unlike the generated source.
     save(spell_icons.crop((x*64,y*64,(x+1)*64,(y+1)*64)), f'spell-{name}')
-for prefix, coordinates in [('state', STATES), ('res', RESISTANCES)]:
-    for name, (x,y) in coordinates.items():
-        save(cell(icons, x, y, 6, 6), f'{prefix}-{name}', (64,64))
+for name, (x,y) in RESISTANCES.items():
+    save(cell(icons, x, y, 6, 6), f'res-{name}', (64,64))
 
 print('Prepared painted sprites, portraits, materials and icons from source illustrations.')

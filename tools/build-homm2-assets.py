@@ -25,6 +25,43 @@ def save(image, name, size=None, resample=FILTER):
     image.save(OUT / f'{name}.png', optimize=True)
 
 
+def atlas_spans(image, axis, panels):
+    """Find actual panel interiors; generated rows are not necessarily equal.
+
+    Only a nearly-black line crossing the entire atlas counts as a divider.
+    Refuse ambiguous layouts instead of silently cutting through a neighboring icon.
+    """
+    rgb = image.convert('RGB')
+    bands = []
+    for position in range(rgb.height if axis == 'y' else rgb.width):
+        line = rgb.crop((0, position, rgb.width, position+1) if axis == 'y'
+                        else (position, 0, position+1, rgb.height))
+        if max(channel[1] for channel in line.getextrema()) <= 12:
+            if bands and position == bands[-1][1]+1:
+                bands[-1][1] = position
+            else:
+                bands.append([position, position])
+    if len(bands) != panels+1:
+        raise ValueError(f'Expected {panels+1} {axis} divider bands, found {bands}; refusing guessed crops')
+    spans = [(bands[i][1]+1, bands[i+1][0]) for i in range(panels)]
+    if any(end <= start for start, end in spans):
+        raise ValueError(f'Empty {axis} panel: {spans}')
+    return spans
+
+
+def fit_icon(image, palette):
+    """Contain the complete panel in 64×64, keeping its proportions and shared palette."""
+    image = image.convert('RGB')
+    image.thumbnail((64,64), Image.Resampling.NEAREST)
+    image = image.quantize(palette=palette, dither=Image.Dither.NONE)
+    colors = palette.getpalette()
+    black = min(range(256), key=lambda i: sum(colors[i*3:i*3+3]))
+    tile = Image.new('P', (64,64), black)
+    tile.putpalette(colors)
+    tile.paste(image, ((64-image.width)//2, (64-image.height)//2))
+    return tile
+
+
 units = Image.open(SOURCES / 'units.png').convert('RGBA')
 portraits = Image.open(SOURCES / 'portraits.png').convert('RGB')
 names = ['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit', 'crate']
@@ -77,11 +114,27 @@ STATES = {
 RESISTANCES = {'ac': (2,3), 'physical': (1,5), 'fire': (0,0), 'water': (0,1),
                'air': (1,2), 'earth': (2,5), 'mind': (4,4), 'poison': (3,5)}
 icons = Image.open(SOURCES / 'icons.png').convert('RGB')
-spell_icons = Image.open(SOURCES / 'spell-icons-retro.png')
+spell_icons = Image.open(SOURCES / 'spell-icons-base.png')
+if spell_icons.size != (384,384) or spell_icons.mode != 'P':
+    raise ValueError('Base sheet must be the approved 384×384 indexed PNG')
+spell_icons = spell_icons.copy()
+edits = Image.open(SOURCES / 'spell-icons-edits.png')
+columns = atlas_spans(edits, 'x', 3)
+rows = atlas_spans(edits, 'y', 3)
+edit_names = ['fire-shot', 'fire-shield', 'ice-arrow', 'deep-freeze', 'wind-rose',
+              'sparks', 'apply-old-age', 'club-smash', 'bite']
+for index, name in enumerate(edit_names):
+    left, right = columns[index % 3]
+    top, bottom = rows[index // 3]
+    tile = fit_icon(edits.crop((left,top,right,bottom)), spell_icons)
+    x,y = SPELLS[name]
+    spell_icons.paste(tile, (x*64,y*64))
+spell_icons.save(SOURCES / 'spell-icons-retro.png', optimize=True)
 for name, (x,y) in SPELLS.items():
     # The approved 384×384 indexed sheet already contains exact 64×64 tiles.
     # Keep its shared VGA palette and pixels intact: no RGB conversion or re-quantization.
-    save(cell(spell_icons, x, y, 6, 6), f'spell-{name}', (64,64), Image.Resampling.NEAREST)
+    # This atlas is assembled above with exact cells, unlike the generated source.
+    save(spell_icons.crop((x*64,y*64,(x+1)*64,(y+1)*64)), f'spell-{name}')
 for prefix, coordinates in [('state', STATES), ('res', RESISTANCES)]:
     for name, (x,y) in coordinates.items():
         save(cell(icons, x, y, 6, 6), f'{prefix}-{name}', (64,64))

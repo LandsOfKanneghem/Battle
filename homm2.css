@@ -24,11 +24,19 @@ body {
   margin-block: 12px;
 }
 .arena {
+  --queue-width: 60px;
+  --queue-gap: 9px;
+  --battlefield-size: min(calc(100vw - 406px - var(--queue-width) - var(--queue-gap)), calc(100dvh - 246px));
+  display: grid;
+  grid-template-columns: var(--queue-width) minmax(0, 1fr);
+  grid-template-areas: 'queue field';
+  align-items: start;
   grid-area: arena; width: auto; align-self: start;
-  gap: 9px; padding: 0; border: 0; background: transparent; box-shadow: none;
+  gap: var(--queue-gap); padding: 0; border: 0; background: transparent; box-shadow: none;
 }
 #battlefield {
-  width: min(calc(100vw - 406px), calc(100dvh - 246px));
+  grid-area: field;
+  width: var(--battlefield-size);
   gap: 0; padding: 0; border: 3px solid #222b22;
   outline: 1px solid #ac9155;
   background: #3d502c; box-shadow: 0 0 0 2px #151c18;
@@ -47,10 +55,13 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 #spells svg image, .effect-icon svg image { image-rendering: pixelated; }
 #battlefield :is(.wizard,.monk,.wolf,.lake-spirit,.hill-giant,.obstacle) { filter: drop-shadow(1px 2px 0 #15201465); }
 #turn-order {
-  min-height: 55px; height: 55px; border-radius: 0;
+  grid-area: queue; flex-direction: column; justify-content: flex-start;
+  width: var(--queue-width); min-height: 0; height: var(--battlefield-size); border-radius: 0;
+  overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable;
   background: transparent; box-shadow: none;
   scrollbar-color: #8c774a #1b211c;
 }
+#turn-order::-webkit-scrollbar { width: 8px; height: 8px; }
 #turn-order::-webkit-scrollbar-track { background: #1b211c; border-radius: 0; }
 #turn-order::-webkit-scrollbar-thumb { background: #8c774a; border-radius: 0; }
 .turn-slot {
@@ -59,6 +70,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
   box-shadow: inset 1px 1px #a39668, inset -1px -1px #141c19;
 }
 .turn-slot.active { border-color: #edce77; background: linear-gradient(#74633d,#413d28); box-shadow: 0 0 0 1px #c29a4a, inset 1px 1px #ead58f; }
+#turn-order .turn-slot.summon { margin-left: 7px; margin-top: -4px; }
 .panel {
   grid-area: panel; width: 306px; align-self: stretch;
   max-height: none; overflow: visible; padding: 13px;
@@ -149,7 +161,7 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 @media (max-height: 760px) and (min-width: 641px) {
   .hero-masthead { margin-bottom: 8px; }
   .portrait-frame { width: 44px; height: 46px; flex-basis: 44px; }
-  #battlefield { width: min(calc(100vw - 406px), calc(100dvh - 214px)); }
+  .arena { --battlefield-size: min(calc(100vw - 406px - var(--queue-width) - var(--queue-gap)), calc(100dvh - 214px)); }
 }
 @media (max-width: 640px) {
   html, body { overflow: auto; height: auto; min-height: 100%; }
@@ -158,9 +170,11 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
     display: flex; flex-direction: column; align-items: stretch;
     max-width: none; min-height: 0; width: calc(100% - 16px); margin: 8px auto 12px; gap: 10px;
   }
-  .arena { gap: 7px; align-self: stretch; }
-  #battlefield { width: 100%; }
-  #turn-order { width: 100%; }
+  .arena {
+    --queue-gap: 7px;
+    --battlefield-size: calc(100vw - 16px - var(--queue-width) - var(--queue-gap));
+    align-self: stretch;
+  }
   .panel { width: 100%; max-height: none; overflow: visible; padding: 12px; }
   .stats { grid-template-columns: repeat(2, minmax(0,1fr)); line-height: 1.3; gap: 10px 16px; font-size: 12px; }
   .stat-column:nth-child(n+3) { padding-top: 8px; }

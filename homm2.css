@@ -6,7 +6,7 @@
   --stone: #343a35;
   --ink: #1c201f;
   --parchment: #e5d2a4;
-  --spell-image-size: 96px;
+  --spell-image-size: 64px;
   --spell-slot-size: calc(var(--spell-image-size) + 6px);
   --spellbook-width: calc(5 * var(--spell-slot-size));
   --panel-width: calc(var(--spellbook-width) + 26px);
@@ -109,7 +109,7 @@ button { -webkit-tap-highlight-color: transparent; }
 #end-turn:active:not(:disabled), .spell-pages button:active:not(:disabled) { border-style: inset; }
 .spell-pages button:disabled { background: #30382b; color: #7d8066; border-color: #6e704e; }
 .spells {
-  /* Each 96px image has a 2px border and 1px padding on each side. */
+  /* Each image has a 2px border and 1px padding on each side. */
   width: var(--spellbook-width); grid-template-columns: repeat(5, var(--spell-slot-size));
   overflow-x: auto; gap: 0; margin-top: 12px; position: relative;
   padding: 0; background: transparent; box-shadow: none;

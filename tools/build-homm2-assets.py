@@ -154,7 +154,8 @@ for source, entries in updates.items():
         else:
             state_icons[name] = tile
 for kind, name in [('state', 'adrenaline-crash'), ('state', 'chill'),
-                   ('state', 'exhaustion'), ('state', 'weakness'), ('spell', 'slow')]:
+                   ('state', 'exhaustion'), ('state', 'weakness'), ('spell', 'slow'),
+                   ('spell', 'sparks'), ('spell', 'haste')]:
     tile = Image.open(SOURCES / 'refinements' / f'{kind}-{name}.png')
     if tile.size != (64,64) or tile.mode != 'P' or tile.getpalette() != spell_icons.getpalette():
         raise ValueError(f'{kind}-{name} must be 64×64 with the shared spell palette')

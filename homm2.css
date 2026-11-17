@@ -111,11 +111,12 @@ button.spell-slot:hover:not(:disabled) { filter: brightness(1.22); }
 button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .spell-slot:disabled { opacity: .48; filter: saturate(.55); }
 .uses-badge, .summon-badge { border-radius: 0; color: #ffedb7; background: #17201cde; text-shadow: 1px 1px #000; font-family: 'Trebuchet MS', sans-serif; }
+.uses-badge { background: transparent; font-size: clamp(10px, calc(1.2vmin + 2px), 13px); }
 .cooldown-badge { border-radius: 0; font-family: Georgia, serif; color: #f1d6a1; }
 .spell-pages { margin-top: 9px; }
 .spell-pages button { width: 44px; height: 25px; font-size: 18px; }
 .spell-tooltip, .effect-tooltip {
-  background: #231823 url('assets/homm2/leather.png') center/100% 100%;
+  background: #171b22;
   border: 3px ridge #baa168; border-radius: 0; color: #e9dab7;
   box-shadow: 3px 5px 0 #0e171c99, inset 0 0 0 1px #111d18;
   font: 12px/1.5 'Trebuchet MS', Arial, sans-serif;
@@ -128,7 +129,7 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .effect-icon { border-radius: 0; }
 .effect-icon.suppressed { opacity: .4; filter: grayscale(1); }
 .close-effects { top: 0; }
-.path-cost, .effect-preview { border-radius: 0; background: #18221de8; }
+.path-cost, .effect-preview { border-radius: 0; background: transparent; }
 .damage-label, .bonus-label, .miss-label, .failure-label { font-family: Georgia, serif; text-shadow: 1px 1px #171a16, -1px 0 #171a16, 0 1px #171a16; }
 .spell-projectile[data-type='fire'] { background: url('assets/homm2/spell-fire-shot.png') center/contain; }
 .spell-projectile[data-type='fire'] svg { visibility: hidden; }

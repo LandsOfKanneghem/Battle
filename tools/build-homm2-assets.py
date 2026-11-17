@@ -127,6 +127,11 @@ for index, name in enumerate(edit_names):
     tile = fit_icon(edits.crop((left,top,right,bottom)), spell_icons)
     x,y = SPELLS[name]
     spell_icons.paste(tile, (x*64,y*64))
+slow = Image.open(SOURCES / 'spell-slow-silver.png')
+if slow.size != (64,64) or slow.mode != 'P' or slow.getpalette() != spell_icons.getpalette():
+    raise ValueError('Silver-chain icon must be 64×64 with the shared spell palette')
+x,y = SPELLS['slow']
+spell_icons.paste(slow, (x*64,y*64))
 # Keep one compiled sheet for review; sources/ contains only actual build inputs.
 (PROJECT / 'docs').mkdir(exist_ok=True)
 spell_icons.save(PROJECT / 'docs' / 'spell-icons-64.png', optimize=True)

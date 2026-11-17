@@ -77,9 +77,10 @@ STATES = {
 RESISTANCES = {'ac': (2,3), 'physical': (1,5), 'fire': (0,0), 'water': (0,1),
                'air': (1,2), 'earth': (2,5), 'mind': (4,4), 'poison': (3,5)}
 icons = Image.open(SOURCES / 'icons.png').convert('RGB')
-spell_icons = Image.open(SOURCES / 'spell-icons-retro.png').convert('RGB')
+spell_icons = Image.open(SOURCES / 'spell-icons-retro.png')
 for name, (x,y) in SPELLS.items():
-    # Native 64×64 pixel icons: preserve crisp clusters and empty gradient corners.
+    # The approved 384×384 indexed sheet already contains exact 64×64 tiles.
+    # Keep its shared VGA palette and pixels intact: no RGB conversion or re-quantization.
     save(cell(spell_icons, x, y, 6, 6), f'spell-{name}', (64,64), Image.Resampling.NEAREST)
 for prefix, coordinates in [('state', STATES), ('res', RESISTANCES)]:
     for name, (x,y) in coordinates.items():

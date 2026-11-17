@@ -44,6 +44,7 @@ body {
 .cell[data-terrain='sand'] .terrain { background-image: url('assets/homm2/sand.png'); }
 .cell[data-terrain='deep-water'] .terrain { background-image: url('assets/homm2/water.png'); }
 svg, svg image, #creature-portrait { image-rendering: auto; }
+#spells svg image { image-rendering: pixelated; }
 #battlefield :is(.wizard,.monk,.wolf,.lake-spirit,.hill-giant,.obstacle) { filter: drop-shadow(1px 2px 0 #15201465); }
 #turn-order {
   min-height: 55px; height: 55px; border-radius: 0;

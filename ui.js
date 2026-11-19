@@ -160,7 +160,8 @@ window.showSpellTooltip = function(icon, spell) {
   // Тип атаки дополняет форму АОЕ.
   const typeLabel = spell.isShot ? ' [тип: Выстрел]' : spell.isHit ? ' [тип: Удар]' : '';
   addLine('АОЕ', `${areaLabel}${typeLabel}`);
-  addLine('Цель', { any: 'любая', ally: 'союзник', enemy: 'враг', none: 'нет' }[spell.target] ?? 'нет');
+  addLine('Цель', spell.id === 'lake-spirit' ? 'незанятая клетка суши'
+    : { any: 'любая', ally: 'союзник', enemy: 'враг', none: 'нет' }[spell.target] ?? 'нет');
   addLine('LOS', spell.noLOS ? 'не требует' : 'требует');
   document.body.appendChild(tooltip);
   // Предпочитаем свободную сторону; на узком экране — место сверху или снизу.

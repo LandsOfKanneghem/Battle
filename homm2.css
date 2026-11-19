@@ -38,8 +38,7 @@ body {
   border: 2px solid #555; background: #fff; color: #171717;
   font: 14px/1.4 system-ui, sans-serif; min-width: 0;
 }
-.battle-log h2 { margin: 0; padding: 7px 9px; border-bottom: 1px solid #aaa; font-size: 16px; }
-#battle-log-entries { flex: 1; min-height: 0; overflow-y: auto; overflow-wrap: anywhere; padding: 6px 9px; scrollbar-gutter: stable; }
+#battle-log-entries { flex: 1; min-height: 0; overflow-y: scroll; overflow-wrap: anywhere; padding: 6px 9px; scrollbar-gutter: stable; }
 #battle-log-entries p { margin: 0 0 7px; }
 .battle-log-round { font-weight: 800; border-top: 1px solid #bbb; padding-top: 7px; }
 .battle-log-round:first-child { border-top: 0; padding-top: 0; }

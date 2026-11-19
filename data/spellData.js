@@ -90,7 +90,7 @@ const SPELL_DEFINITIONS = [{
   id: 'lake-spirit', durationBase: 2, durationPerInt: 0, abilityType: 'spell', name: 'Дух озера', stackable: false, isSummon: true, target: 'none',
   description: 'Призывает левитирующий шар воды. Дух озера наносит слабый урон водой на небольшой дистанции. Исчезает, получив 1 атаку.',
   minRange: 1, range: 1, modifiable: false, noLOS: false,
-  apCost: 3, maxUsesPerTurn: 1, maxCooldown: 2,
+  apCost: 3, maxUsesPerTurn: 1, maxCooldown: 4,
   isAOE: false, aoeSize: 1, magicSchool: 'water',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#d0f4ff" opacity=".7"/><path d="M8 14 Q14 8 22 10" fill="none" stroke="#a0d4ff" stroke-width="1.5" opacity=".6"/><path d="M20 6 V2 M14 4 L20 2 L26 4" fill="none" stroke="#c3ffff" stroke-width="2" stroke-linecap="round"/></svg>`
 }, {

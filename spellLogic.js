@@ -224,7 +224,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       // Тяжесть блокирует только толчок: обычная ходьба остаётся доступной.
       if (!victim || victim.states.some(state => state.id === 'heavy' && !state.suppressed
         && (state.duration > 0 || state.permanent || state.innate)) || destination.x < 0 || destination.x >= SIZE || destination.y < 0 || destination.y >= HEIGHT
-        || obstacles.get(keyOf(destination)) === 'crate' || terrain.get(keyOf(destination)) === 'deep-water'
+        || obstacles.get(keyOf(destination)) === 'crate' || gameState.isWater(terrain.get(keyOf(destination)))
         || entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(destination))) continue;
       victim.position = destination;
     }
@@ -463,6 +463,7 @@ window.recordHitAttempt = function(spell, caster, deps) {
 
 window.castSpell = function(targetCell, deps) {
   const gameState = window.gameState;
+  const battleVersion = gameState.battleVersion;
   const { entities, cells, SIZE, keyOf, activeEntity, isAlly } = gameState;
   const {
     canPrepareSpell, canTarget,
@@ -526,9 +527,12 @@ window.castSpell = function(targetCell, deps) {
   const ctx = { spell, target, caster, targetCell, fromCell, sparkTargets, primaryTarget,
     shotHit: null, finishCast, deps,
     // Обёртка сохраняет обычный вызов браузерного таймера без привязки this к ctx.
-    setTimeout: (callback, delay) => setTimeout(callback, delay) };
+    setTimeout: (callback, delay) => setTimeout(() => {
+      if (battleVersion === gameState.battleVersion) callback();
+    }, delay) };
 
   function finishCast() {
+    if (battleVersion !== gameState.battleVersion) return;
     // Фаза 2: HP и очередь меняются лишь после завершения анимации.
     applySpellEffect(spell, target, caster, deps, sparkTargets, ctx.shotHit);
     removeDefeatedEntities();

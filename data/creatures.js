@@ -22,7 +22,7 @@ window.captureInitialStats = function(creature) {
     return { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0, ...overrides };
   };
 
-  const CREATURE_TEMPLATES = {
+  const CREATURE_TEMPLATES = window.CREATURE_TEMPLATES = {
     wizard: {
       name: 'Волшебник', type: 'wizard',
       level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 15, wpPerLevel: 5, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
@@ -151,15 +151,15 @@ window.captureInitialStats = function(creature) {
   };
 
   const typeCounters = new Map();
+  window.resetCreatureCounters = () => typeCounters.clear();
   window.createCreature = function(templateId, position) {
     if (!Object.hasOwn(CREATURE_TEMPLATES, templateId)) throw new Error(`Неизвестный шаблон существа: ${templateId}`);
     const template = CREATURE_TEMPLATES[templateId];
-    let id = template.type;
-    if (template.type !== 'wizard' && template.type !== 'monk') {
-      const next = (typeCounters.get(template.type) ?? 0) + 1;
-      typeCounters.set(template.type, next);
-      id = `${template.type}-${next}`;
-    }
+    const next = (typeCounters.get(template.type) ?? 0) + 1;
+    typeCounters.set(template.type, next);
+    // Редактор допускает несколько магов/монахов: каждому нужен отдельный ID.
+    const id = next === 1 && ['wizard', 'monk'].includes(template.type)
+      ? template.type : `${template.type}-${next}`;
     const attributes = window.createAttributes(template.attributes);
     // При создании учитываем только гарантированную часть; шанс бросается в начале хода.
     const wisBonus = Math.floor(attributes.wis / 20);

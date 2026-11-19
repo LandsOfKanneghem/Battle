@@ -38,6 +38,7 @@ window.playHealAnimation = function(cell) {
 };
 
 window.playProjectileAnimation = function(fromCell, toCell, type = 'fire', onArrival = null) {
+  const battleVersion = window.gameState.battleVersion;
   const from = fromCell.getBoundingClientRect();
   const to = toCell.getBoundingClientRect();
   const isCube = type === 'fire-cube';
@@ -71,7 +72,7 @@ window.playProjectileAnimation = function(fromCell, toCell, type = 'fire', onArr
     if (arrived) return;
     arrived = true;
     projectile.remove();
-    if (onArrival) onArrival();
+    if (onArrival && battleVersion === window.gameState.battleVersion) onArrival();
   }
   flight.onfinish = finishFlight;
   // Страховочная очистка, даже если браузер приостановил отрисовку.

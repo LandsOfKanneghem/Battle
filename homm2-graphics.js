@@ -16,38 +16,35 @@
   for (const state of stateTypes.values()) state.icon = sprite(`state-${state.id}`);
 
   const kinds = new Set(['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit']);
+  // Исходники 60×72 и фактические размеры совпадают с MapEditor.
+  const fieldSizes = {
+    wolf: [90, 108, [36, 3, 4, 3]], 'hill-giant': [90, 108, [4, 2, 4, 2]],
+    wizard: [72, 86, [4, 7, 4, 7]], monk: [72, 86, [6, 9, 4, 9]]
+  };
   const createSvg = window.createCreatureSvg;
   window.createCreatureSvg = function(kind) {
     const svg = createSvg(kind);
-    if (kinds.has(kind)) svg.innerHTML = `<image href="${artRoot}${kind}.png" width="40" height="40"/>`;
+    if (fieldSizes[kind]) {
+      const [width, height, [top, right, bottom, left]] = fieldSizes[kind];
+      svg.removeAttribute('style');
+      svg.classList.add('battle-creature');
+      svg.setAttribute('viewBox', '0 0 60 72');
+      svg.setAttribute('preserveAspectRatio', 'none');
+      svg.style.setProperty('--sprite-width', `${width}px`);
+      svg.style.setProperty('--sprite-height', `${height}px`);
+      // Убираем те же прозрачные поля исходника, что и редактор.
+      svg.style.setProperty('--sprite-clip', `inset(${top * height / 72}px ${right * width / 60}px ${bottom * height / 72}px ${left * width / 60}px)`);
+      svg.innerHTML = `<image href="assets/map-editor/mobs/${kind}.png" width="60" height="72"/>`;
+    } else if (kinds.has(kind)) svg.innerHTML = `<image href="${artRoot}${kind}.png" width="40" height="40"/>`;
     return svg;
   };
 
   document.addEventListener('DOMContentLoaded', () => {
     window.SUMMON_TIME_ICON = sprite('state-summon-time');
-    for (const svg of document.querySelectorAll('#battlefield .obstacle')) {
-      svg.innerHTML = `<image href="${artRoot}crate.png" width="40" height="40"/>`;
-    }
     for (const stat of document.querySelectorAll('.resistance-stat')) {
       const key = stat.querySelector('span').id.replace('res-', '');
       stat.querySelector('svg').innerHTML = `<image href="${artRoot}res-${key}.png" width="16" height="16"/>`;
     }
-    // Shore edging follows the existing terrain map and never changes passability.
-    for (const cell of window.gameState.cells) {
-      // Every cell samples its position in the same painting, rather than repeating
-      // a small grass stamp. Only CSS coordinates change; the terrain map is read-only.
-      const x = Number(cell.dataset.x), y = Number(cell.dataset.y);
-      cell.querySelector('.terrain').style.setProperty('--land-x', `${x / (window.gameState.SIZE - 1) * 100}%`);
-      cell.querySelector('.terrain').style.setProperty('--land-y', `${y / (window.gameState.HEIGHT - 1) * 100}%`);
-      if (cell.dataset.terrain !== 'deep-water') continue;
-      const edges = [[0, -1, '0 2px'], [0, 1, '0 -2px'], [-1, 0, '2px 0'], [1, 0, '-2px 0']];
-      const shadows = edges.filter(([dx, dy]) => {
-        const terrain = window.gameState.terrain.get(`${x + dx},${y + dy}`);
-        return terrain && terrain !== 'deep-water';
-      }).map(([, , offset]) => `inset ${offset} #a9985a`);
-      cell.querySelector('.terrain').style.boxShadow = shadows.join(', ');
-    }
-
     const portrait = document.getElementById('creature-portrait');
     const name = document.getElementById('character-name');
     const updatePortrait = () => {
@@ -68,7 +65,12 @@
         if (!kinds.has(creature?.type)) continue;
         const image = slot.querySelector('svg image');
         const url = `${artRoot}portrait-${creature.type}.png`;
-        if (image && image.getAttribute('href') !== url) image.setAttribute('href', url);
+        if (image && image.getAttribute('href') !== url) {
+          image.parentElement.setAttribute('viewBox', '0 0 40 40');
+          image.setAttribute('href', url);
+          image.setAttribute('width', '40');
+          image.setAttribute('height', '40');
+        }
       }
     };
     new MutationObserver(updateQueueArtwork).observe(window.gameState.turnOrder, { childList: true });

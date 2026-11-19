@@ -2,10 +2,17 @@
 // Состояние читается из window.gameState; боевые и UI-функции вызываются через window.*.
 // При загрузке только объявляем функции: работа начинается после инициализации index.html.
 
+window.scheduleBattleStep = function() {
+  const version = window.gameState.battleVersion;
+  setTimeout(() => {
+    if (version === window.gameState.battleVersion) window.takeStep();
+  }, window.gameState.STEP_MS);
+};
+
 window.buildPath = function(start, target, entity = window.gameState.activeEntity()) {
   if (!window.gameState.isFree(start, entity) || !window.gameState.isFree(target, entity)) return null;
   // Воду можно пересекать с Левитацией, но точка назначения всегда на суше.
-  if (window.gameState.terrain.get(window.gameState.keyOf(target)) === 'deep-water') return null;
+  if (window.gameState.isWater(window.gameState.terrain.get(window.gameState.keyOf(target)))) return null;
   const heuristic = (point) => Math.abs(point.x - target.x) + Math.abs(point.y - target.y);
   const open = [{ ...start, g: 0, h: heuristic(start), parent: null, axis: null, turn: 0 }];
   const bestCost = new Map([[window.gameState.keyOf(start), 0]]);
@@ -62,7 +69,7 @@ window.takeStep = function() {
   mover.mp -= window.gameState.entryCost(mover.position, mover);
   window.renderPosition();
   if (window.gameState.stepQueue.length > 0) {
-    setTimeout(window.takeStep, window.gameState.STEP_MS);
+    window.scheduleBattleStep();
   } else {
     window.gameState.isMoving = false;
     window.gameState.battlefield.classList.remove('moving');

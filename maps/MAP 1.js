@@ -197,12 +197,6 @@ window.DEFAULT_BATTLE_MAP = {
     {
       "type": "wolf",
       "team": "enemy",
-      "x": 6,
-      "y": 3
-    },
-    {
-      "type": "wolf",
-      "team": "enemy",
       "x": 1,
       "y": 5
     },
@@ -211,6 +205,12 @@ window.DEFAULT_BATTLE_MAP = {
       "team": "enemy",
       "x": 10,
       "y": 2
+    },
+    {
+      "type": "black-wolf",
+      "team": "enemy",
+      "x": 5,
+      "y": 3
     }
   ],
   "objects": [
@@ -236,4 +236,4 @@ window.DEFAULT_BATTLE_MAP = {
       "interactive": false
     }
   ]
-};
+}

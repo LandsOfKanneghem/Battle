@@ -64,11 +64,11 @@ def fit_icon(image, palette, size=(64,64)):
 
 
 portraits = Image.open(SOURCES / 'portraits.png')
-if portraits.size != (720, 144):
-    raise ValueError('Expected five approved 144x144 portraits in one row')
-names = ['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit']
+names = ['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit', 'nymph']
+if portraits.size != (len(names) * 144, 144):
+    raise ValueError('Expected six approved 144x144 portraits in one row')
 for index, name in enumerate(names):
-    save(cell(portraits, index, 0, 5, 1), 'portrait-'+name)
+    save(cell(portraits, index, 0, len(names), 1), 'portrait-'+name)
 
 materials = Image.open(SOURCES / 'materials.png').convert('RGB')
 save(cell(materials, 1, 1), 'leather', (512,512))

@@ -70,6 +70,21 @@ window.captureInitialStats = function(creature) {
           null, null, null, null, null]
       ]
     },
+    nymph: {
+      name: 'Нимфа', type: 'nymph', ai: 'nymph',
+      level: 1, baseHP: 1, hpPerLevel: 0, baseWP: 0, wpPerLevel: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+      baseEarth: 0, baseMind: 0, basePoison: 0,
+      attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
+      innateStates: ['water-entity', { id: 'levitation', permanent: true }],
+      spellPages: [
+        ['water-shot', null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null]
+      ]
+    },
     'hill-giant': {
       name: 'Холмовой Великан', type: 'hill-giant', ai: 'hill-giant',
       level: 1, baseHP: 25, hpPerLevel: 10, baseWP: 32, wpPerLevel: 8, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
@@ -104,6 +119,7 @@ window.captureInitialStats = function(creature) {
   const SVG_ART = {
     'hill-giant': `<path d="M8 37 L10 19 Q20 13 29 20 L31 37 H23 L21 29 L18 37 Z" fill="#807467" stroke="#c7b69c"/><path d="M10 21 L4 30 L8 33 L15 25 M27 22 L34 27" fill="none" stroke="#a59580" stroke-width="6" stroke-linecap="round"/><circle cx="20" cy="11" r="8" fill="#a59580" stroke="#5f544b"/><path d="M13 8 L17 4 H25 L28 10" fill="#544638"/><circle cx="17" cy="11" r="1.2" fill="#fff0c6"/><circle cx="23" cy="11" r="1.2" fill="#fff0c6"/><path d="M17 16 H23 M35 35 L32 15" stroke="#493425" stroke-width="3"/><path d="M29 4 L35 3 L39 17 L32 20 Z" fill="#76502d" stroke="#b18a53" stroke-width="2"/>`,
     'lake-spirit': `<circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#fff" opacity=".6"/>`,
+    nymph: `<circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#fff" opacity=".6"/>`,
     wizard: `
       <path d="M11 36 L15 20 L25 20 L30 36 Z" fill="#287dff" stroke="#102e70"/>
       <circle cx="20" cy="17" r="6" fill="#ffd6a0"/>

@@ -15,12 +15,12 @@
   }
   for (const state of stateTypes.values()) state.icon = sprite(`state-${state.id}`);
 
-  const kinds = new Set(['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit']);
+  const kinds = new Set(['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit', 'nymph']);
   // Исходники 60×72 и фактические размеры совпадают с MapEditor.
   const fieldSizes = {
     wolf: [90, 108, [36, 3, 4, 3]], 'hill-giant': [90, 108, [4, 2, 4, 2]],
     wizard: [72, 86, [4, 7, 4, 7]], monk: [72, 86, [6, 9, 4, 9]],
-    'lake-spirit': [72, 86, [4, 3, 4, 2]]
+    'lake-spirit': [72, 86, [4, 3, 4, 2]], nymph: [72, 86, [4, 3, 4, 2]]
   };
   const createSvg = window.createCreatureSvg;
   window.createCreatureSvg = function(kind) {

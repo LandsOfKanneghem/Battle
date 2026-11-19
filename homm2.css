@@ -9,7 +9,7 @@
   --spell-image-size: 54px;
   --spell-slot-size: calc(var(--spell-image-size) + 6px);
   --spellbook-width: calc(5 * var(--spell-slot-size));
-  --panel-width: calc(var(--spellbook-width) + 26px);
+  --panel-width: var(--spellbook-width);
 }
 html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
 body {
@@ -22,9 +22,10 @@ body {
 }
 .game {
   position: relative; display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--panel-width);
+  grid-template-columns: minmax(0, max-content) var(--panel-width);
   grid-template-areas: 'arena panel';
-  gap: 16px;
+  gap: 10px;
+  width: max-content;
   max-width: calc(100vw - 40px);
   min-height: calc(100dvh - 60px);
   margin: 12px auto;
@@ -40,7 +41,7 @@ body {
   grid-template-areas: 'queue field';
   align-items: start;
   grid-area: arena; width: auto; max-width: 100%; align-self: start; overflow-x: auto;
-  gap: var(--queue-gap); padding: 2px; border: 0; background: transparent; box-shadow: none;
+  gap: var(--queue-gap); padding: 2px 0 2px 2px; border: 0; background: transparent; box-shadow: none;
 }
 #battlefield {
   position: relative; overflow: hidden;
@@ -57,6 +58,13 @@ body {
   content: none;
 }
 .battle-terrain { position: absolute; left: 0; top: 0; width: 576px; height: 576px; z-index: 0; pointer-events: none; image-rendering: pixelated; }
+.battle-grid {
+  display: none; position: absolute; left: 0; top: 0; width: 576px; height: 576px;
+  z-index: 1; pointer-events: none;
+  background-image: linear-gradient(to right, #000 1px, transparent 1px), linear-gradient(to bottom, #000 1px, transparent 1px);
+  background-size: 48px 48px; box-shadow: inset -1px -1px #000;
+}
+#battlefield.show-grid .battle-grid { display: block; }
 svg, svg image, #creature-portrait { image-rendering: auto; }
 #spells svg image, .effect-icon svg image { image-rendering: pixelated; }
 #battlefield :is(.wizard,.monk,.wolf,.lake-spirit,.hill-giant,.obstacle) { filter: drop-shadow(1px 2px 0 #15201465); }
@@ -68,9 +76,10 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 #battlefield .battle-creature image { image-rendering: pixelated; }
 #battlefield img.obstacle { width: 48px; height: 48px; z-index: 2; image-rendering: pixelated; filter: none; }
 .battle-toolbar { display: flex; align-items: center; gap: 8px; margin: 4px 8px 0; position: relative; z-index: 1001; }
-#load-map { width: 32px; height: 32px; padding: 2px; border: 1px solid #8d805e; background: #3a3a36; cursor: pointer; }
-#load-map svg { display: block; width: 100%; height: 100%; }
-#load-map:disabled { opacity: .5; cursor: wait; }
+.battle-toolbar-button { width: 32px; height: 32px; padding: 2px; border: 1px solid #8d805e; background: #3a3a36; color: var(--parchment); cursor: pointer; }
+.battle-toolbar-button svg { display: block; width: 100%; height: 100%; }
+.battle-toolbar-button:disabled { opacity: .5; cursor: wait; }
+.battle-toolbar-button[aria-pressed='true'] { background: #5d5039; border-color: #edce77; }
 #map-status { font: 13px/1.3 system-ui, sans-serif; }
 #turn-order {
   grid-area: queue; flex-direction: column; justify-content: flex-start;
@@ -91,7 +100,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 #turn-order .turn-slot.summon { margin-left: 7px; margin-top: -4px; }
 .panel {
   grid-area: panel; width: var(--panel-width); align-self: stretch;
-  max-height: none; overflow: visible; padding: 13px;
+  max-height: none; overflow: visible; padding: 0;
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }
 .hero-masthead {
@@ -105,7 +114,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 }
 #creature-portrait { display: block; width: 100%; height: 100%; object-fit: cover; }
 .panel h1 { margin: 0; color: #ead194; font: bold 17px/1.3 Georgia, serif; text-shadow: 1px 2px #161b19; }
-.stats { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 12px; line-height: 1.26; gap: 9px 10px; color: #e1d9bc; padding: 5px 6px; border: 0; background: transparent; box-shadow: none; }
+.stats { font-family: 'Trebuchet MS', Arial, sans-serif; font-size: 12px; line-height: 1.26; gap: 9px 10px; color: #432b1b; padding: 5px 6px; border: 0; background: #d9c39c; box-shadow: none; }
 .stat-column h2 { display: none; }
 .stat-column:nth-child(even), .stat-column:nth-child(n+3) { border-color: #7d77534d; }
 .stat-column > span { min-height: 15px; }

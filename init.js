@@ -105,6 +105,10 @@
     state.stepQueue = [];
     state.battlefield.classList.remove('moving');
     state.battlefield.replaceChildren(terrainCanvas);
+    const grid = document.createElement('div');
+    grid.className = 'battle-grid';
+    grid.setAttribute('aria-hidden', 'true');
+    state.battlefield.appendChild(grid);
     document.getElementById('defeat-overlay').hidden = true;
     window.resetCreatureCounters();
     state.costLabel.className = 'path-cost';

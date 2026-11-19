@@ -122,6 +122,9 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   }
   if (spell.isSummon) {
     const creature = window.createCreature('lake-spirit', target);
+    // Поставленный на карту дух — обычный моб; призыв управляется его владельцем.
+    creature.isSummon = true;
+    delete creature.ai;
     creature.ownerId = caster.id;
     creature.summonDuration = duration;
     entities.push(creature);

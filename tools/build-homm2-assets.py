@@ -63,29 +63,12 @@ def fit_icon(image, palette, size=(64,64)):
     return tile
 
 
-units = Image.open(SOURCES / 'units.png').convert('RGBA')
 portraits = Image.open(SOURCES / 'portraits.png').convert('RGB')
-names = ['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit', 'crate']
+names = ['wizard', 'monk', 'wolf', 'hill-giant', 'lake-spirit']
 for index, name in enumerate(names):
-    image = cell(units, index % 3, index // 3)
-    # Ignore almost-transparent atlas padding when aligning feet to a common baseline.
-    bounds = image.getchannel('A').point(lambda value: 255 if value > 32 else 0).getbbox()
-    if not bounds:
-        raise ValueError(f'Empty sprite: {name}')
-    image = image.crop(bounds)
-    scale = min(90/image.width, 90/image.height)
-    image = image.resize((round(image.width*scale), round(image.height*scale)), FILTER)
-    canvas = Image.new('RGBA', (96,96))
-    canvas.alpha_composite(image, ((96-image.width)//2, 93-image.height))
-    save(canvas, name)
-    if name != 'crate':
-        save(cell(portraits, index % 3, index // 3), 'portrait-'+name, (144,144))
+    save(cell(portraits, index % 3, index // 3), 'portrait-'+name, (144,144))
 
 materials = Image.open(SOURCES / 'materials.png').convert('RGB')
-grass = Image.open(SOURCES / 'meadow.png').convert('RGB')
-save(grass, 'grass-0', (512,512))
-save(cell(materials, 1, 0), 'sand', (512,512))
-save(cell(materials, 2, 0), 'water', (512,512))
 save(cell(materials, 1, 1), 'leather', (512,512))
 
 # Atlas coordinates describe pictures only, never spell values or state behavior.
@@ -187,4 +170,4 @@ for name, (x,y) in SPELLS.items():
 for name, (x,y) in RESISTANCES.items():
     save(cell(icons, x, y, 6, 6), f'res-{name}', (64,64))
 
-print('Prepared painted sprites, portraits, materials and icons from source illustrations.')
+print('Prepared portraits, leather and icons from source illustrations.')

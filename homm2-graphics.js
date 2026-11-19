@@ -19,7 +19,8 @@
   // Исходники 60×72 и фактические размеры совпадают с MapEditor.
   const fieldSizes = {
     wolf: [90, 108, [36, 3, 4, 3]], 'hill-giant': [90, 108, [4, 2, 4, 2]],
-    wizard: [72, 86, [4, 7, 4, 7]], monk: [72, 86, [6, 9, 4, 9]]
+    wizard: [72, 86, [4, 7, 4, 7]], monk: [72, 86, [6, 9, 4, 9]],
+    'lake-spirit': [72, 86, [4, 3, 4, 2]]
   };
   const createSvg = window.createCreatureSvg;
   window.createCreatureSvg = function(kind) {
@@ -35,7 +36,7 @@
       // Убираем те же прозрачные поля исходника, что и редактор.
       svg.style.setProperty('--sprite-clip', `inset(${top * height / 72}px ${right * width / 60}px ${bottom * height / 72}px ${left * width / 60}px)`);
       svg.innerHTML = `<image href="assets/map-editor/mobs/${kind}.png" width="60" height="72"/>`;
-    } else if (kinds.has(kind)) svg.innerHTML = `<image href="${artRoot}${kind}.png" width="40" height="40"/>`;
+    }
     return svg;
   };
 

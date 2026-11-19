@@ -56,13 +56,13 @@ window.captureInitialStats = function(creature) {
       ]
     },
     'lake-spirit': {
-      name: 'Дух озера', type: 'lake-spirit',
+      name: 'Дух озера', type: 'lake-spirit', ai: 'lake-spirit',
       level: 1, baseHP: 1, hpPerLevel: 0, baseWP: 0, wpPerLevel: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
       attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
-      isSummon: true, innateStates: ['water-entity', { id: 'levitation', permanent: true }],
+      innateStates: ['water-entity', { id: 'levitation', permanent: true }],
       spellPages: [
         ['water-shot', null, null, null, null,
           null, null, null, null, null,

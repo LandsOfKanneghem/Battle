@@ -177,6 +177,18 @@ window.DEFAULT_BATTLE_MAP = {
   ],
   "mobs": [
     {
+      "type": "wizard",
+      "team": "ally",
+      "x": 6,
+      "y": 7
+    },
+    {
+      "type": "black-wolf",
+      "team": "enemy",
+      "x": 5,
+      "y": 3
+    },
+    {
       "type": "monk",
       "team": "ally",
       "x": 4,
@@ -187,12 +199,6 @@ window.DEFAULT_BATTLE_MAP = {
       "team": "enemy",
       "x": 3,
       "y": 4
-    },
-    {
-      "type": "wizard",
-      "team": "ally",
-      "x": 6,
-      "y": 7
     },
     {
       "type": "wolf",
@@ -206,12 +212,6 @@ window.DEFAULT_BATTLE_MAP = {
       "x": 10,
       "y": 2
     },
-    {
-      "type": "black-wolf",
-      "team": "enemy",
-      "x": 5,
-      "y": 3
-    }
   ],
   "objects": [
     {

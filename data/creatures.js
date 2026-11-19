@@ -102,7 +102,7 @@ window.captureInitialStats = function(creature) {
     },
     wolf: {
       name: 'Волк', type: 'wolf', ai: 'wolf',
-      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 8, wpPerLevel: 3, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
+      level: 3, baseHP: 8, hpPerLevel: 4, baseWP: 8, wpPerLevel: 3, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
       baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -116,11 +116,11 @@ window.captureInitialStats = function(creature) {
     },
     'black-wolf': {
       name: 'Чёрный волк', type: 'black-wolf', ai: 'black-wolf',
-      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 8, wpPerLevel: 3, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      level: 4, baseHP: 8, hpPerLevel: 5, baseWP: 8, wpPerLevel: 3, baseAP: 7, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
+      baseACC: 100, baseCRI: 25, baseEVA: 30, baseSFC: 0, baseBLO: 0, baseINI: 0,
       baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
       baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },
+      attributes: { vit: 3, str: 4, att: 5, int: 0, wis: 0, cha: 0, luc: 0 },
       spellPages: [
         ['bite', null, null, null, null,
           null, null, null, null, null,

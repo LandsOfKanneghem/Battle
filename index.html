@@ -86,6 +86,16 @@
     <div class="defeat-message">Вы проиграли!</div>
     <div class="defeat-hint">Обновите страницу (F5), чтобы начать заново</div>
   </div>
+  <svg width="0" height="0" style="position: absolute; pointer-events: none" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="queue-entity-outline" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+        <feMorphology in="SourceAlpha" operator="dilate" radius="1" result="expanded"/>
+        <feFlood flood-color="#ffff00" result="yellow"/>
+        <feComposite in="yellow" in2="expanded" operator="in" result="outline"/>
+        <feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+  </svg>
   <script src="data/states.js"></script>
   <script src="data/spellData.js"></script>
   <script src="data/creatures.js"></script>

@@ -464,8 +464,8 @@ window.updatePanel = function() {
     slot.classList.toggle('prepared', window.gameState.activeEntity()?.availableSpells.includes(spell) && window.gameState.preparedSpellId === spell.id);
     slot.setAttribute('aria-pressed', window.gameState.activeEntity()?.availableSpells.includes(spell) && window.gameState.preparedSpellId === spell.id ? 'true' : 'false');
   }
-  for (const cell of window.gameState.cells) cell.classList.remove('entity-hover');
   for (const entity of window.gameState.entities) {
+    entity.svg.classList.toggle('entity-hover', window.gameState.queueHoveredEntityId === entity.id);
     const active = entity.id === window.gameState.activeEntityId;
     window.gameState.turnSlots.get(entity.id).classList.toggle('active', active);
     window.gameState.turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');
@@ -480,9 +480,6 @@ window.updatePanel = function() {
         }
         badge.textContent = String(entity.summonDuration ?? 0);
       }
-    }
-    if (window.gameState.queueHoveredEntityId === entity.id) {
-      window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x].classList.add('entity-hover');
     }
   }
 };

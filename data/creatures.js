@@ -113,6 +113,20 @@ window.captureInitialStats = function(creature) {
           null, null, null, null, null,
           null, null, null, null, null]
       ]
+    },
+    'black-wolf': {
+      name: 'Чёрный волк', type: 'black-wolf', ai: 'black-wolf',
+      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 8, wpPerLevel: 3, baseAP: 6, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
+      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+      baseEarth: 0, baseMind: 0, basePoison: 0,
+      attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },
+      spellPages: [
+        ['bite', null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null,
+          null, null, null, null, null]
+      ]
     }
   };
 
@@ -149,6 +163,8 @@ window.captureInitialStats = function(creature) {
       <path d="M12 27 L20 29 L28 27" fill="none" stroke="#f1be8d" stroke-width="3"/>
       <path d="M33 36 V10" stroke="#bc9159" stroke-width="2"/>`
   };
+
+  SVG_ART['black-wolf'] = SVG_ART.wolf;
 
   window.createCreatureSvg = function(kind) {
     if (!Object.hasOwn(SVG_ART, kind)) throw new Error(`Неизвестный спрайт существа: ${kind}`);

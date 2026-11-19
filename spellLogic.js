@@ -254,7 +254,9 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     }
   } else if (spell.isHealHarm) {
     if (directTarget && isAlly(directTarget)) {
+      const hpBefore = directTarget.hp;
       directTarget.hp = Math.min(directTarget.maxHP ?? directTarget.hp, directTarget.hp + spell.healAmount);
+      window.battleLog?.heal(directTarget, directTarget.hp - hpBefore, caster);
       const last = directTarget.states.filter(state => state.id === 'bleeding' && !state.suppressed)
         .reduce((latest, state) => !latest || state.appliedOrder > latest.appliedOrder ? state : latest, null);
       directTarget.states = directTarget.states.filter(state => state !== last);

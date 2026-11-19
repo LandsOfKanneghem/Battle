@@ -9,6 +9,11 @@
     'black-wolf': 'Чёрного волка', 'hill-giant': 'Холмового Великана',
     'lake-spirit': 'Духа озера', nymph: 'Нимфы'
   };
+  const beneficialEffects = new Set([
+    'speed', 'light', 'adrenaline', 'vigor', 'levitation', 'water-entity',
+    'liquid-membrane', 'sky-shot', 'power-hour', 'sprint',
+    'fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin'
+  ]);
   const appendLine = (text, kind = 'event') => {
     const list = document.getElementById('battle-log-entries');
     if (!list) return;
@@ -59,7 +64,10 @@
       remaining.add(entity.id);
       write(`${caster.name} призывает: ${entity.name}.`);
     },
-    bonus(entity, resource) { appendLine(`${entity.name}: +1 ${resource} в начале хода!`); },
+    bonus(entity, resource) { appendLine(`${entity.name}: +1 ${resource} в начале хода!`, 'benefit'); },
+    heal(entity, amount, caster) {
+      write(`${entity.name} +${amount} ОЗ (лечение${caster ? `: ${caster.name}` : ''}).`, 'benefit');
+    },
     cast(caster, spell, target) {
       write(`${caster.name} применяет «${spell.name}»${target ? ` — цель: ${target.name}` : ''}.`);
     },
@@ -67,7 +75,8 @@
     failure(caster, spell) { write(`${caster.name}: заклинание «${spell.name}» провалилось!`); },
     applied(entity, effect, kind = 'состояние', refreshed = false) {
       const source = sourceName(effect);
-      write(`${source ? `${source} ${refreshed ? 'обновляет' : 'накладывает'} ${kind}` : `${entity.name}: ${kind}`} «${effect.name}»${source ? ` — цель: ${entity.name}` : ''}.`);
+      write(`${source ? `${source} ${refreshed ? 'обновляет' : 'накладывает'} ${kind}` : `${entity.name}: ${kind}`} «${effect.name}»${source ? ` — цель: ${entity.name}` : ''}.`,
+        beneficialEffects.has(effect.stateId ?? effect.id) ? 'benefit' : 'event');
     },
     damage(entity, amount, absorbed = 0) {
       write(`${entity.name} -${amount} ОЗ${absorbed ? ` (${absorbed} урона поглощено ES)` : ''}.`, 'damage');

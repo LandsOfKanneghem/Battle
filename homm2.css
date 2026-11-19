@@ -68,7 +68,7 @@ body {
 }
 #battlefield.show-grid .battle-grid { display: block; }
 svg, svg image, #creature-portrait { image-rendering: auto; }
-#spells svg image, .effect-icon svg image { image-rendering: pixelated; }
+#spells svg image, .effect-icon svg image, #creature-portrait, #turn-order svg image { image-rendering: pixelated; }
 #battlefield :is(.wizard,.monk,.wolf,.lake-spirit,.hill-giant,.obstacle) { filter: drop-shadow(1px 2px 0 #15201465); }
 #battlefield svg.battle-creature {
   position: absolute; inset: auto; left: 50%; bottom: 0;

@@ -97,6 +97,7 @@ window.beginTurn = function(entity) {
   // При самоналожении сохраняем урон до истечения защит/ES и самого Горения.
   // Активируем получателя хода заранее, чтобы его смерть сразу передала ход после него.
   window.gameState.activeEntityId = entity.id;
+  window.battleLog?.beginTurn(entity);
   const burning = entity.states.find(state => state.id === 'burning' && !state.suppressed
     && (state.duration > 0 || state.permanent || state.innate));
   if (burning) {
@@ -111,6 +112,7 @@ window.beginTurn = function(entity) {
     for (const bleed of entity.states.filter(state => state.id === 'bleeding' && !state.suppressed
       && (state.duration > 0 || state.permanent || state.innate))) {
       entity.hp = Math.max(0, entity.hp - 2);
+      window.battleLog?.damage(entity, 2);
       const bleedCell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
       window.playDamageAnimation?.(bleedCell, 2);
       if (entity.hp <= 0) {
@@ -151,10 +153,13 @@ window.beginTurn = function(entity) {
     entity.bonusMP = 1;
   }
   if (entity.bonusAP || entity.bonusMP) {
+    if (entity.bonusAP) window.battleLog?.bonus(entity, 'ОД');
+    if (entity.bonusMP) window.battleLog?.bonus(entity, 'ОП');
     const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
     if (entity.bonusAP) window.playBonusAnimation?.(cell, '+1 ОД', 0);
     if (entity.bonusMP) window.playBonusAnimation?.(cell, '+1 ОП', entity.bonusAP ? 1 : 0);
   }
+  window.battleLog?.finishTurnStart();
   window.clearHighlight();
   window.updatePanel(); // HP не является ресурсом хода.
   if (entity.ai && !window.isFrozen(entity)) {
@@ -187,6 +192,7 @@ window.removeDefeatedEntities = function() {
   for (let i = window.gameState.entities.length - 1; i >= 0; i--) {
     const entity = window.gameState.entities[i];
     if (entity.hp > 0) continue;
+    window.battleLog?.removed(entity);
     window.removeCasterEffects(entity.id);
     entity.svg.remove();
     window.gameState.turnSlots.get(entity.id).remove();

@@ -140,6 +140,7 @@
       state.turnOrderIds.push(creature.id);
       createTurnSlot(creature);
     }
+    window.battleLog?.reset();
     window.renderPosition();
     window.renderSpellPanel();
     window.updatePanel();

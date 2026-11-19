@@ -117,6 +117,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
   if ((spell.isShot || spell.isHit) && directTarget && !(shotHit ?? shotHits(caster, directTarget))) {
     // Общая точка промаха, включая готовый результат Искр: надпись появляется один раз.
+    window.battleLog?.miss(caster, directTarget);
     playMissAnimation(cells[target.y * SIZE + target.x]);
     return;
   }
@@ -128,6 +129,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     creature.ownerId = caster.id;
     creature.summonDuration = duration;
     entities.push(creature);
+    window.battleLog?.summoned(caster, creature);
     const gameState = window.gameState;
     const casterIndex = gameState.turnOrderIds.indexOf(caster.id);
     const existingSummons = gameState.turnOrderIds.filter(id => {
@@ -501,6 +503,7 @@ window.castSpell = function(targetCell, deps) {
 
   // Фаза 1: фиксируем цель и оплачиваем попытку каста независимо от результата SFC.
   caster.ap -= spell.apCost;
+  window.battleLog?.cast(caster, spell, entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)));
   // Считаем оплаченные заклинания до лимита, включая провалы SFC; способности не учитываем.
   if (spell.abilityType === 'spell' && (caster.spellCastCount ?? 0) < caster.maxSpellCasts) {
     caster.spellCastCount = (caster.spellCastCount ?? 0) + 1;
@@ -519,6 +522,7 @@ window.castSpell = function(targetCell, deps) {
   // Срок и смерть источника обслуживаются общим механизмом spellsOnMe.
   if (spell.isShot) caster.appliedEffects = caster.appliedEffects.filter(effect => !effect.isSkyShot);
   if (failed) {
+    window.battleLog?.failure(caster, spell);
     // Оплата общая с успешным кастом; провал не запускает эффект, уклонение и блокировку действий.
     playFailureAnimation(targetCell);
     cancelSpell();

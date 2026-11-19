@@ -12,6 +12,7 @@ window.hasActiveState = function(entity, id) {
 };
 
 window.restoreSuspendedWeakness = function(entity) {
+  for (const state of entity.suspendedWeakness ?? []) window.battleLog?.applied(entity, state);
   entity.states.push(...(entity.suspendedWeakness ?? []));
   entity.suspendedWeakness = [];
 };
@@ -107,6 +108,7 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     permanentInstance.suppressed = false;
     resolveStateSuppression(entity);
     recalculateStateStats(entity);
+    window.battleLog?.applied(entity, permanentInstance, 'состояние', true);
     window.updatePanel?.();
     return true;
   }
@@ -136,6 +138,7 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
   resolveStateSuppression(entity);
   recalculateStateStats(entity, true);
+  window.battleLog?.applied(entity, entity.states.find(state => state.appliedOrder === window.gameState.effectOrder));
   window.updatePanel?.();
   return true;
 };
@@ -227,7 +230,10 @@ window.tickCasterEffects = function(casterId) {
     if (target.isSummon && target.ownerId === casterId) {
       const timeEffect = target.appliedEffects.find(effect => effect.id === 'summon-time');
       target.summonDuration = timeEffect?.duration ?? 0;
-      if (target.summonDuration <= 0) target.hp = 0;
+      if (target.summonDuration <= 0) {
+        window.battleLog?.markDisappearance(target);
+        target.hp = 0;
+      }
     }
     tickTemporaryBonuses(target, casterId);
     storeElementalShields(target, elementalShieldEffects(target)
@@ -238,7 +244,10 @@ window.tickCasterEffects = function(casterId) {
 
 window.removeCasterEffects = function(casterId) {
   for (const target of window.gameState.entities) {
-    if (target.isSummon && target.ownerId === casterId) target.hp = 0;
+    if (target.isSummon && target.ownerId === casterId && target.hp > 0) {
+      window.battleLog?.markDisappearance(target);
+      target.hp = 0;
+    }
   }
   // Смерть источника снимает его эффекты сразу, даже если сейчас ход другой цели.
   for (const target of window.gameState.entities) {
@@ -274,6 +283,7 @@ window.applySpellOnEntity = function(entity, spellOnMe) {
     stackable: spellOnMe.stackable === true,
     sourceId: spellOnMe.sourceId ?? spellOnMe.id, appliedOrder: ++window.gameState.effectOrder };
   entity.appliedEffects.push(applied);
+  if (applied.id !== 'summon-time') window.battleLog?.applied(entity, applied, 'заклинание');
   const bonus = { sourceId: applied.sourceId, name: applied.name, turnsLeft: applied.duration,
     casterId: applied.casterId, casterName: applied.casterName, icon: applied.icon, instanceId: applied.appliedOrder };
   if (applied.esAmount) {
@@ -317,6 +327,7 @@ window.addElementalShield = function(entity, spell, caster = window.gameState.ac
   if (index === -1) effects.push(fresh);
   else effects[index] = fresh; // Тот же источник заменяется даже более слабой защитой.
   storeElementalShields(entity, effects);
+  window.battleLog?.applied(entity, fresh, 'заклинание');
 };
 
 window.elementalBlockAmount = function(entity, damageType) {
@@ -369,6 +380,7 @@ window.applyDamage = function(spell, entity) {
   const { absorbed, hpDamage } = damageBreakdown(spell, entity);
   consumeES(entity, absorbed);
   entity.hp = Math.max(0, entity.hp - hpDamage);
+  window.battleLog?.damage(entity, hpDamage, absorbed);
   // Показываем и поглощение ES, и нулевой урон после сопротивления; иммунитеты выше.
   const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
   window.playDamageAnimation?.(cell, absorbed + hpDamage);

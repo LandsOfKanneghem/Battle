@@ -13,7 +13,7 @@
   --panel-frame-color: #8e6a3d;
   --panel-frame-bevel: inset 1px 1px #d2b77933, inset -1px -1px #0c1618;
 }
-html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+html, body { height: auto; min-height: 100%; overflow-x: auto; overflow-y: auto; }
 body {
   display: block;
   place-items: normal;
@@ -24,14 +24,27 @@ body {
 }
 .game {
   position: relative; display: grid;
-  grid-template-columns: minmax(0, max-content) var(--panel-width);
-  grid-template-areas: 'arena panel';
+  grid-template-columns: 220px minmax(0, max-content) var(--panel-width);
+  grid-template-areas: 'logs arena panel';
   gap: 0;
   width: max-content;
-  max-width: calc(100vw - 40px);
+  max-width: none;
   min-height: calc(100dvh - 60px);
-  margin: 12px auto;
+  margin: 12px 0;
 }
+.battle-log {
+  grid-area: logs; align-self: start; display: flex; flex-direction: column;
+  width: 220px; height: 582px; margin-top: 2px; margin-right: 0;
+  border: 2px solid #555; background: #fff; color: #171717;
+  font: 14px/1.4 system-ui, sans-serif; min-width: 0;
+}
+.battle-log h2 { margin: 0; padding: 7px 9px; border-bottom: 1px solid #aaa; font-size: 16px; }
+#battle-log-entries { flex: 1; min-height: 0; overflow-y: auto; overflow-wrap: anywhere; padding: 6px 9px; scrollbar-gutter: stable; }
+#battle-log-entries p { margin: 0 0 7px; }
+.battle-log-round { font-weight: 800; border-top: 1px solid #bbb; padding-top: 7px; }
+.battle-log-round:first-child { border-top: 0; padding-top: 0; }
+.battle-log-turn { font-weight: 700; }
+.battle-log-death { color: #9d1111; font-weight: 700; }
 .arena {
   --queue-width: 60px;
   --queue-gap: 9px;
@@ -199,7 +212,14 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .effect-icon.suppressed { opacity: .4; filter: grayscale(1); }
 .close-effects { top: 0; }
 .path-cost, .effect-preview { border-radius: 0; background: transparent; }
-.damage-label, .bonus-label, .miss-label, .failure-label { font-family: Georgia, serif; text-shadow: 1px 1px #171a16, -1px 0 #171a16, 0 1px #171a16; }
+.damage-label, .bonus-label, .miss-label, .failure-label, .heal-spark {
+  z-index: 110; font-family: system-ui, sans-serif; font-weight: 900; font-size: 22px;
+  text-shadow: -1px -1px #000, 1px -1px #000, -1px 1px #000, 1px 1px #000, 0 0 4px #000, 0 2px 5px #000;
+}
+.damage-label { color: #ff6262; }
+.bonus-label, .heal-spark { color: #78ff98; }
+.miss-label { color: #ffff66; }
+.failure-label { color: #ffb3ff; font-size: 20px; }
 .spell-projectile[data-type='fire'] { background: url('assets/homm2/spell-fire-shot.png') center/contain; }
 .spell-projectile[data-type='fire'] svg { visibility: hidden; }
 .spell-projectile[data-type='fire-cube'] { background: url('assets/homm2/spell-fire-cube.png') center/contain; }
@@ -220,8 +240,9 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
   body { display: block; min-height: 100dvh; }
   .game {
     display: flex; flex-direction: column; align-items: stretch;
-    max-width: none; min-height: 0; width: calc(100% - 16px); margin: 8px auto 12px; gap: 0;
+    max-width: none; min-height: 0; width: 100%; margin: 8px 0 12px; gap: 0;
   }
+  .battle-log { width: 100%; }
   .arena {
     --queue-gap: 7px;
     align-self: stretch;

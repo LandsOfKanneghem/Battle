@@ -1,6 +1,18 @@
 // Визуальные эффекты игры: глобальные функции window.play* без изменения состояния боя.
 // Поле и клетки доступны через window.gameState; DOM создаётся только при вызове анимации.
 
+function appendCombatPopup(cell, label, lifetime, preferredSlot = 0) {
+  // Одновременные тики и бонусы не перекрывают друг друга.
+  const used = new Set([...cell.querySelectorAll('[data-popup-slot]')].map(item => Number(item.dataset.popupSlot)));
+  let slot = preferredSlot;
+  while (used.has(slot)) slot++;
+  label.dataset.popupSlot = slot;
+  const nearTop = Number(cell.dataset.y) < 2;
+  label.style.top = `calc(${nearTop ? '65%' : '35%'} ${nearTop ? '+' : '-'} ${slot * 26}px)`;
+  cell.appendChild(label);
+  setTimeout(() => label.remove(), lifetime);
+}
+
 window.playSprintAnimation = function(cell) {
   const arrows = document.createElement('span');
   arrows.className = 'state-animation wind';
@@ -34,7 +46,7 @@ window.playHealAnimation = function(cell) {
     cell.appendChild(spark);
     sparks.push(spark);
   }
-  setTimeout(() => sparks.forEach(spark => spark.remove()), 600);
+  setTimeout(() => sparks.forEach(spark => spark.remove()), 1100);
 };
 
 window.playProjectileAnimation = function(fromCell, toCell, type = 'fire', onArrival = null) {
@@ -156,8 +168,7 @@ window.playMissAnimation = function(cell) {
   label.className = 'miss-label';
   label.textContent = 'MISS';
   label.setAttribute('aria-hidden', 'true');
-  cell.appendChild(label);
-  setTimeout(() => label.remove(), 500);
+  appendCombatPopup(cell, label, 1000);
 };
 
 window.playDamageAnimation = function(cell, amount) {
@@ -165,8 +176,7 @@ window.playDamageAnimation = function(cell, amount) {
   label.className = 'damage-label';
   label.textContent = `-${amount}`;
   label.setAttribute('aria-hidden', 'true');
-  cell.appendChild(label);
-  setTimeout(() => label.remove(), 700);
+  appendCombatPopup(cell, label, 1200);
 };
 
 window.playFailureAnimation = function(cell) {
@@ -174,8 +184,7 @@ window.playFailureAnimation = function(cell) {
   label.className = 'failure-label';
   label.textContent = 'FAILURE';
   label.setAttribute('aria-hidden', 'true');
-  cell.appendChild(label);
-  setTimeout(() => label.remove(), 500);
+  appendCombatPopup(cell, label, 1000);
 };
 
 window.playElementalShieldAnimation = function(cell, spell) {
@@ -329,7 +338,5 @@ window.playBonusAnimation = function(cell, text, offset = 0) {
   label.className = 'bonus-label';
   label.textContent = text;
   label.setAttribute('aria-hidden', 'true');
-  label.style.top = `${30 + offset * 20}%`;
-  cell.appendChild(label);
-  setTimeout(() => label.remove(), 900);
+  appendCombatPopup(cell, label, 1400, offset);
 };

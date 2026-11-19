@@ -167,6 +167,7 @@
 
   function aiCast(caster, spell, target, version, onDone) {
     caster.ap -= spell.apCost;
+    window.battleLog?.cast(caster, spell, target);
     spell.usesThisTurn++;
     if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
     spell.cooldown = spell.maxCooldown;
@@ -185,6 +186,7 @@
     }
     const sfc = spell.abilityType === 'spell' ? failureChance(caster) : 0;
     if (sfc > 0 && Math.random() < sfc) {
+      window.battleLog?.failure(caster, spell);
       window.playFailureAnimation(cell);
       setTimeout(() => { if (current(caster, version)) onDone(); }, 0);
     } else if (spell.isShot) {

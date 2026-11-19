@@ -20,6 +20,10 @@
     <span id="map-status" role="status" aria-live="polite"></span>
   </div>
   <main class="game">
+    <aside class="battle-log" aria-labelledby="battle-log-title">
+      <h2 id="battle-log-title">Логи</h2>
+      <div id="battle-log-entries" role="log" aria-live="polite" aria-relevant="additions" tabindex="0"></div>
+    </aside>
     <section class="arena" aria-label="Поле и очередь ходов">
       <div id="battlefield" aria-label="Поле боя 12 на 12 клеток"></div>
       <div id="turn-order" aria-label="Очередь ходов"></div>
@@ -101,6 +105,7 @@
   <script src="data/creatures.js"></script>
   <script src="homm2-graphics.js"></script>
   <script src="gameState.js"></script>
+  <script src="battleLog.js"></script>
   <script src="terrain-renderer.js"></script>
   <script src="maps/MAP%201.js"></script>
   <script src="init.js"></script>

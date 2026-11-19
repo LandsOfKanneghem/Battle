@@ -21,18 +21,25 @@
     }, 100);
   }
 
+  function usableSpells(entity) {
+    return entity.availableSpells.filter(spell => entity.ap >= spell.apCost && spell.cooldown <= 0
+      && (spell.maxUsesPerTurn === undefined || spell.usesThisTurn < spell.maxUsesPerTurn)
+      && (spell.maxUsesPerBattle === undefined || (spell.usesTotal ?? 0) < spell.maxUsesPerBattle));
+  }
+
+  function canAttackFrom(entity, spell, target, from) {
+    const distance = manhattan(from, target.position);
+    const range = spell.modifiable ? window.effectiveSpellRange(spell, entity) : spell.range;
+    return distance >= (spell.minRange ?? 1) && distance <= range
+      && (spell.noLOS || window.checkLOS(from, target.position, entity.id));
+  }
+
   function availablePairs(entity) {
     const pairs = [];
-    for (const spell of entity.availableSpells) {
+    for (const spell of usableSpells(entity)) {
       const sfc = spell.abilityType === 'spell' ? failureChance(entity) : 0;
-      if (entity.ap < spell.apCost || spell.cooldown > 0
-        || (spell.maxUsesPerTurn !== undefined && spell.usesThisTurn >= spell.maxUsesPerTurn)
-        || (spell.maxUsesPerBattle !== undefined && (spell.usesTotal ?? 0) >= spell.maxUsesPerBattle)) continue;
       for (const target of enemies()) {
-        const distance = manhattan(entity.position, target.position);
-        const range = spell.modifiable ? window.effectiveSpellRange(spell, entity) : spell.range;
-        if (distance < (spell.minRange ?? 1) || distance > range
-          || (!spell.noLOS && !window.checkLOS(entity.position, target.position))) continue;
+        if (!canAttackFrom(entity, spell, target, entity.position)) continue;
         const factDamage = window.spellDamage({ ...spell, damage: window.getSpellDamage(spell, entity) }, target);
         const hitChance = (spell.isShot || spell.isHit) ? Math.max(0, Math.min(100,
           window.getEffectiveStat(entity, 'acc') - window.getEffectiveStat(target, 'eva'))) / 100 : 1;
@@ -64,51 +71,77 @@
     }
     if (entity.mp <= 0) { finishAITurn(entity, version); return; }
     const sorted = enemies().sort((a, b) => manhattan(entity.position, a.position) - manhattan(entity.position, b.position));
+    // Планируем по всей доступной области, даже если обход займёт несколько ходов.
+    const reachable = reachablePositions(entity);
+    const spells = usableSpells(entity);
     for (const target of sorted) {
-      const path = pathToTarget(entity, target);
-      if (path === null) continue;
-      if (!path.length) { finishAITurn(entity, version); return; }
-      aiMove(entity, path, version, () => runCombatAI(entity, version));
-      return;
+      const firingPosition = reachable.filter(node => spells.some(spell => canAttackFrom(entity, spell, target, node.point)))
+        .sort((a, b) => a.cost - b.cost || manhattan(a.point, target.position) - manhattan(b.point, target.position))[0];
+      if (firingPosition) { advanceTowards(entity, firingPosition, version); return; }
     }
-    // Ни к одной цели нет полного пути: идём к ближайшему достижимому берегу.
+    // Если атаки сейчас потрачены, продолжаем обычное сближение до соседней клетки.
+    for (const target of sorted) {
+      const adjacent = reachable.filter(node => manhattan(node.point, target.position) === 1)
+        .sort((a, b) => a.cost - b.cost)[0];
+      if (adjacent) { advanceTowards(entity, adjacent, version); return; }
+    }
+    // Цель может быть на отдельном острове: выбираем ближайший берег во ВСЕЙ области.
     let best = null;
     for (const target of sorted) {
-      const reach = findReachableClosestTo(entity, target);
-      if (reach && (!best || reach.dist < best.dist)) best = reach;
+      for (const node of reachable) {
+        const distance = manhattan(node.point, target.position);
+        if (!best || distance < best.distance || (distance === best.distance && node.cost < best.node.cost)) {
+          best = { node, distance };
+        }
+      }
     }
-    if (best) aiMove(entity, best.path, version, () => runCombatAI(entity, version));
+    if (best) advanceTowards(entity, best.node, version);
     else finishAITurn(entity, version);
   }
 
-  function pathToTarget(entity, target) {
-    // Цель занята существом; путь заканчивается на свободной соседней клетке.
-    const paths = [[1, 0], [0, 1], [-1, 0], [0, -1]].map(([dx, dy]) => {
-      const cell = { x: target.position.x + dx, y: target.position.y + dy };
-      return state().isFree(cell) ? window.buildPath(entity.position, cell) : null;
-    }).filter(path => path !== null);
-    paths.sort((a, b) => state().pathCost(a) - state().pathCost(b) || a.length - b.length);
-    return paths[0] ?? null;
+  function reachablePositions(entity) {
+    // Дейкстра учитывает цену песка/болота, препятствия, существ и Левитацию.
+    const start = { point: { ...entity.position }, cost: 0, waterCost: 0, parent: null };
+    const keyOfNode = node => `${state().keyOf(node.point)}:${node.waterCost}`;
+    const nodes = new Map([[keyOfNode(start), start]]);
+    const open = [start];
+    while (open.length) {
+      open.sort((a, b) => a.cost - b.cost);
+      const node = open.shift();
+      if (nodes.get(keyOfNode(node)) !== node) continue;
+      for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+        const point = { x: node.point.x + dx, y: node.point.y + dy };
+        if (!state().isFree(point, entity)) continue;
+        const stepCost = state().entryCost(point, entity);
+        const cost = node.cost + stepCost;
+        const water = state().isWater(state().terrain.get(state().keyOf(point)));
+        const crossingCost = node.waterCost + stepCost;
+        // Шаг или переправа должны помещаться в один ход; на воде ждать нельзя.
+        const turnCost = water || node.waterCost > 0 ? crossingCost : stepCost;
+        if (turnCost > (entity.maxMP ?? entity.mp) && cost > entity.mp) continue;
+        const next = { point, cost, waterCost: water ? crossingCost : 0, parent: node };
+        const key = keyOfNode(next);
+        if (cost >= (nodes.get(key)?.cost ?? Infinity)) continue;
+        nodes.set(key, next);
+        open.push(next);
+      }
+    }
+    return [...nodes.values()].filter(node => !state().isWater(state().terrain.get(state().keyOf(node.point))));
   }
 
-  function findReachableClosestTo(entity, target) {
-    let best = null;
-    const startDistance = manhattan(entity.position, target.position);
-    const radius = Math.min(state().SIZE * 2, Math.floor(entity.mp));
-    for (let dx = -radius; dx <= radius; dx++) for (let dy = -radius; dy <= radius; dy++) {
-      if (Math.abs(dx) + Math.abs(dy) > radius) continue;
-      const cell = { x: entity.position.x + dx, y: entity.position.y + dy };
-      if (!state().isFree(cell)) continue;
-      const dist = manhattan(cell, target.position);
-      // Оставаться на месте лучше, чем ходить по берегу туда-сюда.
-      if (dist >= startDistance || (best && dist > best.dist)) continue;
-      const path = window.buildPath(entity.position, cell);
-      if (!path?.length) continue;
-      const cost = state().pathCost(path);
-      if (cost > entity.mp) continue;
-      if (!best || dist < best.dist || cost < best.cost) best = { cell, dist, path, cost };
+  function advanceTowards(entity, destination, version) {
+    const path = [];
+    for (let node = destination; node.parent; node = node.parent) path.push(node.point);
+    path.reverse();
+    let cost = 0, steps = 0;
+    for (let i = 0; i < path.length; i++) {
+      cost += state().entryCost(path[i], entity);
+      if (cost > entity.mp) break;
+      // Даже с Левитацией промежуточная остановка должна быть на суше.
+      if (!state().isWater(state().terrain.get(state().keyOf(path[i])))) steps = i + 1;
     }
-    return best;
+    if (steps) aiMove(entity, path.slice(0, steps), version, () => runCombatAI(entity, version));
+    else finishAITurn(entity, version);
   }
 
   function aiMove(entity, path, version, onDone) {
@@ -117,15 +150,16 @@
       if (!current(entity, version)) return;
       if (window.isFrozen(entity)) { finishAITurn(entity, version); return; }
       const next = path[index];
-      const cost = state().entryCost(next);
-      if (!state().isFree(next) || cost > entity.mp) { finishAITurn(entity, version); return; }
+      const cost = state().entryCost(next, entity);
+      if (!state().isFree(next, entity) || cost > entity.mp) { finishAITurn(entity, version); return; }
       entity.position = { ...next };
       entity.mp -= cost;
       index++;
       window.renderPosition();
       window.updatePanel();
       // Дальнобойное существо останавливается, как только появляется доступная атака.
-      if (index >= path.length || availablePairs(entity).length) onDone();
+      const onLand = !state().isWater(state().terrain.get(state().keyOf(next)));
+      if (index >= path.length || (onLand && availablePairs(entity).length)) onDone();
       else setTimeout(step, state().STEP_MS);
     }
     setTimeout(step, state().STEP_MS);

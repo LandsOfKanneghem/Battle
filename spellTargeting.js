@@ -11,7 +11,8 @@ window.canPrepareSpell = function(spell) {
 
 // Supercover от центра до центра с исключением для углов при 45°. Сравниваем моменты
 // пересечения границ целыми числами, без погрешностей float.
-window.checkLOS = function(from, to) {
+// ИИ может оценить будущую позицию, исключив самого себя из препятствий.
+window.checkLOS = function(from, to, ignoredEntityId = null) {
   const dx = Math.abs(to.x - from.x), dy = Math.abs(to.y - from.y);
   const sx = Math.sign(to.x - from.x), sy = Math.sign(to.y - from.y);
   let x = from.x, y = from.y;
@@ -21,7 +22,7 @@ window.checkLOS = function(from, to) {
     if (window.gameState.obstacles.get(`${cx},${cy}`) === 'crate') return true;
     // Существо в исходной или целевой клетке не закрывает выстрел.
     if ((cx === from.x && cy === from.y) || (cx === to.x && cy === to.y)) return false;
-    return window.gameState.entities.some(entity => entity.position.x === cx && entity.position.y === cy);
+    return window.gameState.entities.some(entity => entity.id !== ignoredEntityId && entity.position.x === cx && entity.position.y === cy);
   }
 
   if (blocked(x, y)) return false;

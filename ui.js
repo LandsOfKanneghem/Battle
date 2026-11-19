@@ -398,9 +398,9 @@ window.updatePanel = function() {
     const initial = displayed?.initialStats?.[key];
     if (initial === undefined) return undefined;
     if (key === 'sfc') {
-      return current > initial ? '#ff4d4d' : current < initial ? '#4ade80' : undefined;
+      return current > initial ? '#ff4d4d' : current < initial ? '#166534' : undefined;
     }
-    return current > initial ? '#4ade80' : current < initial ? '#ff4d4d' : undefined;
+    return current > initial ? '#166534' : current < initial ? '#ff4d4d' : undefined;
   };
   document.getElementById('character-name').textContent = displayed ? `${displayed.name} ${displayed.level} ур.` : '—';
   // Максимумы сравниваем со стартовыми; текущие AP/MP сохраняют подсветку бонуса хода.
@@ -412,7 +412,7 @@ window.updatePanel = function() {
       const maxValue = stat === 'wp' ? window.getEffectiveStat(displayed, maxKey) : displayed[maxKey];
       const current = document.createElement('span');
       current.textContent = `${label}: ${stat === 'wp' ? window.getEffectiveStat(displayed, stat) : displayed[stat]}`;
-      if (bonus && displayed[bonus] > 0) current.style.color = '#4ade80';
+      if (bonus && displayed[bonus] > 0) current.style.color = '#166534';
       const maximum = document.createElement('span');
       maximum.textContent = String(maxValue);
       maximum.style.color = statColor(maxValue, maxKey) ?? '';

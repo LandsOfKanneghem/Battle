@@ -145,8 +145,7 @@
   };
 
   window.loadDefaultBattle = async function() {
-    const response = await fetch('maps/MAP%201.json');
-    if (!response.ok) throw new Error('Не удалось загрузить maps/MAP 1.json.');
-    await window.startBattleFromMap(await response.json());
+    if (!window.DEFAULT_BATTLE_MAP) throw new Error('Не удалось загрузить maps/MAP 1.js.');
+    await window.startBattleFromMap(window.DEFAULT_BATTLE_MAP);
   };
 })();

@@ -10,6 +10,7 @@ window.gameState = {
   obstacles: new Map(),
   turnOrderIds: [],
   roundNumber: 0,
+  attackingTeam: 'ally', // По умолчанию атакует команда игрока.
   activeEntityId: null,
   isMoving: false,
   isCasting: false, // Блокировка действий до завершения визуального эффекта.

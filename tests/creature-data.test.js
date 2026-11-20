@@ -73,6 +73,28 @@ test('ability instances, counters and innate state arrays are not shared between
   assert.equal(second.states[0].overrides.includes('test'), false);
 });
 
+test('snapping turtle starts with wolf stats and an independently tunable copy of its bite', () => {
+  const ctx = setup();
+  const wolfTemplate = ctx.CREATURE_TEMPLATES.wolf;
+  const turtleTemplate = ctx.CREATURE_TEMPLATES['alligator-snapping-turtle'];
+  const stats = template => Object.fromEntries(Object.entries(template)
+    .filter(([key]) => !['name', 'type', 'ai', 'appearance'].includes(key)));
+  assert.deepEqual(stats(turtleTemplate), stats(wolfTemplate));
+  assert.notEqual(turtleTemplate.attributes, wolfTemplate.attributes);
+  assert.notEqual(turtleTemplate.spells[0], wolfTemplate.spells[0]);
+  const wolf = ctx.createCreature('wolf', { x: 1, y: 1 });
+  const turtle = ctx.createCreature('alligator-snapping-turtle', { x: 2, y: 1 });
+  for (const key of ['level', 'hp', 'maxHP', 'wp', 'maxWP', 'ap', 'maxAP', 'mp', 'maxMP', 'maxHitCount']) {
+    assert.equal(turtle[key], wolf[key], key);
+  }
+  assert.equal(turtle.ai, turtle.type);
+  turtle.availableSpells[0].usesThisTurn = 1;
+  turtleTemplate.spells[0].damageBase += 5;
+  assert.equal(wolf.availableSpells[0].usesThisTurn, 0);
+  assert.equal(wolfTemplate.spells[0].damageBase, 2);
+  assert.equal(turtle.availableSpells[0].damageBase, 2);
+});
+
 test('sprite, portrait and local ability icon paths live with each creature and point to existing assets', () => {
   const ctx = setup();
   for (const template of Object.values(ctx.CREATURE_TEMPLATES)) {

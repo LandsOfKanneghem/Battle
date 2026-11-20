@@ -15,6 +15,7 @@ window.shiftHeld = false;
 let effectPanelKey = null;
 let effectTooltip = null;
 let nextRoundPanelKey = null;
+let nextRoundHoveredEntityId = null;
 
 window.renderNextRoundQueue = function() {
   const state = window.gameState;
@@ -29,6 +30,7 @@ window.renderNextRoundQueue = function() {
   const key = JSON.stringify([state.roundNumber, entries]);
   if (key === nextRoundPanelKey) return;
   nextRoundPanelKey = key;
+  nextRoundHoveredEntityId = null;
   container.hidden = entries.length === 0;
   container.setAttribute('aria-label', `Очередь следующего раунда (${state.roundNumber + 1})`);
   container.replaceChildren(...entries.map(entry => {
@@ -41,6 +43,15 @@ window.renderNextRoundQueue = function() {
     portrait.alt = entry.name;
     portrait.draggable = false;
     slot.appendChild(portrait);
+    slot.addEventListener('mouseenter', () => {
+      nextRoundHoveredEntityId = entry.id;
+      window.updatePanel();
+    });
+    slot.addEventListener('mouseleave', () => {
+      if (nextRoundHoveredEntityId !== entry.id) return;
+      nextRoundHoveredEntityId = null;
+      window.updatePanel();
+    });
     return slot;
   }));
 };
@@ -410,7 +421,8 @@ window.updatePanel = function() {
   window.renderNextRoundQueue();
   // Завершение ранее начатого каста может сбросить isCasting; экран поражения сохраняет блокировку.
   if (document.getElementById('defeat-overlay')?.hidden === false) window.gameState.isCasting = true;
-  window.gameState.hoveredEntityId = window.gameState.queueHoveredEntityId ?? window.gameState.fieldHoveredEntityId;
+  const queueHoveredId = window.gameState.queueHoveredEntityId ?? nextRoundHoveredEntityId;
+  window.gameState.hoveredEntityId = queueHoveredId ?? window.gameState.fieldHoveredEntityId;
   if (window.gameState.selectedEntityId !== null && !window.gameState.entities.some(entity => entity.id === window.gameState.selectedEntityId)) window.gameState.selectedEntityId = null;
   const displayed = window.gameState.entities.find(entity => entity.id === (window.gameState.selectedEntityId ?? window.gameState.hoveredEntityId ?? window.gameState.activeEntityId));
   const viewingEffects = window.gameState.selectedEntityId !== null;
@@ -497,7 +509,7 @@ window.updatePanel = function() {
     slot.setAttribute('aria-pressed', window.gameState.activeEntity()?.availableSpells.includes(spell) && window.gameState.preparedSpellId === spell.id ? 'true' : 'false');
   }
   for (const entity of window.gameState.entities) {
-    entity.svg.classList.toggle('entity-hover', window.gameState.queueHoveredEntityId === entity.id);
+    entity.svg.classList.toggle('entity-hover', queueHoveredId === entity.id);
     const active = entity.id === window.gameState.activeEntityId;
     window.gameState.turnSlots.get(entity.id).classList.toggle('active', active);
     window.gameState.turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');

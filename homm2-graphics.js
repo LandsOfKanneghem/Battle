@@ -7,7 +7,7 @@
     water-shot liquid-membrane rain ice-arrow deep-freeze lake-spirit
     haste wind-rose sparks sky-shot teleport water-walk slow dead-weight stone-skin
     heal-harm weakness-vigor sprint light-flash power-hour apply-old-age
-    bite club-smash boulder-throw fire-shield water-shield earth-shield air-shield`.split(/\s+/));
+    bite boulder-smash boulder-throw fire-shield water-shield earth-shield air-shield`.split(/\s+/));
   // Some book entries are copies of definitions. Decorate each distinct object,
   // preserving all references subsequently used as keys by spellSlots.
   for (const spell of new Set([...SPELL_DEFINITIONS, ...MONK_SPELLS, ...ELEMENTAL_SHIELD_SPELLS])) {

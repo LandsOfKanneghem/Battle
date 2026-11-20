@@ -85,7 +85,7 @@ SPELLS = {
     'earth-shield': (3,3), 'air-shield': (4,3), 'water-shield': (5,3),
     'heal-harm': (0,4), 'weakness-vigor': (1,4), 'sprint': (2,4),
     'light-flash': (3,4), 'power-hour': (4,4), 'apply-old-age': (5,4),
-    'bite': (0,5), 'club-smash': (1,5), 'boulder-throw': (2,5)
+    'bite': (0,5), 'boulder-smash': (1,5), 'boulder-throw': (2,5)
 }
 STATES = ['speed', 'slowness', 'freeze', 'burning', 'wet', 'heavy',
           'light', 'chill', 'adrenaline', 'adrenaline-crash', 'weakness', 'exhaustion',
@@ -101,7 +101,7 @@ edits = Image.open(SOURCES / 'spell-icons-edits.png')
 columns = atlas_spans(edits, 'x', 3)
 rows = atlas_spans(edits, 'y', 3)
 edit_names = ['fire-shot', 'fire-shield', 'ice-arrow', 'deep-freeze', 'wind-rose',
-              'sparks', 'apply-old-age', 'club-smash', 'bite']
+              'sparks', 'apply-old-age', 'boulder-smash', 'bite']
 for index, name in enumerate(edit_names):
     left, right = columns[index % 3]
     top, bottom = rows[index // 3]
@@ -140,7 +140,7 @@ for source, entries in updates.items():
             state_icons[name] = tile
 for kind, name in [('state', 'adrenaline-crash'), ('state', 'chill'),
                    ('state', 'exhaustion'), ('state', 'weakness'), ('spell', 'slow'),
-                   ('spell', 'sparks'), ('spell', 'haste')]:
+                   ('spell', 'sparks'), ('spell', 'haste'), ('spell', 'boulder-smash')]:
     tile = Image.open(SOURCES / 'refinements' / f'{kind}-{name}.png')
     if tile.size != (64,64) or tile.mode != 'P' or tile.getpalette() != spell_icons.getpalette():
         raise ValueError(f'{kind}-{name} must be 64×64 with the shared spell palette')

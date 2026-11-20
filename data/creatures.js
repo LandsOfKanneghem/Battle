@@ -94,7 +94,7 @@ window.captureInitialStats = function(creature) {
       attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
       innateStates: [{ id: 'heavy', permanent: true }],
       spellPages: [
-        ['club-smash', 'boulder-throw', null, null, null,
+        ['boulder-smash', 'boulder-throw', null, null, null,
           null, null, null, null, null,
           null, null, null, null, null,
           null, null, null, null, null]

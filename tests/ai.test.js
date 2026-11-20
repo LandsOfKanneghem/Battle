@@ -78,7 +78,7 @@ const map = JSON.parse(fs.readFileSync(path.join(root, 'maps/MAP 1.json'), 'utf8
 test('giant walks left around the screenshot lake over several turns and throws a boulder', () => {
   const start = { x: 10, y: 6 }, target = { x: 10, y: 11 };
   const h = setup({ position: start, target, tiles: map.tiles, crates: map.objects,
-    spells: [spell('club-smash', 1), spell('boulder-throw', 4, { isShot: true, maxCooldown: 3 })] });
+    spells: [spell('boulder-smash', 1), spell('boulder-throw', 4, { isShot: true, maxCooldown: 3 })] });
   assert.equal(h.ctx.buildPath(start, { x: 11, y: 11 }, h.caster), null, 'no melee path across water');
   h.turn();
   assert.ok(h.moves.length > 0, 'do not idle on the upper bank');

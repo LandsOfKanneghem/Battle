@@ -21,26 +21,26 @@ function setup() {
     lines: () => entries.children.map(line => line.textContent) };
 }
 
-test('one round heading per complete cycle, including a single survivor', () => {
+test('round headings follow the scheduler rather than guessing from creature order', () => {
   const { log, wizard, wolf, lines } = setup();
-  log.beginTurn(wizard);
+  log.beginRound(1);
   log.beginTurn(wolf);
   log.beginTurn(wizard);
-  assert.deepEqual(lines(), ['Ход 1', 'Ход Волшебника', 'Ход Волка', 'Ход 2', 'Ход Волшебника']);
-  wolf.hp = 0;
+  log.beginRound(2);
   log.beginTurn(wizard);
-  assert.deepEqual(lines().slice(-2), ['Ход 3', 'Ход Волшебника']);
+  assert.deepEqual(lines(), ['Ход 1', 'Ход Волка', 'Ход Волшебника', 'Ход 2', 'Ход Волшебника']);
 });
 
-test('a new summon acts in the current round; removed pending actors do not stall it', () => {
-  const { log, wizard, wolf, state, lines } = setup();
+test('summoning and summon turns do not invent a new round', () => {
+  const { log, wizard, state, lines } = setup();
+  log.beginRound(1);
   log.beginTurn(wizard);
   const spirit = { id: 'spirit-1', type: 'lake-spirit', name: 'Дух озера', hp: 1 };
   state.entities.push(spirit);
   log.summoned(wizard, spirit);
   log.beginTurn(spirit);
-  assert.equal(lines().filter(text => /^Ход \d/.test(text)).length, 1);
-  wolf.hp = 0;
+  assert.equal(lines().filter(text => /^Ход [0-9]/.test(text)).length, 1);
+  log.beginRound(2);
   log.beginTurn(wizard);
   assert.deepEqual(lines().slice(-2), ['Ход 2', 'Ход Волшебника']);
 });
@@ -56,6 +56,7 @@ test('damage includes zero and ES; expired summons disappear while killed ones d
 
 test('turn opening lists bonuses before automatic effects, but flushes before a death', () => {
   const { log, wizard, lines } = setup();
+  log.beginRound(1);
   log.beginTurn(wizard);
   log.applied(wizard, { name: 'Адреналиновый откат', casterName: wizard.name });
   log.bonus(wizard, 'ОД');
@@ -82,6 +83,7 @@ test('loading a battle clears history and round/disappearance tracking; text sta
   log.markDisappearance(wizard);
   log.beginTurn(wizard);
   log.reset();
+  log.beginRound(1);
   log.beginTurn(wizard);
   log.removed(wizard);
   log.cast(wizard, { name: '<img src=x>' });

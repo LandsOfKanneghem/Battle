@@ -376,6 +376,7 @@ window.showDefeatOverlay = function() {
 };
 
 window.updatePanel = function() {
+  window.turnQueue.sync();
   // Завершение ранее начатого каста может сбросить isCasting; экран поражения сохраняет блокировку.
   if (document.getElementById('defeat-overlay')?.hidden === false) window.gameState.isCasting = true;
   window.gameState.hoveredEntityId = window.gameState.queueHoveredEntityId ?? window.gameState.fieldHoveredEntityId;

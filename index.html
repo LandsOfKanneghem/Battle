@@ -112,6 +112,7 @@
   <script src="homm2-graphics.js"></script>
   <script src="gameState.js"></script>
   <script src="battleLog.js"></script>
+  <script src="turnQueue.js"></script>
   <script src="terrain-renderer.js"></script>
   <script src="maps/MAP%201.js"></script>
   <script src="init.js"></script>
@@ -221,7 +222,7 @@
     gameState.endTurnButton.addEventListener('click', () => {
       if (gameState.isCasting || gameState.isSkippingTurn || isFrozen(gameState.activeEntity())) return;
       if (gameState.isMoving || !window.activeMover()) return;
-      window.beginTurn(gameState.nextLivingEntity(gameState.activeEntityId));
+      window.endTurn();
     });
 
     gameState.battlefield.addEventListener('mousemove', (event) => {

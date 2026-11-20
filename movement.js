@@ -77,13 +77,16 @@ window.takeStep = function() {
   window.updatePanel();
 };
 
-window.beginTurn = function(entity) {
+window.endTurn = function() {
+  if (document.getElementById('defeat-overlay')?.hidden === false) return;
+  window.turnQueue.finishTurn();
+  window.beginTurn();
+};
+
+window.beginTurn = function() {
   if (document.getElementById('defeat-overlay')?.hidden === false) return;
   window.gameState.isSkippingTurn = false;
-  // Если участник удалён, выбираем следующего живого по фиксированной очереди.
-  if (window.gameState.entities.indexOf(entity) === -1) {
-    entity = window.gameState.nextLivingEntity(window.gameState.activeEntityId);
-  }
+  const entity = window.turnQueue.activate();
   const version = ++window.gameState.turnVersion;
   window.gameState.preparedSpellId = null;
   if (!entity) {
@@ -174,12 +177,12 @@ window.beginTurn = function(entity) {
       if (version !== window.gameState.turnVersion) return;
       const index = window.gameState.entities.indexOf(entity);
       if (index === -1) {
-        window.beginTurn(window.gameState.nextLivingEntity(window.gameState.activeEntityId));
+        window.endTurn();
         return;
       }
       entity.ap = entity.maxAP;
       entity.mp = entity.maxMP;
-      window.beginTurn(window.gameState.nextLivingEntity(entity.id));
+      window.endTurn();
     }, 100);
   }
 };
@@ -187,7 +190,6 @@ window.beginTurn = function(entity) {
 window.removeDefeatedEntities = function() {
   const activeIndex = window.gameState.entities.findIndex(entity => entity.id === window.gameState.activeEntityId);
   const activeBefore = window.gameState.entities[activeIndex];
-  const orderBefore = [...window.gameState.turnOrderIds];
   // Удаляем именно сущность по ID: одинаковые имена не связывают врагов.
   for (let i = window.gameState.entities.length - 1; i >= 0; i--) {
     const entity = window.gameState.entities[i];
@@ -197,9 +199,7 @@ window.removeDefeatedEntities = function() {
     entity.svg.remove();
     window.gameState.turnSlots.get(entity.id).remove();
     window.gameState.turnSlots.delete(entity.id);
-    if (entity.isSummon) {
-      window.gameState.turnOrderIds = window.gameState.turnOrderIds.filter(id => id !== entity.id);
-    }
+    window.turnQueue.remove(entity.id);
     if (window.gameState.selectedEntityId === entity.id) window.gameState.selectedEntityId = null;
     if (window.gameState.hoveredEntityId === entity.id) window.gameState.hoveredEntityId = null;
     if (window.gameState.fieldHoveredEntityId === entity.id) window.gameState.fieldHoveredEntityId = null;
@@ -209,12 +209,6 @@ window.removeDefeatedEntities = function() {
     i = window.gameState.entities.length;
   }
   const activeDied = !!activeBefore && !window.gameState.entities.includes(activeBefore);
-  // ID погибшего духа уже удалён: ищем преемника по прежней очереди среди оставшихся живых.
-  const activeOrderIndex = orderBefore.indexOf(activeBefore?.id);
-  const nextAfterSummon = activeDied && activeBefore.isSummon
-    ? [...orderBefore.slice(activeOrderIndex + 1), ...orderBefore.slice(0, activeOrderIndex + 1)]
-      .map(id => window.gameState.entities.find(entity => entity.id === id && entity.hp > 0)).find(Boolean)
-    : null;
   const alliesAlive = window.gameState.entities.some(entity => entity.hp > 0 && window.gameState.isAlly(entity));
   if (!alliesAlive) {
     window.showDefeatOverlay?.();
@@ -224,7 +218,7 @@ window.removeDefeatedEntities = function() {
     window.gameState.isMoving = false;
     window.gameState.stepQueue = [];
     window.gameState.battlefield.classList.remove('moving');
-    window.beginTurn(nextAfterSummon ?? window.gameState.nextLivingEntity(window.gameState.activeEntityId)); // Смена активного участника происходит сразу.
+    window.beginTurn(); // Смена активного участника происходит сразу, без повторного удаления из очереди.
   } else {
     window.updatePanel();
   }

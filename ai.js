@@ -17,7 +17,7 @@
   function finishAITurn(entity, version) {
     setTimeout(() => {
       if (!current(entity, version)) return;
-      window.beginTurn(state().nextLivingEntity(entity.id));
+      window.endTurn();
     }, 100);
   }
 

@@ -9,6 +9,7 @@ window.gameState = {
   terrain: new Map(),
   obstacles: new Map(),
   turnOrderIds: [],
+  roundNumber: 0,
   activeEntityId: null,
   isMoving: false,
   isCasting: false, // Блокировка действий до завершения визуального эффекта.
@@ -59,13 +60,4 @@ window.gameState = {
     return gameState.entities.find(entity => entity.id === gameState.activeEntityId);
   },
   isAlly: entity => entity.type === 'wizard' || entity.type === 'monk',
-  nextLivingEntity(afterId) {
-    const index = gameState.turnOrderIds.indexOf(afterId);
-    for (let offset = 1; offset <= gameState.turnOrderIds.length; offset++) {
-      const id = gameState.turnOrderIds[(index + offset) % gameState.turnOrderIds.length];
-      const entity = gameState.entities.find(item => item.id === id && item.hp > 0);
-      if (entity) return entity;
-    }
-    return null;
-  },
 };

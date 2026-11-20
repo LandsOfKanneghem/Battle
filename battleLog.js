@@ -1,7 +1,5 @@
 // Только журнал: не изменяет ресурсы, очередь или результаты боевых бросков.
 (() => {
-  let round = 0;
-  let remaining = new Set();
   let disappearing = new WeakSet();
   let turnStartEntries = null;
   const turnNames = {
@@ -37,23 +35,16 @@
     || window.gameState.entities.find(entity => entity.id === effect.casterId)?.name;
   window.battleLog = {
     reset() {
-      round = 0;
-      remaining = new Set();
       disappearing = new WeakSet();
       turnStartEntries = null;
       document.getElementById('battle-log-entries')?.replaceChildren();
     },
+    beginRound(number) {
+      finishTurnStart();
+      write(`Ход ${number}`, 'round');
+    },
     beginTurn(entity) {
       finishTurnStart();
-      const alive = window.gameState.entities.filter(item => item.hp > 0);
-      const aliveIds = new Set(alive.map(item => item.id));
-      remaining = new Set([...remaining].filter(id => aliveIds.has(id)));
-      if (!remaining.size) {
-        round++;
-        remaining = aliveIds;
-        write(`Ход ${round}`, 'round');
-      }
-      remaining.delete(entity.id);
       write(`Ход ${turnNames[entity.type] ?? entity.name}`, 'turn');
       // Броски происходят после тиков. В журнале сначала показываем бонусы начала хода,
       // затем возникшие состояния и урон, сохраняя порядок самих боевых вычислений.
@@ -61,7 +52,6 @@
     },
     finishTurnStart,
     summoned(caster, entity) {
-      remaining.add(entity.id);
       write(`${caster.name} призывает: ${entity.name}.`);
     },
     bonus(entity, resource) { appendLine(`${entity.name}: +1 ${resource} в начале хода!`, 'benefit'); },

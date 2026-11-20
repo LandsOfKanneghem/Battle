@@ -84,7 +84,7 @@
     window.hideEffectTooltip();
     document.querySelectorAll('.spell-projectile').forEach(projectile => projectile.remove());
     state.entities = [];
-    state.turnOrderIds = [];
+    window.turnQueue.reset();
     state.turnSlots.clear();
     state.turnOrder.replaceChildren();
     state.spellSlots.clear();
@@ -137,7 +137,6 @@
     for (const mob of map.mobs) {
       const creature = window.createCreature(mob.type, mob);
       state.entities.push(creature);
-      state.turnOrderIds.push(creature.id);
       createTurnSlot(creature);
     }
     window.battleLog?.reset();
@@ -145,7 +144,7 @@
     window.renderSpellPanel();
     window.updatePanel();
     if (state.entities.some(entity => state.isAlly(entity))) {
-      window.beginTurn(state.entities[0]);
+      window.beginTurn();
     } else window.showDefeatOverlay();
   };
 

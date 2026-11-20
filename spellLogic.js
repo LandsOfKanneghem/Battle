@@ -131,13 +131,6 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     entities.push(creature);
     window.battleLog?.summoned(caster, creature);
     const gameState = window.gameState;
-    const casterIndex = gameState.turnOrderIds.indexOf(caster.id);
-    const existingSummons = gameState.turnOrderIds.filter(id => {
-      const creature = entities.find(item => item.id === id);
-      return creature?.isSummon && creature.ownerId === caster.id;
-    }).length;
-    const insertIndex = casterIndex + 1 + existingSummons;
-    gameState.turnOrderIds.splice(insertIndex, 0, creature.id);
     const slot = document.createElement('div');
     slot.className = 'turn-slot';
     slot.classList.add('summon');
@@ -156,10 +149,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       window.updatePanel();
     });
     gameState.turnSlots.set(creature.id, slot);
-    // Визуальная очередь повторяет порядок ID, включая несколько духов владельца.
-    const nextSlot = gameState.turnOrderIds.slice(insertIndex + 1)
-      .map(id => gameState.turnSlots.get(id)).find(Boolean);
-    gameState.turnOrder.insertBefore(slot, nextSlot ?? null);
+    window.turnQueue.addSummon(creature);
     renderPosition();
     applySpellOnEntity(creature, {
       id: 'summon-time', sourceId: 'summon-time', name: 'Время жизни',

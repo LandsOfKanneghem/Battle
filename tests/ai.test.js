@@ -49,7 +49,7 @@ function setup({ position, target, mp = 3, spells = [spell('bite', 1)], tiles, c
   };
   ctx.removeDefeatedEntities = () => {};
   ctx.spellDeps = {};
-  ctx.beginTurn = next => { state.activeEntityId = next?.id; };
+  ctx.endTurn = () => { state.activeEntityId = victim.id; };
   vm.runInContext(fs.readFileSync(path.join(root, 'ai.js'), 'utf8'), ctx);
 
   function turn() {

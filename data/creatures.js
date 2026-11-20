@@ -2,6 +2,19 @@
 window.BASE_SPELL_CASTS = 5;
 window.BASE_HIT_COUNT = 5;
 
+// Один раз перед боем: фиксируем уникальные номера 1…N только для персонажей игрока.
+window.preparePartyOrder = function(entities) {
+  const rank = entity => Number.isInteger(entity.partyOrder) && entity.partyOrder > 0
+    ? entity.partyOrder : Infinity;
+  const party = entities.filter(entity => entity.hp > 0 && !entity.isSummon && window.gameState.isAlly(entity));
+  party.sort((a, b) => rank(a) - rank(b)
+    || a.id.localeCompare(b.id, 'en', { numeric: true })
+    || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  party.forEach((entity, index) => Object.defineProperty(entity, 'partyOrder', {
+    value: index + 1, enumerable: true, writable: false, configurable: false
+  }));
+};
+
 // Снимок фиксируется один раз и учитывает врождённые состояния и производные статы.
 window.captureInitialStats = function(creature) {
   if (creature.initialStats || !window.getEffectiveStat || !window.getCurrentES) return;
@@ -91,6 +104,7 @@ window.captureInitialStats = function(creature) {
       position: { x: position.x, y: position.y }, svg: window.createCreatureSvg(template.type)
     };
     if (template.ai) creature.ai = template.ai;
+    if (template.partyOrder !== undefined) creature.partyOrder = template.partyOrder;
     if (template.isSummon) {
       creature.isSummon = true;
       creature.ownerId = null; // Владелец будет назначен механикой призыва.

@@ -10,6 +10,9 @@
   const team = entity => state().isAlly(entity) ? 'ally' : 'enemy';
   const compareIds = (a, b) => a.id.localeCompare(b.id, 'en', { numeric: true })
     || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const partyRank = entity => Number.isInteger(entity.partyOrder) && entity.partyOrder > 0
+    ? entity.partyOrder : Infinity;
+  const compareParty = (a, b) => partyRank(a) - partyRank(b) || compareIds(a, b);
   function orderRoots(roots, previousIds, startingRound) {
     const groups = new Map();
     const positions = new Map(previousIds.map((id, index) => [id, index]));
@@ -24,7 +27,7 @@
     return values.flatMap(value => {
       const group = groups.get(value);
       const sides = {
-        ally: group.filter(entity => team(entity) === 'ally').sort(compareIds),
+        ally: group.filter(entity => team(entity) === 'ally').sort(compareParty),
         enemy: group.filter(entity => team(entity) === 'enemy').sort(compareIds)
       };
       const earliest = group.reduce((first, entity) =>

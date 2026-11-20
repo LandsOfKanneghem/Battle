@@ -139,6 +139,7 @@
       state.entities.push(creature);
       createTurnSlot(creature);
     }
+    window.preparePartyOrder(state.entities);
     window.battleLog?.reset();
     window.renderPosition();
     window.renderSpellPanel();

@@ -67,6 +67,34 @@ test('ties alternate teams with natural IDs, independent of entity array order',
   assert.deepEqual(h.ids(), expected);
 });
 
+test('player party order overrides ally IDs while enemy order and team alternation stay unchanged', () => {
+  const wizard = creature('wizard', 10, { ally: true, partyOrder: 1 });
+  const monk = creature('monk', 10, { ally: true, partyOrder: 2 });
+  const h = setup([monk, creature('wolf-10', 10, { partyOrder: 1 }),
+    wizard, creature('wolf-2', 10, { partyOrder: 99 })]);h.begin();
+  assert.deepEqual(h.ids(), ['wizard', 'wolf-2', 'monk', 'wolf-10']);
+  assert.deepEqual(Array.from(h.queue.preview()), ['wizard', 'wolf-2', 'monk', 'wolf-10']);
+  assert.equal(h.end(), 'wolf-2');
+  assert.equal(h.end(), 'monk');
+});
+
+test('party order breaks only equal initiative, including during mid-round re-sorts', () => {
+  const wizard = creature('wizard', 30, { ally: true, partyOrder: 1 });
+  const monk = creature('monk', 35, { ally: true, partyOrder: 2 });
+  const h = setup([creature('active', 100), creature('cap', 80), wizard, monk, creature('enemy', 30)]);h.begin();
+  assert.deepEqual(h.waiting(), ['cap', 'monk', 'wizard', 'enemy']);
+  monk.ini = 30;h.queue.sync();
+  assert.deepEqual(h.waiting(), ['cap', 'wizard', 'enemy', 'monk']);
+  assert.deepEqual(Array.from(h.queue.preview()), ['active', 'cap', 'wizard', 'enemy', 'monk']);
+});
+
+test('player party order still applies when the enemy team is attacking', () => {
+  const h = setup([creature('wizard', 10, { ally: true, partyOrder: 1 }),
+    creature('monk', 10, { ally: true, partyOrder: 2 }), creature('enemy-2', 10), creature('enemy-1', 10)]);
+  h.state.attackingTeam = 'enemy';h.begin();
+  assert.deepEqual(h.ids(), ['enemy-1', 'wizard', 'enemy-2', 'monk']);
+});
+
 test('every initial initiative group starts with attackers and appends the larger team remainder', () => {
   const h = setup([
     creature('enemy-20', 10), creature('enemy-10', 10), creature('ally-10', 10, { ally: true }),

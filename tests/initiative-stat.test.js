@@ -53,10 +53,10 @@ test('effective CHA buffs and expiration update initiative without changing base
 test('state movement and initiative bonuses are counted once and follow suppression', () => {
   const { ctx, make, ini } = setup();
   const creature = make();
-  ctx.applyState(creature, { id: 'speed', duration: 3, casterId: creature.id });
+  ctx.applyState(creature, { id: 'speed', duration: 3, mpBonus: 2, initiativeBonus: 5, casterId: creature.id });
   assert.equal(creature.maxMP, 6);
   assert.equal(ini(creature), 19); // 6 maxMP + 5 baseINI + 5 speed + 3 CHA
-  ctx.applyState(creature, { id: 'slowness', duration: 2, casterId: creature.id });
+  ctx.applyState(creature, { id: 'slowness', duration: 2, mpBonus: -2, initiativeBonus: -5, casterId: creature.id });
   assert.equal(ini(creature), 5); // 2 maxMP + 5 baseINI - 5 slowness + 3 CHA
   ctx.removeState(creature, 'slowness');
   assert.equal(ini(creature), 19);

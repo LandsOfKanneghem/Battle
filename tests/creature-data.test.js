@@ -85,3 +85,41 @@ test('sprite, portrait and local ability icon paths live with each creature and 
     assert.ok(padding.top + padding.bottom < sourceSize.height);
   }
 });
+
+test('player party order is copied from templates and fixed for the battle', () => {
+  const ctx = setup();
+  ctx.gameState.isAlly = entity => ['wizard', 'monk'].includes(entity.type) || entity.isSummon === true;
+  const wizard = ctx.createCreature('wizard', { x: 1, y: 1 });
+  const monk = ctx.createCreature('monk', { x: 2, y: 1 });
+  assert.equal(wizard.partyOrder, 1);
+  assert.equal(monk.partyOrder, 2);
+  ctx.preparePartyOrder([monk, wizard]);
+  ctx.CREATURE_TEMPLATES.wizard.partyOrder = 10;
+  assert.equal(wizard.partyOrder, 1, 'editing a template cannot change an ongoing battle');
+  assert.equal(Reflect.set(wizard, 'partyOrder', 2), false, 'battle ranks are immutable');
+  wizard.hp = 0;
+  assert.equal(monk.partyOrder, 2, 'death does not renumber the party');
+  const nextWizard = ctx.createCreature('wizard', { x: 1, y: 2 });
+  const nextMonk = ctx.createCreature('monk', { x: 2, y: 2 });
+  ctx.preparePartyOrder([nextWizard, nextMonk]);
+  assert.equal(nextMonk.partyOrder, 1);
+  assert.equal(nextWizard.partyOrder, 2, 'new template preferences apply in the next battle');
+});
+
+test('battle party numbers are exactly 1..N for subsets and duplicate hero types, excluding enemies and summons', () => {
+  const ctx = setup();
+  ctx.gameState.isAlly = entity => ['wizard', 'monk'].includes(entity.type) || entity.isSummon === true;
+  const onlyMonk = ctx.createCreature('monk', { x: 0, y: 0 });
+  ctx.preparePartyOrder([onlyMonk]);
+  assert.equal(onlyMonk.partyOrder, 1);
+  const first = ctx.createCreature('wizard', { x: 1, y: 1 });
+  const second = ctx.createCreature('wizard', { x: 2, y: 1 });
+  const monk = ctx.createCreature('monk', { x: 3, y: 1 });
+  const wolf = ctx.createCreature('wolf', { x: 4, y: 1 });
+  const spirit = ctx.createCreature('lake-spirit', { x: 5, y: 1 });
+  spirit.isSummon = true;
+  ctx.preparePartyOrder([monk, second, first, wolf, spirit]);
+  assert.deepEqual([first.partyOrder, second.partyOrder, monk.partyOrder], [1, 2, 3]);
+  assert.equal(Object.hasOwn(wolf, 'partyOrder'), false);
+  assert.equal(Object.hasOwn(spirit, 'partyOrder'), false);
+});

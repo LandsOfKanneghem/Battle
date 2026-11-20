@@ -134,8 +134,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 .hero-masthead {
   position: relative; display: flex; align-items: center; gap: 8px; min-height: 0;
   margin: 0; padding: 0; border-bottom: 0; overflow: hidden;
-  background: repeating-conic-gradient(#ffffff08 0% 25%, #00000008 0% 50%) 0 0 / 4px 4px,
-    linear-gradient(#858585, #606060);
+  background: linear-gradient(#985e40, #773b29 48%, #4d201d 49%, #6a3325);
 }
 .portrait-frame {
   width: auto; height: 100%; aspect-ratio: 1; flex: 0 0 auto;
@@ -143,7 +142,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
   box-shadow: var(--panel-frame-bevel);
 }
 #creature-portrait { display: block; width: 100%; height: 100%; object-fit: contain; }
-.panel h1 { margin: 0; color: #fff; font: bold 17px/1.2 Georgia, serif; text-shadow: none; }
+.panel h1 { margin: 0; color: #f0dfad; font: bold 17px/1.2 Georgia, serif; text-shadow: none; }
 .hero-masthead { grid-row: 1; }
 .stats { grid-row: 2; }
 #end-turn { grid-row: 3; }

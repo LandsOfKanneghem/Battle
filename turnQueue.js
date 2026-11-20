@@ -48,6 +48,10 @@
     return [root.id, ...alive().filter(entity => entity.isSummon && entity.ownerId === root.id)
       .flatMap(entity => block(entity))];
   }
+  function nextRoundIds() {
+    return orderRoots(alive().filter(entity => !entity.isSummon), [], true)
+      .flatMap(entity => block(entity));
+  }
   function prune() {
     const ids = new Set(alive().map(entity => entity.id));
     state().turnOrderIds = state().turnOrderIds.filter(id => ids.has(id));
@@ -101,7 +105,7 @@
     activeRootId = null;
     activeId = null;
     initiatives = new Map(roots.map(entity => [entity.id, initiative(entity)]));
-    state().turnOrderIds = orderRoots(roots, [], true).flatMap(entity => block(entity));
+    state().turnOrderIds = nextRoundIds();
     if (state().turnOrderIds.length) {
       state().roundNumber++;
       window.battleLog?.beginRound(state().roundNumber);
@@ -122,6 +126,7 @@
       state().turnOrderIds = [];
     },
     sync,
+    preview: nextRoundIds,
     activate() {
       const entity = next();
       if (entity) state().turnOrderIds.shift();

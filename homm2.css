@@ -97,23 +97,32 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 .battle-toolbar-button:disabled { opacity: .5; cursor: wait; }
 .battle-toolbar-button[aria-pressed='true'] { background: #5d5039; border-color: #edce77; }
 #map-status { font: 13px/1.3 system-ui, sans-serif; }
-#turn-order {
-  grid-area: queue; flex-direction: column; justify-content: flex-start;
+#turn-orders {
+  grid-area: queue;
   width: var(--queue-width); min-height: 0; height: var(--battlefield-height); border-radius: 0;
   overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable;
   background: transparent; box-shadow: none;
   scrollbar-color: #8c774a #1b211c;
+  scrollbar-width: thin;
 }
-#turn-order::-webkit-scrollbar { width: 8px; height: 8px; }
-#turn-order::-webkit-scrollbar-track { background: #1b211c; border-radius: 0; }
-#turn-order::-webkit-scrollbar-thumb { background: #8c774a; border-radius: 0; }
+#turn-orders::-webkit-scrollbar { width: 8px; height: 8px; }
+#turn-orders::-webkit-scrollbar-track { background: #1b211c; border-radius: 0; }
+#turn-orders::-webkit-scrollbar-thumb { background: #8c774a; border-radius: 0; }
+#turn-order, #next-turn-order {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  width: 100%; min-height: 0; height: auto; gap: 8px; padding: 6px;
+  overflow: visible; scrollbar-gutter: auto; background: transparent; border-radius: 0; box-shadow: none;
+}
+#next-turn-order { margin-top: 8px; padding-top: 12px; border-top: 1px solid #79765c; }
+#next-turn-order .turn-slot { filter: grayscale(100%); }
+#next-turn-order img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 .turn-slot {
   border-radius: 0; border-color: #79765c; padding: 0;
   background: linear-gradient(#44504a, #252e2a);
   box-shadow: inset 1px 1px #a39668, inset -1px -1px #141c19;
 }
 .turn-slot.active { border-color: #edce77; background: linear-gradient(#74633d,#413d28); box-shadow: 0 0 0 1px #c29a4a, inset 1px 1px #ead58f; }
-#turn-order .turn-slot.summon { margin-left: 7px; margin-top: -4px; }
+:is(#turn-order, #next-turn-order) .turn-slot.summon { margin-left: 7px; margin-top: -4px; }
 .panel {
   grid-area: panel; width: var(--panel-width); align-self: start;
   display: grid; grid-template-columns: 100%;

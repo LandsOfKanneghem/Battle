@@ -256,3 +256,55 @@ test('empty battles do not start phantom rounds; loading a new battle resets the
   h.queue.reset();h.state.entities.push(creature('new', 0));h.state.turnSlots.set('new', { id: 'new' });
   assert.equal(h.begin(), 'new');assert.equal(h.state.roundNumber, 1);
 });
+
+test('next-round preview includes active and completed creatures without advancing or changing the battle', () => {
+  const a = creature('a', 30), b = creature('b', 20), c = creature('c', 10);
+  const h = setup([a, b, c]);h.begin();h.end();
+  const snapshot = () => JSON.stringify({ waiting: h.waiting(), visible: h.ids(),
+    round: h.state.roundNumber, active: h.state.activeEntityId, rounds: h.rounds, entities: h.state.entities });
+  const before = snapshot();
+  const forecast = h.queue.preview();
+  assert.deepEqual(Array.from(forecast), ['a', 'b', 'c']);
+  forecast[0] = 'changed-by-caller';
+  assert.deepEqual(Array.from(h.queue.preview()), ['a', 'b', 'c']);
+  assert.equal(snapshot(), before);
+});
+
+test('next-round preview follows current initiative, including changes to completed and active creatures', () => {
+  const a = creature('a', 30), b = creature('b', 20), c = creature('c', 10);
+  const h = setup([a, b, c]);h.begin();h.end();
+  a.ini = -30;b.ini = 50;c.ini = 40;h.queue.sync();
+  assert.deepEqual(Array.from(h.queue.preview()), ['b', 'c', 'a']);
+  assert.deepEqual(h.waiting(), ['c']);
+  assert.equal(h.state.activeEntityId, 'b');
+  assert.deepEqual(h.rounds, [1]);
+});
+
+test('preview uses new-round attacker priority rather than the current lower-group anchor', () => {
+  const ally = creature('ally', 20, { ally: true });
+  const h = setup([creature('leader', 100), creature('cap', 80),
+    creature('enemy-1', 30), creature('enemy-2', 30), ally]);h.begin();
+  ally.ini = 30;h.queue.sync();
+  assert.deepEqual(h.waiting(), ['cap', 'enemy-1', 'ally', 'enemy-2']);
+  assert.deepEqual(Array.from(h.queue.preview()), ['leader', 'cap', 'ally', 'enemy-1', 'enemy-2']);
+});
+
+test('preview keeps one round of summon blocks, ignores summon initiative and removes dead creatures', () => {
+  const owner = creature('owner', 20), other = creature('other', 10);
+  const h = setup([owner, other]);h.begin();
+  h.add('summon-1', owner.id, -999);const second = h.add('summon-2', owner.id, 999);h.end();
+  assert.deepEqual(Array.from(h.queue.preview()), ['owner', 'summon-1', 'summon-2', 'other']);
+  h.kill(second);
+  assert.deepEqual(Array.from(h.queue.preview()), ['owner', 'summon-1', 'other']);
+  assert.equal(new Set(h.queue.preview()).size, h.queue.preview().length);
+});
+
+test('preview before starting or after ending a battle never invents rounds', () => {
+  const a = creature('a', 1);const h = setup([a]);
+  assert.deepEqual(Array.from(h.queue.preview()), ['a']);
+  assert.equal(h.state.roundNumber, 0);
+  assert.deepEqual(h.rounds, []);
+  a.hp = 0;
+  assert.deepEqual(Array.from(h.queue.preview()), []);
+  assert.deepEqual(h.rounds, []);
+});

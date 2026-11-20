@@ -25,7 +25,10 @@
     </aside>
     <section class="arena" aria-label="Поле и очередь ходов">
       <div id="battlefield" class="show-grid" aria-label="Поле боя 12 на 12 клеток"></div>
-      <div id="turn-order" aria-label="Очередь ходов"></div>
+      <div id="turn-orders" aria-label="Очереди раундов">
+        <div id="turn-order" aria-label="Очередь текущего раунда"></div>
+        <div id="next-turn-order" aria-label="Очередь следующего раунда" hidden></div>
+      </div>
     </section>
     <aside class="panel" aria-labelledby="character-name">
       <div class="hero-masthead">

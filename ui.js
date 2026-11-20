@@ -14,6 +14,36 @@ window.spellTooltipSpell = null;
 window.shiftHeld = false;
 let effectPanelKey = null;
 let effectTooltip = null;
+let nextRoundPanelKey = null;
+
+window.renderNextRoundQueue = function() {
+  const state = window.gameState;
+  const container = document.getElementById('next-turn-order');
+  const ids = state.roundNumber > 0 && document.getElementById('defeat-overlay')?.hidden !== false
+    ? window.turnQueue.preview() : [];
+  const entries = ids.map(id => {
+    const entity = state.entities.find(entity => entity.id === id);
+    return { id, name: entity.name, summon: entity.isSummon === true,
+      portrait: window.CREATURE_TEMPLATES[entity.type].appearance.portrait };
+  });
+  const key = JSON.stringify([state.roundNumber, entries]);
+  if (key === nextRoundPanelKey) return;
+  nextRoundPanelKey = key;
+  container.hidden = entries.length === 0;
+  container.setAttribute('aria-label', `Очередь следующего раунда (${state.roundNumber + 1})`);
+  container.replaceChildren(...entries.map(entry => {
+    const slot = document.createElement('div');
+    slot.className = `turn-slot next-round-slot${entry.summon ? ' summon' : ''}`;
+    slot.dataset.entityId = entry.id;
+    slot.title = entry.name;
+    const portrait = document.createElement('img');
+    portrait.src = entry.portrait;
+    portrait.alt = entry.name;
+    portrait.draggable = false;
+    slot.appendChild(portrait);
+    return slot;
+  }));
+};
 
 window.getSpellPages = function(entity = window.gameState.activeEntity()) {
   return entity?.spellPages ?? [entity?.availableSpells ?? []];
@@ -377,6 +407,7 @@ window.showDefeatOverlay = function() {
 
 window.updatePanel = function() {
   window.turnQueue.sync();
+  window.renderNextRoundQueue();
   // Завершение ранее начатого каста может сбросить isCasting; экран поражения сохраняет блокировку.
   if (document.getElementById('defeat-overlay')?.hidden === false) window.gameState.isCasting = true;
   window.gameState.hoveredEntityId = window.gameState.queueHoveredEntityId ?? window.gameState.fieldHoveredEntityId;

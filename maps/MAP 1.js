@@ -201,7 +201,7 @@ window.DEFAULT_BATTLE_MAP = {
       "y": 4
     },
     {
-      "type": "wolf",
+      "type": "alligator-snapping-turtle",
       "team": "enemy",
       "x": 1,
       "y": 5

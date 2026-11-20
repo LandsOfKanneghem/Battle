@@ -13,7 +13,7 @@
     <button id="load-map" class="battle-toolbar-button" type="button" aria-label="Загрузить карту" title="Загрузить карту">
       <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 6 H11 L14 9 H25 V24 H3 Z" fill="#d4a83d" stroke="#654c20" stroke-width="2"/><path d="M3 13 H25 L22 24 H1 Z" fill="#f2cf69" stroke="#806024" stroke-width="2"/><path d="M18 3 V13 M14 9 L18 13 L22 9" fill="none" stroke="#82d8ff" stroke-width="2"/></svg>
     </button>
-    <button id="toggle-grid" class="battle-toolbar-button" type="button" aria-label="Сетка" title="Показать/скрыть сетку" aria-pressed="false" aria-controls="battlefield">
+    <button id="toggle-grid" class="battle-toolbar-button" type="button" aria-label="Сетка" title="Показать/скрыть сетку" aria-pressed="true" aria-controls="battlefield">
       <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3v18M12 3v18M18 3v18M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
     <input id="map-file" type="file" accept=".json,application/json" hidden>
@@ -24,7 +24,7 @@
       <div id="battle-log-entries" role="log" aria-live="polite" aria-relevant="additions" tabindex="0"></div>
     </aside>
     <section class="arena" aria-label="Поле и очередь ходов">
-      <div id="battlefield" aria-label="Поле боя 12 на 12 клеток"></div>
+      <div id="battlefield" class="show-grid" aria-label="Поле боя 12 на 12 клеток"></div>
       <div id="turn-order" aria-label="Очередь ходов"></div>
     </section>
     <aside class="panel" aria-labelledby="character-name">

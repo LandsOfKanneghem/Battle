@@ -73,26 +73,37 @@ test('ability instances, counters and innate state arrays are not shared between
   assert.equal(second.states[0].overrides.includes('test'), false);
 });
 
-test('snapping turtle starts with wolf stats and an independently tunable copy of its bite', () => {
+test('creatures with their own bite can be tuned without changing wolves or existing instances', () => {
   const ctx = setup();
   const wolfTemplate = ctx.CREATURE_TEMPLATES.wolf;
-  const turtleTemplate = ctx.CREATURE_TEMPLATES['alligator-snapping-turtle'];
+  const wolfDamage = wolfTemplate.spells[0].damageBase;
+  for (const type of ['alligator-snapping-turtle', 'hound']) {
+    const template = ctx.CREATURE_TEMPLATES[type];
+    assert.notEqual(template.attributes, wolfTemplate.attributes);
+    assert.notEqual(template.spells[0], wolfTemplate.spells[0]);
+    const creature = ctx.createCreature(type, { x: 2, y: 1 });
+    const damage = creature.availableSpells[0].damageBase;
+    creature.availableSpells[0].usesThisTurn = 1;
+    template.spells[0].damageBase += 5;
+    assert.equal(creature.availableSpells[0].damageBase, damage);
+    assert.equal(ctx.createCreature('wolf', { x: 1, y: 1 }).availableSpells[0].usesThisTurn, 0);
+    assert.equal(wolfTemplate.spells[0].damageBase, wolfDamage);
+  }
+});
+
+test('hound starts with the ordinary wolf stats and abilities', () => {
+  const ctx = setup();
+  const wolfTemplate = ctx.CREATURE_TEMPLATES.wolf;
+  const houndTemplate = ctx.CREATURE_TEMPLATES.hound;
   const stats = template => Object.fromEntries(Object.entries(template)
     .filter(([key]) => !['name', 'type', 'ai', 'appearance'].includes(key)));
-  assert.deepEqual(stats(turtleTemplate), stats(wolfTemplate));
-  assert.notEqual(turtleTemplate.attributes, wolfTemplate.attributes);
-  assert.notEqual(turtleTemplate.spells[0], wolfTemplate.spells[0]);
+  assert.deepEqual(stats(houndTemplate), stats(wolfTemplate));
   const wolf = ctx.createCreature('wolf', { x: 1, y: 1 });
-  const turtle = ctx.createCreature('alligator-snapping-turtle', { x: 2, y: 1 });
+  const hound = ctx.createCreature('hound', { x: 2, y: 1 });
   for (const key of ['level', 'hp', 'maxHP', 'wp', 'maxWP', 'ap', 'maxAP', 'mp', 'maxMP', 'maxHitCount']) {
-    assert.equal(turtle[key], wolf[key], key);
+    assert.equal(hound[key], wolf[key], key);
   }
-  assert.equal(turtle.ai, turtle.type);
-  turtle.availableSpells[0].usesThisTurn = 1;
-  turtleTemplate.spells[0].damageBase += 5;
-  assert.equal(wolf.availableSpells[0].usesThisTurn, 0);
-  assert.equal(wolfTemplate.spells[0].damageBase, 2);
-  assert.equal(turtle.availableSpells[0].damageBase, 2);
+  assert.equal(hound.ai, hound.type);
 });
 
 test('sprite, portrait and local ability icon paths live with each creature and point to existing assets', () => {

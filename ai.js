@@ -192,8 +192,8 @@
     } else if (spell.isShot) {
       const type = spell.id === 'boulder-throw' ? 'rock' : spell.damageType === 'water' ? 'water' : 'fire';
       window.playProjectileAnimation(state().cells[caster.position.y * state().SIZE + caster.position.x], cell,
-        type, () => setTimeout(finish, 0));
-      // animations.js оставляем неизменным: для камня используем SVG самой способности.
+        type, () => setTimeout(finish, 0), spell);
+      // Для камня используем SVG самой способности.
       if (type === 'rock') {
         const projectile = [...document.querySelectorAll('.spell-projectile[data-type="rock"]')].at(-1);
         if (projectile) projectile.innerHTML = spell.svg;

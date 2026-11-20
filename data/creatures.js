@@ -1,4 +1,4 @@
-// Шаблоны существ и фабрика. Счётчики типов приватны; изменяемые данные не разделяются.
+// Реестр и фабрика существ. Шаблоны подключаются из data/creatures/*.js. Счётчики типов приватны; изменяемые данные не разделяются.
 window.BASE_SPELL_CASTS = 5;
 window.BASE_HIT_COUNT = 5;
 
@@ -22,163 +22,18 @@ window.captureInitialStats = function(creature) {
     return { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0, ...overrides };
   };
 
-  const CREATURE_TEMPLATES = window.CREATURE_TEMPLATES = {
-    wizard: {
-      name: 'Волшебник', type: 'wizard',
-      level: 1, baseHP: 8, hpPerLevel: 4, baseWP: 15, wpPerLevel: 5, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
-      baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 2, str: 0, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
-      spellPages: [
-        ['fire-shot', 'burning-hands', 'reckless', null, 'teleport',
-          'liquid-membrane', 'rain', 'ice-arrow', 'lake-spirit', null,
-          'haste', 'wind-rose', 'sparks', 'sky-shot', 'water-walk',
-          'slow', 'dead-weight', null, null, 'apply-old-age'],
-        ['fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin',
-          null, null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null]
-      ]
-    },
-    monk: {
-      name: 'Монах', type: 'monk',
-      level: 1, baseHP: 8, hpPerLevel: 5, baseWP: 15, wpPerLevel: 6, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
-      baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 2, str: 2, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },
-      spellPages: [
-        ['sprint', 'heal-harm', 'weakness-vigor', null, null,
-          'light-flash', 'power-hour', null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null]
-      ]
-    },
-    'lake-spirit': {
-      name: 'Дух озера', type: 'lake-spirit', ai: 'lake-spirit',
-      level: 1, baseHP: 1, hpPerLevel: 0, baseWP: 0, wpPerLevel: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
-      baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
-      innateStates: ['water-entity', { id: 'levitation', permanent: true }],
-      spellPages: [
-        ['water-shot', null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null]
-      ]
-    },
-    nymph: {
-      name: 'Нимфа', type: 'nymph', ai: 'nymph',
-      level: 1, baseHP: 1, hpPerLevel: 0, baseWP: 0, wpPerLevel: 0, baseAP: 6, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
-      baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 0, str: 0, att: 0, int: 0, wis: 0, cha: 0, luc: 0 },
-      innateStates: ['water-entity', { id: 'levitation', permanent: true }],
-      spellPages: [
-        ['water-shot', null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null]
-      ]
-    },
-    'hill-giant': {
-      name: 'Холмовой Великан', type: 'hill-giant', ai: 'hill-giant',
-      level: 1, baseHP: 25, hpPerLevel: 10, baseWP: 32, wpPerLevel: 8, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
-      baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
-      innateStates: [{ id: 'heavy', permanent: true }],
-      spellPages: [
-        ['boulder-smash', 'boulder-throw', null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null]
-      ]
-    },
-    wolf: {
-      name: 'Волк', type: 'wolf', ai: 'wolf',
-      level: 3, baseHP: 8, hpPerLevel: 4, baseWP: 8, wpPerLevel: 3, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
-      baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },
-      spellPages: [
-        ['bite', null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null]
-      ]
-    },
-    'black-wolf': {
-      name: 'Чёрный волк', type: 'black-wolf', ai: 'black-wolf',
-      level: 4, baseHP: 8, hpPerLevel: 5, baseWP: 8, wpPerLevel: 3, baseAP: 7, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
-      baseACC: 100, baseCRI: 25, baseEVA: 30, baseSFC: 0, baseBLO: 0, baseINI: 0,
-      baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
-      baseEarth: 0, baseMind: 0, basePoison: 0,
-      attributes: { vit: 3, str: 4, att: 5, int: 0, wis: 0, cha: 0, luc: 0 },
-      spellPages: [
-        ['bite', null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null,
-          null, null, null, null, null]
-      ]
-    }
-  };
-
-  const SVG_ART = {
-    'hill-giant': `<path d="M8 37 L10 19 Q20 13 29 20 L31 37 H23 L21 29 L18 37 Z" fill="#807467" stroke="#c7b69c"/><path d="M10 21 L4 30 L8 33 L15 25 M27 22 L34 27" fill="none" stroke="#a59580" stroke-width="6" stroke-linecap="round"/><circle cx="20" cy="11" r="8" fill="#a59580" stroke="#5f544b"/><path d="M13 8 L17 4 H25 L28 10" fill="#544638"/><circle cx="17" cy="11" r="1.2" fill="#fff0c6"/><circle cx="23" cy="11" r="1.2" fill="#fff0c6"/><path d="M17 16 H23 M35 35 L32 15" stroke="#493425" stroke-width="3"/><path d="M29 4 L35 3 L39 17 L32 20 Z" fill="#76502d" stroke="#b18a53" stroke-width="2"/>`,
-    'lake-spirit': `<circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#fff" opacity=".6"/>`,
-    nymph: `<circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#fff" opacity=".6"/>`,
-    wizard: `
-      <path d="M11 36 L15 20 L25 20 L30 36 Z" fill="#287dff" stroke="#102e70"/>
-      <circle cx="20" cy="17" r="6" fill="#ffd6a0"/>
-      <path d="M9 13 L20 2 L30 13 Z" fill="#ffdc36" stroke="#a77c00"/>
-      <path d="M8 13 H32" stroke="#ffdc36" stroke-width="3"/>
-      <circle cx="18" cy="17" r="1" fill="#20202b"/>
-      <circle cx="23" cy="17" r="1" fill="#20202b"/>
-      <path d="M17 22 L21 29 L25 22" fill="#f5f0df"/>
-      <path d="M32 35 L34 20" stroke="#ce9b56" stroke-width="2"/>
-      <circle cx="34" cy="19" r="2.5" fill="#86e8ff"/>`,
-    wolf: `
-        <path d="M11 21 L3 12 L2 23 L10 28 Z" fill="#73818e" stroke="#344453"/>
-        <path d="M10 22 Q17 16 28 21 L30 29 H10 Z" fill="#8e9ca8" stroke="#344453"/>
-        <path d="M11 27 L10 36 H14 L16 27 M18 28 L18 36 H22 L23 27
-                 M25 26 L26 36 H30 L29 26 M30 25 L32 35 H36 L34 24" fill="#73818e" stroke="#344453"/>
-        <path d="M25 22 L25 7 L30 12 L35 6 L36 17 L39 21 L35 26 L28 25 Z" fill="#a8b5bf" stroke="#344453"/>
-        <path d="M27 11 L27 15 L30 14 M33 13 L35 10 L35 15" fill="#dfb0ac"/>
-        <path d="M27 22 L32 27 L35 24" fill="#d9e0e5"/>
-        <circle cx="33" cy="18" r="1.2" fill="#eaca70"/>
-        <path d="M37 20 L39 21 L37 23 Z" fill="#23323e"/>`,
-    monk: `
-      <path d="M10 37 L14 21 L26 21 L31 37 Z" fill="#b86028" stroke="#713c22"/>
-      <path d="M15 22 L25 35 M25 22 L15 35" stroke="#e7a34a" stroke-width="3"/>
-      <circle cx="20" cy="13" r="7" fill="#f1be8d"/>
-      <circle cx="18" cy="13" r="1" fill="#30241e"/>
-      <circle cx="23" cy="13" r="1" fill="#30241e"/>
-      <path d="M12 27 L20 29 L28 27" fill="none" stroke="#f1be8d" stroke-width="3"/>
-      <path d="M33 36 V10" stroke="#bc9159" stroke-width="2"/>`
-  };
-
-  SVG_ART['black-wolf'] = SVG_ART.wolf;
+  const CREATURE_TEMPLATES = window.CREATURE_TEMPLATES = {};
 
   window.createCreatureSvg = function(kind) {
-    if (!Object.hasOwn(SVG_ART, kind)) throw new Error(`Неизвестный спрайт существа: ${kind}`);
+    const template = CREATURE_TEMPLATES[kind];
+    if (!template?.appearance) throw new Error(`Неизвестный спрайт существа: ${kind}`);
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 40 40');
     svg.setAttribute('class', kind);
     svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', CREATURE_TEMPLATES[kind].name);
-    svg.innerHTML = SVG_ART[kind];
-    if (kind === 'hill-giant') {
-      // Новый спрайт и его копия очереди вписываются в контейнер без изменения общей CSS.
-      Object.assign(svg.style, { display: 'block', width: '100%', height: '100%',
-        position: 'absolute', inset: '0', zIndex: '3', pointerEvents: 'none' });
-    }
+    svg.setAttribute('aria-label', template.name);
+    svg.innerHTML = template.appearance.svg;
+    Object.assign(svg.style, template.appearance.svgStyle ?? {});
     return svg;
   };
 
@@ -242,13 +97,13 @@ window.captureInitialStats = function(creature) {
     }
     if (template.spellPages) {
       // Одна копия способности на владельца; страницы и flat-массив делят её счётчики.
+      const definitions = template.spells ?? [...SPELL_DEFINITIONS, ...MONK_SPELLS];
       const resolved = new Map();
       creature.spellPages = template.spellPages.map(page => page.map(id => {
         if (id === null) return null;
         if (!resolved.has(id)) {
-          // Часть старых способностей монаха пока определена только в MONK_SPELLS.
-          const spell = SPELL_DEFINITIONS.find(spell => spell.id === id)
-            ?? MONK_SPELLS.find(spell => spell.id === id);
+          // Если каталог локальный, способности берём только из файла этого существа.
+          const spell = definitions.find(spell => spell.id === id);
           resolved.set(id, spell ? { ...spell, cooldown: 0, usesThisTurn: 0, usesTotal: 0 } : null);
         }
         return resolved.get(id);

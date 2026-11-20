@@ -56,37 +56,6 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14" fill="none" stroke="#a7eced" stroke-width="2" stroke-dasharray="4 3"/><path d="M20 6 V14 M14 10 L20 16 L26 10" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><path d="M20 34 V26 M14 30 L20 24 L26 30" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="3" fill="#86e8ff"/></svg>`
 }, {
-  id: 'boulder-smash', isHit: true, abilityType: 'weapon-strike', name: 'Удар булыжником', stackable: false,
-  damageBase: 18, damagePerStr: 2, damageType: 'physical', target: 'any',
-  range: 1, minRange: 1, modifiable: false, noLOS: false,
-  apCost: 4, maxUsesPerTurn: 1, maxCooldown: 1,
-  isAOE: false, aoeSize: 1, isShot: false,
-  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 12 L22 5 L34 13 L36 28 L24 36 L7 30 L3 20 Z" fill="#8b8f96" stroke="#d1d5dc" stroke-width="2"/><path d="M9 12 L17 22 L7 30 M17 22 L31 18 L34 13 M17 22 L24 36" fill="none" stroke="#565d68" stroke-width="2"/></svg>`
-}, {
-  id: 'boulder-throw', abilityType: 'weapon-strike', name: 'Бросок булыжника', stackable: false,
-  damageBase: 10, damagePerStr: 1.5, damageType: 'physical', target: 'any',
-  range: 4, minRange: 1, modifiable: false, noLOS: false,
-  apCost: 4, maxUsesPerTurn: 1, maxCooldown: 3,
-  isAOE: false, aoeSize: 1, isShot: true,
-  description: 'Бросает булыжник, нанося физический урон по цели.',
-  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 12 L22 5 L34 13 L36 28 L24 36 L7 30 L3 20 Z" fill="#8b8f96" stroke="#d1d5dc" stroke-width="2"/><path d="M9 12 L17 22 L7 30 M17 22 L31 18 L34 13 M17 22 L24 36" fill="none" stroke="#565d68" stroke-width="2"/></svg>`
-}, {
-  id: 'bite', isHit: true, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', magicSchool: null, name: 'Укус волка', stackable: false,
-  damageBase: 2, damagePerStr: 1, damageType: 'physical', target: 'any',
-  description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
-  stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,
-  range: 1, minRange: 1, modifiable: false, noLOS: false,
-  apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0, isAOE: false, aoeSize: 1,
-  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8 Q10 4 14 6 L18 10 Q20 8 22 10 L26 6 Q30 4 32 8 L28 18 L32 28 Q30 32 26 30 L22 26 Q20 28 18 26 L14 30 Q10 32 8 28 L12 18 Z" fill="#c93650" stroke="#ffadb6" stroke-width="2"/><circle cx="16" cy="14" r="2" fill="#fff"/><circle cx="24" cy="14" r="2" fill="#fff"/></svg>`
-}, {
-  id: 'water-shot', abilityType: 'spell', magicSchool: 'water', isShot: true,
-  name: 'Водный выстрел', stackable: false, damageBase: 3, damageType: 'water', target: 'any',
-  description: 'Наносит небольшой урон водой.',
-  range: 4, minRange: 1, modifiable: false, noLOS: false,
-  apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
-  isAOE: false, aoeSize: 1,
-  svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 30 Q2 22 10 14 Q18 6 28 10 Q36 14 34 24 Q32 34 20 34 Q12 34 8 30 Z" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><path d="M14 22 Q18 18 24 20" fill="none" stroke="#d0f4ff" stroke-width="1.5" opacity=".7"/></svg>`
-}, {
   id: 'lake-spirit', durationBase: 2, durationPerInt: 0, abilityType: 'spell', name: 'Дух озера', stackable: false, isSummon: true, target: 'none',
   description: 'Призывает левитирующий шар воды. Дух озера наносит слабый урон водой на небольшой дистанции. Исчезает, получив 1 атаку.',
   minRange: 1, range: 1, modifiable: false, noLOS: false,

@@ -2,40 +2,39 @@
 // Spell/state values, targeting, timing and creature registration stay in their modules.
 (() => {
   const artRoot = 'assets/homm2/';
-  const sprite = name => `<svg viewBox="0 0 40 40" aria-hidden="true"><image href="${artRoot}${name}.png" width="40" height="40"/></svg>`;
+  const icon = path => `<svg viewBox="0 0 40 40" aria-hidden="true"><image href="${path}" width="40" height="40"/></svg>`;
+  const sprite = name => icon(`${artRoot}${name}.png`);
+  const templates = window.CREATURE_TEMPLATES;
   const spellArt = new Set(`fire-shot burning-hands reckless fire-cube armageddon
-    water-shot liquid-membrane rain ice-arrow deep-freeze lake-spirit
+    liquid-membrane rain ice-arrow deep-freeze lake-spirit
     haste wind-rose sparks sky-shot teleport water-walk slow dead-weight stone-skin
     heal-harm weakness-vigor sprint light-flash power-hour apply-old-age
-    bite boulder-smash boulder-throw fire-shield water-shield earth-shield air-shield`.split(/\s+/));
+    fire-shield water-shield earth-shield air-shield`.split(/\s+/));
   // Some book entries are copies of definitions. Decorate each distinct object,
   // preserving all references subsequently used as keys by spellSlots.
-  for (const spell of new Set([...SPELL_DEFINITIONS, ...MONK_SPELLS, ...ELEMENTAL_SHIELD_SPELLS])) {
-    if (spellArt.has(spell.id)) spell.svg = sprite(`spell-${spell.id}`);
+  for (const spell of new Set([...SPELL_DEFINITIONS, ...MONK_SPELLS, ...ELEMENTAL_SHIELD_SPELLS,
+    ...Object.values(templates).flatMap(template => template.spells ?? [])])) {
+    if (spell.iconPath || spellArt.has(spell.id)) spell.svg = icon(spell.iconPath ?? `${artRoot}spell-${spell.id}.png`);
   }
   for (const state of stateTypes.values()) state.icon = sprite(`state-${state.id}`);
 
-  const kinds = new Set(['wizard', 'monk', 'wolf', 'black-wolf', 'hill-giant', 'lake-spirit', 'nymph']);
-  // Исходники 60×72 и фактические размеры совпадают с MapEditor.
-  const fieldSizes = {
-    wolf: [90, 108, [36, 3, 4, 3]], 'black-wolf': [90, 108, [36, 3, 4, 3]], 'hill-giant': [90, 108, [4, 9, 4, 8]],
-    wizard: [72, 86, [4, 7, 4, 7]], monk: [72, 86, [6, 9, 4, 9]],
-    'lake-spirit': [60, 72, [4, 3, 4, 2]], nymph: [72, 86, [4, 3, 4, 2]]
-  };
   const createSvg = window.createCreatureSvg;
   window.createCreatureSvg = function(kind) {
     const svg = createSvg(kind);
-    if (fieldSizes[kind]) {
-      const [width, height, [top, right, bottom, left]] = fieldSizes[kind];
+    const appearance = templates[kind].appearance;
+    if (appearance.sprite) {
+      const { width, height } = appearance.displaySize;
+      const { width: sourceWidth, height: sourceHeight } = appearance.sourceSize;
+      const { top, right, bottom, left } = appearance.padding;
       svg.removeAttribute('style');
       svg.classList.add('battle-creature');
-      svg.setAttribute('viewBox', '0 0 60 72');
+      svg.setAttribute('viewBox', `0 0 ${sourceWidth} ${sourceHeight}`);
       svg.setAttribute('preserveAspectRatio', 'none');
       svg.style.setProperty('--sprite-width', `${width}px`);
       svg.style.setProperty('--sprite-height', `${height}px`);
       // Убираем те же прозрачные поля исходника, что и редактор.
-      svg.style.setProperty('--sprite-clip', `inset(${top * height / 72}px ${right * width / 60}px ${bottom * height / 72}px ${left * width / 60}px)`);
-      svg.innerHTML = `<image href="assets/map-editor/mobs/${kind}.png" width="60" height="72"/>`;
+      svg.style.setProperty('--sprite-clip', `inset(${top * height / sourceHeight}px ${right * width / sourceWidth}px ${bottom * height / sourceHeight}px ${left * width / sourceWidth}px)`);
+      svg.innerHTML = `<image href="${appearance.sprite}" width="${sourceWidth}" height="${sourceHeight}"/>`;
     }
     return svg;
   };
@@ -51,8 +50,7 @@
     const updatePortrait = () => {
       const state = window.gameState;
       const creature = state.entities.find(item => item.id === (state.selectedEntityId ?? state.hoveredEntityId ?? state.activeEntityId));
-      const kind = kinds.has(creature?.type) ? creature.type : 'wizard';
-      const url = `${artRoot}portrait-${kind}.png`;
+      const url = (templates[creature?.type] ?? templates.wizard).appearance.portrait;
       if (portrait.getAttribute('src') !== url) portrait.setAttribute('src', url);
       portrait.hidden = !creature;
     };
@@ -63,9 +61,9 @@
     const updateQueueArtwork = () => {
       for (const [id, slot] of window.gameState.turnSlots) {
         const creature = window.gameState.entities.find(item => item.id === id);
-        if (!kinds.has(creature?.type)) continue;
+        if (!templates[creature?.type]?.appearance.portrait) continue;
         const image = slot.querySelector('svg image');
-        const url = `${artRoot}portrait-${creature.type}.png`;
+        const url = templates[creature.type].appearance.portrait;
         if (image && image.getAttribute('href') !== url) {
           image.parentElement.setAttribute('viewBox', '0 0 40 40');
           image.setAttribute('href', url);

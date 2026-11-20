@@ -2,7 +2,7 @@
 window.CREATURE_TEMPLATES['black-wolf'] = {
   name: 'Чёрный волк', type: 'black-wolf', ai: 'black-wolf',
   level: 4, baseHP: 8, hpPerLevel: 5, baseWP: 8, wpPerLevel: 3, baseAP: 7, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
-  baseACC: 100, baseCRI: 25, baseEVA: 30, baseSFC: 0, baseBLO: 0, baseINI: 6,
+  baseACC: 100, baseCRI: 25, baseEVA: 30, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   attributes: { vit: 3, str: 2, att: 5, int: 0, wis: 0, cha: 0, luc: 0 },

@@ -2,10 +2,10 @@
 window.CREATURE_TEMPLATES['black-wolf'] = {
   name: 'Чёрный волк', type: 'black-wolf', ai: 'black-wolf',
   level: 4, baseHP: 8, hpPerLevel: 5, baseWP: 8, wpPerLevel: 3, baseAP: 7, baseMP: 6, baseES: 0, baseVS: 0, baseRA: 0,
-  baseACC: 100, baseCRI: 25, baseEVA: 30, baseSFC: 0, baseBLO: 0, baseINI: 0,
+  baseACC: 100, baseCRI: 25, baseEVA: 30, baseSFC: 0, baseBLO: 0, baseINI: 6,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
-  attributes: { vit: 3, str: 4, att: 5, int: 0, wis: 0, cha: 0, luc: 0 },
+  attributes: { vit: 3, str: 2, att: 5, int: 0, wis: 0, cha: 0, luc: 0 },
   appearance: {
     sprite: 'assets/map-editor/mobs/black-wolf.png',
     portrait: 'assets/homm2/portrait-black-wolf.png',
@@ -25,10 +25,10 @@ window.CREATURE_TEMPLATES['black-wolf'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'bite', isHit: true, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', magicSchool: null, name: 'Укус волка', stackable: false,
-    damageBase: 2, damagePerStr: 1, damageType: 'physical', target: 'any',
-    description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
-    stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,
+    id: 'bite', isHit: true, isShot: false, effectDescription: 'Кровотечение [75%]', abilityType: 'weapon-strike', magicSchool: null, name: 'Укус волка', stackable: false,
+    damageBase: 4, damagePerStr: 1, damageType: 'physical', target: 'any',
+    description: 'Наносит физический урон и с шансом 75% накладывает на цель 1 стак кровотечения.',
+    stateId: 'bleeding', bleedChance: 75, bleedDuration: 2,
     range: 1, minRange: 1, modifiable: false, noLOS: false,
     apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0, isAOE: false, aoeSize: 1,
     iconPath: 'assets/homm2/spell-bite.png',

@@ -2,7 +2,7 @@
 window.CREATURE_TEMPLATES['wolf'] = {
   name: 'Волк', type: 'wolf', ai: 'wolf',
   level: 3, baseHP: 8, hpPerLevel: 4, baseWP: 8, wpPerLevel: 3, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
-  baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+  baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 4,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },

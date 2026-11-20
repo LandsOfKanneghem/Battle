@@ -1,17 +1,17 @@
 // Данные существа и его собственных способностей.
 window.CREATURE_TEMPLATES['alligator-snapping-turtle'] = {
   name: 'Грифовая черепаха', type: 'alligator-snapping-turtle', ai: 'alligator-snapping-turtle',
-  level: 3, baseHP: 8, hpPerLevel: 4, baseWP: 8, wpPerLevel: 3, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
+  level: 3, baseHP: 14, hpPerLevel: 6, baseWP: 10, wpPerLevel: 4, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
   baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
-  attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },
+  attributes: { vit: 4, str: 4, att: 0, int: 0, wis: 3, cha: 0, luc: 0 },
   appearance: {
     sprite: 'assets/map-editor/mobs/alligator-snapping-turtle.png',
     portrait: 'assets/homm2/portrait-alligator-snapping-turtle.png',
     sourceSize: { width: 60, height: 72 },
     displaySize: { width: 90, height: 108 },
-    padding: { top: 37, right: 2, bottom: 4, left: 2 },
+    padding: { top: 41, right: 2, bottom: 4, left: 2 },
     svg: `
         <path d="M8 27 L5 34 H11 L15 27 M24 27 L25 34 H31 L29 26" fill="#66693b" stroke="#30291b"/>
         <path d="M4 26 Q4 13 18 13 Q31 13 33 26 Z" fill="#84602f" stroke="#30291b" stroke-width="2"/>
@@ -21,10 +21,8 @@ window.CREATURE_TEMPLATES['alligator-snapping-turtle'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'bite', isHit: true, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', magicSchool: null, name: 'Укус волка', stackable: false,
-    damageBase: 2, damagePerStr: 1, damageType: 'physical', target: 'any',
-    description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
-    stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,
+    id: 'bite', isHit: true, isShot: false, abilityType: 'weapon-strike', magicSchool: null, name: 'Укус черепахи', stackable: false,
+    damageBase: 4, damagePerStr: 1, damageType: 'physical', target: 'any',
     range: 1, minRange: 1, modifiable: false, noLOS: false,
     apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0, isAOE: false, aoeSize: 1,
     iconPath: 'assets/homm2/spell-bite.png',

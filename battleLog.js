@@ -2,11 +2,6 @@
 (() => {
   let disappearing = new WeakSet();
   let turnStartEntries = null;
-  const turnNames = {
-    wizard: 'Волшебника', monk: 'Монаха', wolf: 'Волка',
-    'black-wolf': 'Чёрного волка', 'hill-giant': 'Холмового Великана',
-    'lake-spirit': 'Духа озера', nymph: 'Нимфы'
-  };
   const beneficialEffects = new Set([
     'speed', 'light', 'adrenaline', 'vigor', 'levitation', 'water-entity',
     'liquid-membrane', 'sky-shot', 'power-hour', 'sprint',
@@ -45,7 +40,7 @@
     },
     beginTurn(entity) {
       finishTurnStart();
-      write(`Ход ${turnNames[entity.type] ?? entity.name}`, 'turn');
+      write(`Ходит: ${entity.name}`, 'turn');
       // Броски происходят после тиков. В журнале сначала показываем бонусы начала хода,
       // затем возникшие состояния и урон, сохраняя порядок самих боевых вычислений.
       turnStartEntries = [];

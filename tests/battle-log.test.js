@@ -28,7 +28,7 @@ test('round headings follow the scheduler rather than guessing from creature ord
   log.beginTurn(wizard);
   log.beginRound(2);
   log.beginTurn(wizard);
-  assert.deepEqual(lines(), ['Ход 1', 'Ход Волка', 'Ход Волшебника', 'Ход 2', 'Ход Волшебника']);
+  assert.deepEqual(lines(), ['Ход 1', 'Ходит: Волк', 'Ходит: Волшебник', 'Ход 2', 'Ходит: Волшебник']);
 });
 
 test('summoning and summon turns do not invent a new round', () => {
@@ -42,7 +42,7 @@ test('summoning and summon turns do not invent a new round', () => {
   assert.equal(lines().filter(text => /^Ход [0-9]/.test(text)).length, 1);
   log.beginRound(2);
   log.beginTurn(wizard);
-  assert.deepEqual(lines().slice(-2), ['Ход 2', 'Ход Волшебника']);
+  assert.deepEqual(lines().slice(-2), ['Ход 2', 'Ходит: Волшебник']);
 });
 
 test('damage includes zero and ES; expired summons disappear while killed ones die', () => {
@@ -87,6 +87,6 @@ test('loading a battle clears history and round/disappearance tracking; text sta
   log.beginTurn(wizard);
   log.removed(wizard);
   log.cast(wizard, { name: '<img src=x>' });
-  assert.deepEqual(lines().slice(0, 3), ['Ход 1', 'Ход Волшебника', 'Волшебник погибает.']);
+  assert.deepEqual(lines().slice(0, 3), ['Ход 1', 'Ходит: Волшебник', 'Волшебник погибает.']);
   assert.equal(entries.children.at(-1).textContent, 'Волшебник применяет «<img src=x>».');
 });

@@ -1,11 +1,11 @@
 // Данные существа и его собственных способностей.
 window.CREATURE_TEMPLATES['alligator-snapping-turtle'] = {
   name: 'Грифовая черепаха', type: 'alligator-snapping-turtle', ai: 'alligator-snapping-turtle',
-  level: 3, baseHP: 14, hpPerLevel: 6, baseWP: 10, wpPerLevel: 4, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+  level: 3, baseHP: 8, hpPerLevel: 4, baseWP: 8, wpPerLevel: 3, baseAP: 6, baseMP: 5, baseES: 0, baseVS: 0, baseRA: 0,
   baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
-  attributes: { vit: 4, str: 4, att: 0, int: 0, wis: 3, cha: 0, luc: 0 },
+  attributes: { vit: 2, str: 2, att: 3, int: 0, wis: 0, cha: 0, luc: 0 },
   appearance: {
     sprite: 'assets/map-editor/mobs/alligator-snapping-turtle.png',
     portrait: 'assets/homm2/portrait-alligator-snapping-turtle.png',
@@ -21,8 +21,10 @@ window.CREATURE_TEMPLATES['alligator-snapping-turtle'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'bite', isHit: true, isShot: false, abilityType: 'weapon-strike', magicSchool: null, name: 'Укус черепахи', stackable: false,
-    damageBase: 4, damagePerStr: 1, damageType: 'physical', target: 'any',
+    id: 'bite', isHit: true, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', magicSchool: null, name: 'Укус волка', stackable: false,
+    damageBase: 2, damagePerStr: 1, damageType: 'physical', target: 'any',
+    description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
+    stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,
     range: 1, minRange: 1, modifiable: false, noLOS: false,
     apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0, isAOE: false, aoeSize: 1,
     iconPath: 'assets/homm2/spell-bite.png',

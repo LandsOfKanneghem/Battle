@@ -2,7 +2,7 @@
 window.CREATURE_TEMPLATES['monk'] = {
   name: 'Монах', type: 'monk',
   level: 1, baseHP: 8, hpPerLevel: 5, baseWP: 15, wpPerLevel: 6, baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
-  baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+  baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 4,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   attributes: { vit: 2, str: 2, att: 1, int: 2, wis: 2, cha: 1, luc: 0 },

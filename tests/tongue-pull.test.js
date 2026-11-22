@@ -35,7 +35,7 @@ function setup(targetType = 'wizard') {
 
 test('tongue has the requested costs, STR damage, fixed range and no weapon hit or spell failure flags', () => {
   const { ctx, caster, spell } = setup();
-  assert.equal(spell.abilityType, 'ability');
+  assert.equal(spell.abilityType, 'weapon-strike');
   assert.equal(spell.target, 'any');
   assert.equal(spell.apCost, 3);
   assert.equal(spell.maxCooldown, 1);
@@ -143,7 +143,7 @@ test('preview shows enemy damage and no damage badge on allied targets', () => {
   }
 });
 
-test('tongue is an ability and does not trigger Sharp Shell weapon retaliation', () => {
+test('tongue has no melee hit flag and does not trigger Sharp Shell retaliation', () => {
   const { ctx, state, target, spell, deps } = setup('alligator-snapping-turtle');
   const player = ctx.createCreature('wizard', { x: 5, y: 5 });
   state.entities[0] = player;

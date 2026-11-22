@@ -23,7 +23,7 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
   },
   // Собственное умение жабы, независимо от общих школ магии.
   spells: [{
-    id: 'tongue-pull', abilityType: 'ability', magicSchool: null, name: 'Захват языком',
+    id: 'tongue-pull', abilityType: 'weapon-strike', magicSchool: null, name: 'Захват языком',
     isTonguePull: true, stackable: false, target: 'any',
     description: 'Притягивает языком цель на 2 клетки к себе. Вражеская цель при этом получает физический урон.',
     effectDescription: 'Притягивает цель на 2 клетки к заклинателю.',

@@ -196,16 +196,16 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     if (directTarget) {
       // Выбираем отскоки до урона: смерть основной цели не меняет уже выбранную цепь.
       const targets = sparkTargets ?? findSparkTargets(directTarget, spell.sparkRadius, spell.sparkCount, entities);
-      applyDamage(adjustedSpell, directTarget);
+      applyDamage(adjustedSpell, directTarget, caster);
       for (const secondary of targets) {
-        if (secondary.hp > 0) applyDamage({ ...adjustedSpell, damage: Math.floor(adjustedSpell.damage / 2) }, secondary);
+        if (secondary.hp > 0) applyDamage({ ...adjustedSpell, damage: Math.floor(adjustedSpell.damage / 2) }, secondary, caster);
       }
     }
   } else if (spell.id === 'ice-arrow') {
     if (directTarget) {
       // Сначала сопротивление → ES → HP, затем Охлаждение у выжившей цели.
       // Общая проверка попадания выше не допускает состояния при промахе.
-      applyDamage(adjustedSpell, directTarget);
+      applyDamage(adjustedSpell, directTarget, caster);
       if (directTarget.hp > 0) applyState(directTarget, {
         id: spell.stateId, duration, casterId: caster.id, casterName: caster.name
       });
@@ -253,14 +253,14 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       resolveStateSuppression(directTarget);
       recalculateStateStats(directTarget);
     } else if (directTarget) {
-      applyDamage(adjustedSpell, directTarget);
+      applyDamage(adjustedSpell, directTarget, caster);
       if (directTarget.hp > 0) applyState(directTarget, {
         id: spell.stateId, duration: spell.bleedDuration, casterId: caster.id, casterName: caster.name
       });
     }
   } else if (spell.id === 'bite') {
     if (directTarget) {
-      applyDamage(adjustedSpell, directTarget);
+      applyDamage(adjustedSpell, directTarget, caster);
       if (directTarget.hp > 0 && Math.random() * 100 < spell.bleedChance) {
         applyState(directTarget, { id: spell.stateId, duration: spell.bleedDuration,
           casterId: caster.id, casterName: caster.name });
@@ -284,7 +284,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     for (const victim of entities) {
       if (area.has(keyOf(victim.position)) && (spell.isAOE || victim.id !== caster.id)
         && (spell.target !== 'enemy' || !isAlly(victim))) {
-        applyDamage(adjustedSpell, victim);
+        applyDamage(adjustedSpell, victim, caster);
         if (spell.id === 'burning-hands') {
           // Сначала урон: Влага и Заморозка ещё защищают от текущего удара.
           // Затем прямое снятие у всех задетых целей, даже при поглощении/иммунитете.

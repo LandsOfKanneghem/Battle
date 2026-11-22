@@ -89,7 +89,7 @@ SPELLS = {
 }
 STATES = ['speed', 'slowness', 'freeze', 'burning', 'wet', 'heavy',
           'light', 'chill', 'adrenaline', 'adrenaline-crash', 'weakness', 'exhaustion',
-          'vigor', 'bleeding', 'water-entity', 'levitation', 'old-age', 'summon-time']
+          'vigor', 'bleeding', 'water-entity', 'levitation', 'old-age', 'summon-time', 'sharp-shell']
 RESISTANCES = {'ac': (2,3), 'physical': (1,5), 'fire': (0,0), 'water': (0,1),
                'air': (1,2), 'earth': (2,5), 'mind': (4,4), 'poison': (3,5)}
 icons = Image.open(SOURCES / 'icons.png').convert('RGB')
@@ -140,7 +140,8 @@ for source, entries in updates.items():
             state_icons[name] = tile
 for kind, name in [('state', 'adrenaline-crash'), ('state', 'chill'),
                    ('state', 'exhaustion'), ('state', 'weakness'), ('spell', 'slow'),
-                   ('spell', 'sparks'), ('spell', 'haste'), ('spell', 'boulder-smash')]:
+                   ('spell', 'sparks'), ('spell', 'haste'), ('spell', 'boulder-smash'),
+                   ('state', 'sharp-shell')]:
     tile = Image.open(SOURCES / 'refinements' / f'{kind}-{name}.png')
     if tile.size != (64,64) or tile.mode != 'P' or tile.getpalette() != spell_icons.getpalette():
         raise ValueError(f'{kind}-{name} must be 64×64 with the shared spell palette')
@@ -158,7 +159,7 @@ if set(state_icons) != set(STATES):
 # Keep one compiled sheet for review; sources/ contains only actual build inputs.
 (PROJECT / 'docs').mkdir(exist_ok=True)
 spell_icons.save(PROJECT / 'docs' / 'spell-icons-64.png', optimize=True)
-state_sheet = Image.new('P', (384,192))
+state_sheet = Image.new('P', (384, 64 * ((len(STATES) + 5) // 6)))
 state_sheet.putpalette(spell_icons.getpalette())
 for index, name in enumerate(STATES):
     save(state_icons[name], f'state-{name}')

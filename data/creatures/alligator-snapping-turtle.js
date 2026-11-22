@@ -6,6 +6,7 @@ window.CREATURE_TEMPLATES['alligator-snapping-turtle'] = {
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   attributes: { vit: 4, str: 4, att: 0, int: 0, wis: 3, cha: 0, luc: 0 },
+  innateStates: ['sharp-shell'],
   appearance: {
     sprite: 'assets/map-editor/mobs/alligator-snapping-turtle.png',
     portrait: 'assets/homm2/portrait-alligator-snapping-turtle.png',

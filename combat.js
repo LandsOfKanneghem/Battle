@@ -374,9 +374,12 @@ window.spellDamage = function(spell, entity) {
   return damageBreakdown(spell, entity).hpDamage;
 };
 
-window.applyDamage = function(spell, entity) {
+window.applyDamage = function(spell, entity, attacker = null) {
   if (isFrozen(entity)) return; // Не расходуем ни HP, ни ES, ни бонусы защиты.
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) return;
+  const reflectsMelee = entity.hp > 0 && attacker && attacker !== entity && attacker.hp > 0
+    && spell.abilityType === 'weapon-strike' && spell.isHit && !spell.isShot
+    && hasActiveState(entity, 'sharp-shell');
   const { absorbed, hpDamage } = damageBreakdown(spell, entity);
   consumeES(entity, absorbed);
   entity.hp = Math.max(0, entity.hp - hpDamage);
@@ -384,6 +387,11 @@ window.applyDamage = function(spell, entity) {
   // Показываем и поглощение ES, и нулевой урон после сопротивления; иммунитеты выше.
   const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
   window.playDamageAnimation?.(cell, absorbed + hpDamage);
+  if (reflectsMelee && absorbed + hpDamage > 0) {
+    // Отдельный физический урон: без броска попадания, штрафов атак и ответного отражения.
+    // Смертельный удар тоже задевает панцирь; удаление погибших выполнит вызывающий код.
+    window.applyDamage({ damage: 3, damageType: 'physical' }, attacker, entity);
+  }
 };
 
 window.shotHits = function(caster, target) {

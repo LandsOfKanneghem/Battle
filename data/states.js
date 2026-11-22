@@ -107,4 +107,11 @@ const OLD_AGE = {
   casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 3 H28 V7 H12 Z M12 37 H28 V33 H12 Z" fill="#8a6f4a"/><path d="M13 7 H27 L27 14 Q27 18 20 20 Q13 18 13 14 Z M13 33 H27 L27 26 Q27 22 20 20 Q13 22 13 26 Z" fill="#d5b98a" stroke="#8a6f4a" stroke-width="1.5"/><path d="M20 20 V26 M20 20 V14" stroke="#8a6f4a" stroke-width="1.5"/></svg>`
 };
-const stateTypes = new Map([[OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+const SHARP_SHELL = {
+  id: 'sharp-shell', name: 'Острый панцирь', duration: 0, mpBonus: 0, initiativeBonus: 0,
+  description: 'При получении урона от оружия ближнего боя владелец отражает 3 единицы физического урона.',
+  casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [],
+  permanent: true, unremovable: true, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 31 Q5 14 20 14 Q35 14 35 31 Z" fill="#9c562b" stroke="#3b261c" stroke-width="2"/><path d="M9 21 L8 10 L16 18 M17 16 L20 3 L24 17 M27 19 L33 9 L32 25" fill="#ffe4a4" stroke="#ad7633" stroke-width="1.5"/></svg>`
+};
+const stateTypes = new Map([[SHARP_SHELL.id, SHARP_SHELL], [OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

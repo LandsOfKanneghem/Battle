@@ -94,6 +94,27 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
   return points;
 };
 
+// Ось фиксируется по исходному положению; диагональ сдвигается на одну клетку.
+window.getTonguePullDestination = function(caster, target) {
+  const state = window.gameState;
+  const dx = caster.position.x - target.position.x;
+  const dy = caster.position.y - target.position.y;
+  const diagonal = Math.abs(dx) === Math.abs(dy);
+  const stepX = diagonal || Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) : 0;
+  const stepY = diagonal || Math.abs(dy) > Math.abs(dx) ? Math.sign(dy) : 0;
+  let point = { ...target.position };
+  for (let step = 0; step < (diagonal ? 1 : 2); step++) {
+    const next = { x: point.x + stepX, y: point.y + stepY };
+    const key = state.keyOf(next);
+    // Не перепрыгиваем через препятствия и существ, не занимаем клетку самого кастера.
+    if (next.x < 0 || next.x >= state.SIZE || next.y < 0 || next.y >= state.HEIGHT
+      || state.obstacles.has(key) || state.isWater(state.terrain.get(key))
+      || state.entities.some(entity => entity !== target && entity.hp > 0 && state.keyOf(entity.position) === key)) break;
+    point = next;
+  }
+  return point;
+};
+
 // Данные берём из общего gameState; функции эффектов, UI и анимаций — из deps.
 // Только эффект: ресурсы уже оплачены в первой фазе каста.
 window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = null, shotHit = null) {
@@ -161,6 +182,13 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     if (caster) {
       caster.position = { x: target.x, y: target.y };
       renderPosition(); // Мгновенное перемещение без шагов и расхода MP.
+    }
+  } else if (spell.isTonguePull) {
+    if (directTarget && caster) {
+      directTarget.position = window.getTonguePullDestination(caster, directTarget);
+      renderPosition();
+      // Сторона определяется относительно кастера, включая умение вражеского ИИ.
+      if (isAlly(directTarget) !== isAlly(caster)) applyDamage(adjustedSpell, directTarget, caster);
     }
   } else if (spell.isPowerHour) {
     const area = new Set(affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE, HEIGHT).map(keyOf));
@@ -304,6 +332,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'tongue-pull': ctx => {
+    ctx.deps.playTonguePullAnimation(ctx.fromCell, ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
   'power-hour': ctx => {
     const { entities, obstacles, terrain, keyOf, SIZE, HEIGHT, cells, isAlly } = window.gameState;
     const area = new Set(ctx.deps.affectedCells(ctx.target, ctx.spell, ctx.caster,

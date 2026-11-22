@@ -49,6 +49,31 @@ window.playHealAnimation = function(cell) {
   setTimeout(() => sparks.forEach(spark => spark.remove()), 1100);
 };
 
+window.playTonguePullAnimation = function(fromCell, toCell) {
+  const from = fromCell.getBoundingClientRect(), to = toCell.getBoundingClientRect();
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  const tongue = document.createElement('span');
+  tongue.className = 'spell-projectile tongue-animation';
+  tongue.setAttribute('aria-hidden', 'true');
+  Object.assign(tongue.style, {
+    left: `${from.left + from.width / 2 + window.scrollX}px`,
+    top: `${from.top + from.height / 2 + window.scrollY - 3}px`,
+    width: `${Math.hypot(dx, dy)}px`, height: '6px', background: '#d45579',
+    border: '1px solid #76283e', boxShadow: '0 1px 0 #2b1620', transformOrigin: '0 50%',
+    filter: 'drop-shadow(0 0 2px #572435)'
+  });
+  document.body.appendChild(tongue);
+  const rotation = `rotate(${Math.atan2(dy, dx)}rad)`;
+  tongue.animate([
+    { transform: `${rotation} scaleX(0)`, offset: 0 },
+    { transform: `${rotation} scaleX(1)`, offset: .4 },
+    { transform: `${rotation} scaleX(1)`, offset: .55 },
+    { transform: `${rotation} scaleX(0)`, offset: 1 }
+  ], { duration: 500, easing: 'linear', fill: 'both' });
+  setTimeout(() => tongue.remove(), 500);
+};
+
 window.playProjectileAnimation = function(fromCell, toCell, type = 'fire', onArrival = null, spell = null) {
   const battleVersion = window.gameState.battleVersion;
   const from = fromCell.getBoundingClientRect();

@@ -74,6 +74,8 @@ window.inSpellReach = function(target, spell) {
 };
 
 window.canTarget = function(target, spell) {
+  if (spell?.isTonguePull && !window.gameState.entities.some(entity => entity.hp > 0
+    && window.gameState.keyOf(entity.position) === window.gameState.keyOf(target))) return false;
   if (spell?.isGlobal) {
     const caster = window.gameState.activeEntity();
     return !!caster && caster.availableSpells.includes(spell) && window.gameState.keyOf(target) === window.gameState.keyOf(caster.position);
@@ -119,6 +121,7 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
   const primary = spell.isSparks ? window.gameState.entities.find(entity => window.gameState.keyOf(entity.position) === window.gameState.keyOf(center)) : null;
   for (const entity of window.gameState.entities) {
     if (entity.hp <= 0 || !keys.has(window.gameState.keyOf(entity.position))) continue;
+    if (spell.isTonguePull && caster && window.gameState.isAlly(entity) === window.gameState.isAlly(caster)) continue;
     if (spell.target === 'enemy' && window.gameState.isAlly(entity)) continue;
     const badge = document.createElement('span');
     if (spell.isHealHarm && window.gameState.isAlly(entity)) {

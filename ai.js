@@ -189,6 +189,9 @@
       window.battleLog?.failure(caster, spell);
       window.playFailureAnimation(cell);
       setTimeout(() => { if (current(caster, version)) onDone(); }, 0);
+    } else if (spell.isTonguePull) {
+      window.playTonguePullAnimation(state().cells[caster.position.y * state().SIZE + caster.position.x], cell);
+      setTimeout(finish, 500);
     } else if (spell.isShot) {
       const type = spell.id === 'boulder-throw' ? 'rock' : spell.damageType === 'water' ? 'water' : 'fire';
       window.playProjectileAnimation(state().cells[caster.position.y * state().SIZE + caster.position.x], cell,

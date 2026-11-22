@@ -173,4 +173,7 @@ for name, (x,y) in SPELLS.items():
 for name, (x,y) in RESISTANCES.items():
     save(cell(icons, x, y, 6, 6), f'res-{name}', (64,64))
 
+# Собственные умения существ могут иметь отдельные иконки вне общего атласа школ.
+save(Image.open(SOURCES / 'refinements' / 'spell-tongue-pull.png'), 'spell-tongue-pull')
+
 print('Prepared portraits, leather and icons from source illustrations.')

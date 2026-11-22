@@ -77,7 +77,7 @@ test('creatures with their own bite can be tuned without changing wolves or exis
   const ctx = setup();
   const wolfTemplate = ctx.CREATURE_TEMPLATES.wolf;
   const wolfDamage = wolfTemplate.spells[0].damageBase;
-  for (const type of ['alligator-snapping-turtle', 'hound']) {
+  for (const type of ['alligator-snapping-turtle', 'hound', 'werewolf']) {
     const template = ctx.CREATURE_TEMPLATES[type];
     assert.notEqual(template.attributes, wolfTemplate.attributes);
     assert.notEqual(template.spells[0], wolfTemplate.spells[0]);
@@ -160,6 +160,29 @@ test('player party order is copied from templates and fixed for the battle', () 
   ctx.preparePartyOrder([nextWizard, nextMonk]);
   assert.equal(nextMonk.partyOrder, 1);
   assert.equal(nextWizard.partyOrder, 2, 'new template preferences apply in the next battle');
+});
+
+test('werewolf has independent giant stats and its own copy of the ordinary wolf bite', () => {
+  const ctx = setup();
+  const giant = ctx.CREATURE_TEMPLATES['hill-giant'];
+  const wolf = ctx.CREATURE_TEMPLATES.wolf;
+  const werewolf = ctx.CREATURE_TEMPLATES.werewolf;
+  for (const key of Object.keys(giant).filter(key => typeof giant[key] === 'number')) {
+    assert.equal(werewolf[key], giant[key], key);
+  }
+  assert.deepEqual(werewolf.attributes, giant.attributes);
+  assert.notEqual(werewolf.attributes, giant.attributes);
+  assert.deepEqual(werewolf.spells, wolf.spells);
+  assert.notEqual(werewolf.spells[0], wolf.spells[0]);
+  const entity = ctx.createCreature('werewolf', { x: 2, y: 1 });
+  const other = ctx.createCreature('hill-giant', { x: 3, y: 1 });
+  for (const key of ['level', 'hp', 'maxHP', 'wp', 'maxWP', 'ap', 'maxAP', 'mp', 'maxMP', 'maxHitCount']) {
+    assert.equal(entity[key], other[key], key);
+  }
+  assert.equal(entity.ai, 'werewolf');
+  assert.equal(entity.availableSpells.length, 1);
+  assert.equal(entity.spellPages[0][0].id, 'bite');
+  assert.ok(entity.spellPages[0].slice(1).every(slot => slot === null));
 });
 
 test('battle party numbers are exactly 1..N for subsets and duplicate hero types, excluding enemies and summons', () => {

@@ -32,7 +32,7 @@ test('all registered creature books resolve, with independent local catalogs for
     assert.equal(creature.availableSpells.length, count, `${type} has no unresolved slots`);
     if (type === 'wizard' || type === 'monk') assert.equal(template.spells, undefined);
     else {
-      assert.ok(template.spells.length > 0);
+      assert.ok(Array.isArray(template.spells));
       for (const spell of creature.availableSpells) {
         assert.ok(template.spells.some(definition => definition.id === spell.id));
       }
@@ -116,6 +116,27 @@ test('sprite, portrait and local ability icon paths live with each creature and 
     assert.ok(displaySize.width > 0 && displaySize.height > 0);
     assert.ok(padding.left + padding.right < sourceSize.width);
     assert.ok(padding.top + padding.bottom < sourceSize.height);
+  }
+});
+
+test('giant toad has giant stats, independent attributes and an empty ability book', () => {
+  const ctx = setup();
+  const giant = ctx.CREATURE_TEMPLATES['hill-giant'];
+  const toad = ctx.CREATURE_TEMPLATES['giant-toad'];
+  const statKeys = Object.keys(giant).filter(key => typeof giant[key] === 'number');
+  for (const key of statKeys) assert.equal(toad[key], giant[key], key);
+  assert.deepEqual(toad.attributes, giant.attributes);
+  assert.notEqual(toad.attributes, giant.attributes);
+  const entity = ctx.createCreature('giant-toad', { x: 2, y: 1 });
+  assert.equal(entity.type, 'giant-toad');
+  assert.equal(entity.ai, 'giant-toad');
+  assert.equal(entity.availableSpells.length, 0);
+  assert.equal(entity.spellPages.length, 1);
+  assert.ok(entity.spellPages[0].every(slot => slot === null));
+  assert.equal(entity.hitCount, 0);
+  const creature = ctx.createCreature('hill-giant', { x: 3, y: 1 });
+  for (const key of ['level', 'hp', 'maxHP', 'wp', 'maxWP', 'ap', 'maxAP', 'mp', 'maxMP', 'maxHitCount']) {
+    assert.equal(entity[key], creature[key], key);
   }
 });
 

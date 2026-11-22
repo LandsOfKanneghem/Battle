@@ -202,3 +202,24 @@ test('battle party numbers are exactly 1..N for subsets and duplicate hero types
   assert.equal(Object.hasOwn(wolf, 'partyOrder'), false);
   assert.equal(Object.hasOwn(spirit, 'partyOrder'), false);
 });
+
+test('specter copies monk combat stats without inheriting its party rank or spell book', () => {
+  const ctx = setup();
+  const monk = ctx.CREATURE_TEMPLATES.monk;
+  const specter = ctx.CREATURE_TEMPLATES.specter;
+  for (const key of Object.keys(monk).filter(key => typeof monk[key] === 'number' && key !== 'partyOrder')) {
+    assert.equal(specter[key], monk[key], key);
+  }
+  assert.deepEqual(specter.attributes, monk.attributes);
+  assert.notEqual(specter.attributes, monk.attributes);
+  const entity = ctx.createCreature('specter', { x: 2, y: 1 });
+  const other = ctx.createCreature('monk', { x: 3, y: 1 });
+  for (const key of ['level', 'hp', 'maxHP', 'wp', 'maxWP', 'ap', 'maxAP', 'mp', 'maxMP', 'maxHitCount']) {
+    assert.equal(entity[key], other[key], key);
+  }
+  assert.equal(entity.ai, 'specter');
+  assert.equal(entity.partyOrder, undefined);
+  assert.equal(entity.availableSpells.length, 0);
+  assert.equal(entity.spellPages.length, 1);
+  assert.ok(entity.spellPages[0].every(slot => slot === null));
+});

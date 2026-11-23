@@ -183,16 +183,16 @@ window.DEFAULT_BATTLE_MAP = {
       "y": 7
     },
     {
-      "type": "black-wolf",
-      "team": "enemy",
-      "x": 5,
-      "y": 3
-    },
-    {
       "type": "monk",
       "team": "ally",
       "x": 4,
       "y": 7
+    },
+    {
+      "type": "black-wolf",
+      "team": "enemy",
+      "x": 5,
+      "y": 3
     },
     {
       "type": "wolf",

@@ -10,7 +10,7 @@ function setup() {
   const ctx = { document: { getElementById: () => ({}), createElement: () => ({}) }, setTimeout() {} };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const file of ['gameState.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
+  for (const file of ['gameState.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
   }
   ctx.CREATURE_TEMPLATES = { wizard: { type: 'wizard' }, wolf: { type: 'wolf' } };
@@ -172,3 +172,39 @@ test('direct effect calls cannot teleport or summon into void', () => {
   assert.deepEqual(caster.position, { x: 1, y: 1 });
   assert.equal(state.entities.length, 0);
 });
+
+test('absolute lighting loads with independent copies and default day light', () => {
+  const ctx = setup(), data = fixture();
+  assert.equal(ctx.BattleLighting.at(ctx.validateBattleMap(data).lighting, 0, 0), 1);
+  data.lighting = { mode: 'absolute', ambient: 80, cells: Array.from({ length: 12 }, () => Array(12).fill(null)) };
+  data.lighting.cells[0][0] = 100;
+  const loaded = ctx.validateBattleMap(data);
+  assert.equal(ctx.BattleLighting.at(loaded.lighting, 0, 0), 1);
+  assert.equal(ctx.BattleLighting.at(loaded.lighting, 1, 0), .8);
+  data.lighting.cells[0][0] = 60;
+  assert.equal(loaded.lighting.cells[0][0], 100);
+});
+
+test('older relative and out-of-range light follows editor migration rules', () => {
+  const ctx = setup(), data = fixture();
+  data.lighting = { ambient: 60, cells: Array.from({ length: 12 }, () => Array(12).fill(100)) };
+  data.lighting.cells[0][0] = 150;
+  const light = ctx.validateBattleMap(data).lighting;
+  assert.equal(light.mode, 'absolute');
+  assert.equal(ctx.BattleLighting.at(light, 0, 0), .9);
+  assert.equal(light.cells[1][1], null);
+  data.lighting = { mode: 'absolute', ambient: 20, cells: Array.from({ length: 12 }, () => Array(12).fill(180)) };
+  const migrated = ctx.validateBattleMap(data).lighting;
+  assert.equal(migrated.ambient, 60);
+  assert.equal(migrated.cells[0][0], 120);
+});
+
+for (const bad of [null, {}, { ambient: 80, cells: [] },
+  { mode: 'unknown', ambient: 80, cells: Array.from({ length: 12 }, () => Array(12).fill(100)) }]) {
+  test(`invalid lighting rejects the map before combat resets: ${JSON.stringify(bad).slice(0, 50)}`, async () => {
+    const ctx = setup(), data = fixture();
+    data.lighting = bad;
+    await assert.rejects(ctx.startBattleFromMap(data), /освещения/);
+    assert.equal(ctx.gameState.battleVersion, 0);
+  });
+}

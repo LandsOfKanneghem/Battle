@@ -8,6 +8,7 @@ window.gameState = {
   cells: [],
   terrain: new Map(),
   mapType: 'surface',
+  lighting: null,
   obstacles: new Map(),
   turnOrderIds: [],
   roundNumber: 0,

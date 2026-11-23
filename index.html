@@ -122,6 +122,7 @@
   <script src="battleLog.js"></script>
   <script src="turnQueue.js"></script>
   <script src="undergroundRenderer.js"></script>
+  <script src="lighting.js"></script>
   <script src="terrain-renderer.js"></script>
   <script src="maps/MAP%201.js"></script>
   <script src="init.js"></script>
@@ -208,6 +209,7 @@
     function renderPosition() {
       // Перенос DOM-элемента мгновенный: никаких CSS-переходов.
       for (const entity of gameState.entities) {
+        entity.svg.style.setProperty('--entity-lighting', window.BattleLighting.at(gameState.lighting, entity.position.x, entity.position.y));
         gameState.cells[entity.position.y * gameState.SIZE + entity.position.x].appendChild(entity.svg);
       }
     }

@@ -64,7 +64,8 @@
       if (object.blocking !== true || object.interactive !== false) throw new Error('Неверные свойства препятствия.');
       return { type: object.type, x: object.x, y: object.y };
     });
-    return { mapType, wallStyles, tiles: content.tiles.map(row => [...row]), mobs: normalizedMobs, objects: normalizedObjects };
+    const lighting = window.BattleLighting.read(content.lighting);
+    return { mapType, wallStyles, lighting, tiles: content.tiles.map(row => [...row]), mobs: normalizedMobs, objects: normalizedObjects };
   };
 
   function createTurnSlot(entity) {
@@ -91,7 +92,7 @@
 
   window.startBattleFromMap = async function(data) {
     const map = window.validateBattleMap(data);
-    const terrainCanvas = await window.createBattleTerrain(map.tiles, map.mapType, map.wallStyles);
+    const terrainCanvas = await window.createBattleTerrain(map.tiles, map.mapType, map.wallStyles, map.lighting);
     const state = window.gameState;
     // ИИ/заморозка проверяют turnVersion, касты/шаги — battleVersion.
     state.turnVersion++;
@@ -108,6 +109,7 @@
     state.cells = [];
     state.terrain.clear();
     state.mapType = map.mapType;
+    state.lighting = map.lighting;
     state.obstacles.clear();
     state.activeEntityId = null;
     state.selectedEntityId = null;
@@ -148,6 +150,7 @@
         image.src = 'assets/map-editor/objects/crate.png';
         image.alt = 'Ящик';
         image.draggable = false;
+        image.style.setProperty('--entity-lighting', window.BattleLighting.at(map.lighting, x, y));
         cell.appendChild(image);
       }
       state.cells.push(cell);

@@ -27,7 +27,7 @@
   }
 
   // Готовим холст до замены текущего боя: ошибка загрузки ресурсов его не разрушает.
-  window.createBattleTerrain = async function(tiles, mapType = 'surface', wallStyles = null) {
+  window.createBattleTerrain = async function(tiles, mapType = 'surface', wallStyles = null, lighting = null) {
     const images = await loadArtwork();
     const map = tiles.map(row => row.map(name => TERRAIN[name]));
     const mapDocument = { mapType, tiles: map, wallStyles };
@@ -137,6 +137,15 @@
 
 
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLUMNS; x++) drawCell(x, y);
-    return canvas;
+    // Apply light once to the completed original tile, as in MapEditor.
+    const litCanvas = canvas.cloneNode();
+    const lit = litCanvas.getContext('2d');
+    lit.imageSmoothingEnabled = false;
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLUMNS; x++) {
+      lit.filter = `brightness(${window.BattleLighting.at(lighting, x, y)})`;
+      lit.drawImage(canvas, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE,
+        x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+    return litCanvas;
   };
 })();

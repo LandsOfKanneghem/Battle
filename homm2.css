@@ -91,6 +91,8 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 }
 #battlefield .battle-creature image { image-rendering: pixelated; }
 #battlefield img.obstacle { width: 48px; height: 48px; z-index: 2; image-rendering: pixelated; filter: none; }
+#battlefield svg.battle-creature, #battlefield img.obstacle { filter: brightness(var(--entity-lighting, 1)); }
+#battlefield svg.battle-creature.entity-hover { filter: brightness(var(--entity-lighting, 1)) url('#queue-entity-outline'); }
 .battle-toolbar { display: flex; align-items: center; gap: 8px; margin: 4px 8px 0; position: relative; z-index: 1001; }
 .battle-toolbar-button { width: 32px; height: 32px; padding: 2px; border: 1px solid #8d805e; background: #3a3a36; color: var(--parchment); cursor: pointer; }
 .battle-toolbar-button svg { display: block; width: 100%; height: 100%; }

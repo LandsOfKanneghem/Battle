@@ -527,14 +527,13 @@ window.castSpell = function(targetCell, deps) {
   const caster = activeEntity();
   const spell = caster?.availableSpells.find(item => item.id === gameState.preparedSpellId);
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
-  // Занятая клетка не расходует ресурсы призыва и сохраняет подготовку.
-  if (spell.isSummon && entities.some(entity => entity.hp > 0
-    && keyOf(entity.position) === keyOf(target))) return false;
-  const teleportOccupant = spell.isTeleport && entities.find(entity => entity.hp > 0
+  // Единое правило: новые заклинания с требованием пустой клетки помечаются requiresEmptyCell.
+  const requiresEmptyCell = spell.requiresEmptyCell || spell.isSummon || spell.isTeleport;
+  const occupant = requiresEmptyCell && entities.find(entity => entity.hp > 0
     && keyOf(entity.position) === keyOf(target));
-  const teleportBlocked = teleportOccupant && gameState.isHiddenFrom(teleportOccupant, caster);
+  const hiddenObstacle = occupant && gameState.isHiddenFrom(occupant, caster);
   // Видимую занятую клетку отклоняем до оплаты; скрытое препятствие обнаруживается только при касте.
-  if (teleportOccupant && !teleportBlocked) return false;
+  if (occupant && !hiddenObstacle) return false;
   // Лечение и защита требуют живого союзника до оплаты.
   if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
@@ -545,7 +544,7 @@ window.castSpell = function(targetCell, deps) {
   if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
   // Отдельный бросок до оплаты: при SFC = 0 последовательность бросков выстрелов не меняется.
   const sfc = getEffectiveStat(caster, 'sfc');
-  const failed = teleportBlocked || (spell.abilityType === 'spell' && sfc > 0 && Math.random() * 100 < sfc);
+  const failed = hiddenObstacle || (spell.abilityType === 'spell' && sfc > 0 && Math.random() * 100 < sfc);
   const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
   // Этот же снимок целей используется для анимации и последующего урона.
   const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount, entities) : null;

@@ -48,7 +48,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24 Q10 18 20 20 Q30 22 36 18 M4 30 Q10 24 20 26 Q30 28 36 24" fill="none" stroke="#6fbaff" stroke-width="2"/><path d="M20 4 Q22 10 26 12 Q32 15 30 20 Q28 26 20 26 Q12 26 10 20 Q8 15 14 12 Q18 10 20 4 Z" fill="#d5edf6" stroke="#829ea9" stroke-width="2"/></svg>`
 }, {
-  id: 'teleport', abilityType: 'spell', magicSchool: 'air', isTeleport: true,
+  id: 'teleport', abilityType: 'spell', magicSchool: 'air', isTeleport: true, requiresEmptyCell: true,
   name: 'Перемещение', stackable: false, target: 'none',
   description: 'Заклинатель телепортируется в указанную клетку.',
   range: 5, minRange: 1, modifiable: false, noLOS: true,
@@ -56,7 +56,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14" fill="none" stroke="#a7eced" stroke-width="2" stroke-dasharray="4 3"/><path d="M20 6 V14 M14 10 L20 16 L26 10" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><path d="M20 34 V26 M14 30 L20 24 L26 30" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="3" fill="#86e8ff"/></svg>`
 }, {
-  id: 'lake-spirit', durationBase: 2, durationPerInt: 0, abilityType: 'spell', name: 'Дух озера', stackable: false, isSummon: true, target: 'none',
+  id: 'lake-spirit', durationBase: 2, durationPerInt: 0, abilityType: 'spell', name: 'Дух озера', stackable: false, isSummon: true, requiresEmptyCell: true, target: 'none',
   description: 'Призывает левитирующий шар воды. Дух озера наносит слабый урон водой на небольшой дистанции. Исчезает, получив 1 атаку.',
   minRange: 1, range: 1, modifiable: false, noLOS: false,
   apCost: 3, maxUsesPerTurn: 1, maxCooldown: 4,

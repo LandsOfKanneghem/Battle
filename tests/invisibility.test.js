@@ -184,25 +184,34 @@ test('invisible creatures block neither LOS nor the fire cone, while crates, voi
   assert.equal(ctx.checkLOS(wizard.position, beyond), false);
 });
 
-test('teleport into a concealed enemy pays the cast and fails; a visible occupied target pays nothing', () => {
-  const { ctx, state, wizard, shadow, hide, deps } = setup();
-  const teleport = wizard.availableSpells.find(spell => spell.id === 'teleport');
-  state.preparedSpellId = teleport.id;
-  const targetCell = { dataset: { x: shadow.position.x, y: shadow.position.y } };
-  const failures = [];
-  const castDeps = { ...deps, playFailureAnimation: cell => failures.push(cell) };
-  const initial = { ap: wizard.ap, scc: wizard.spellCastCount, position: plain(wizard.position) };
-  assert.equal(ctx.castSpell(targetCell, castDeps), false);
-  assert.equal(wizard.ap, initial.ap);
-  assert.equal(teleport.cooldown, 0);
-  hide(shadow);
-  assert.equal(ctx.castSpell(targetCell, castDeps), true);
-  assert.equal(wizard.ap, initial.ap - teleport.apCost);
-  assert.equal(wizard.spellCastCount, initial.scc + 1);
-  assert.equal(teleport.cooldown, teleport.maxCooldown);
-  assert.equal(teleport.usesThisTurn, 1);
-  assert.deepEqual(plain(wizard.position), initial.position);
-  assert.deepEqual(failures, [targetCell]);
-  assert.equal(state.preparedSpellId, null);
-  assert.equal(state.isCasting, false);
-});
+for (const spellId of ['teleport', 'lake-spirit', 'future-empty-cell-spell']) {
+  test(`${spellId} pays and fails on a concealed occupant, but pays nothing on a visible occupant`, () => {
+    const { ctx, state, wizard, shadow, hide, deps } = setup();
+    const spell = spellId === 'future-empty-cell-spell'
+      ? { ...wizard.availableSpells.find(s => s.id === 'teleport'), id: spellId,
+        isTeleport: false, requiresEmptyCell: true, maxUsesPerBattle: 1 }
+      : wizard.availableSpells.find(s => s.id === spellId);
+    if (spellId === 'future-empty-cell-spell') wizard.availableSpells.push(spell);
+    state.preparedSpellId = spell.id;
+    shadow.position = { x: 2, y: 1 };
+    const targetCell = { dataset: { x: shadow.position.x, y: shadow.position.y } };
+    const failures = [];
+    const castDeps = { ...deps, playFailureAnimation: cell => failures.push(cell) };
+    const initial = { ap: wizard.ap, scc: wizard.spellCastCount, position: plain(wizard.position), count: state.entities.length };
+    assert.equal(ctx.castSpell(targetCell, castDeps), false);
+    assert.equal(wizard.ap, initial.ap);
+    assert.equal(spell.cooldown, 0);
+    hide(shadow);
+    assert.equal(ctx.castSpell(targetCell, castDeps), true);
+    assert.equal(wizard.ap, initial.ap - spell.apCost);
+    assert.equal(wizard.spellCastCount, initial.scc + 1);
+    assert.equal(spell.cooldown, spell.maxCooldown);
+    assert.equal(spell.usesThisTurn, 1);
+    if (spell.maxUsesPerBattle !== undefined) assert.equal(spell.usesTotal, 1);
+    assert.deepEqual(plain(wizard.position), initial.position);
+    assert.equal(state.entities.length, initial.count, 'no creature is summoned');
+    assert.deepEqual(failures, [targetCell]);
+    assert.equal(state.preparedSpellId, null);
+    assert.equal(state.isCasting, false);
+  });
+}

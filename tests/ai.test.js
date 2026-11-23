@@ -178,3 +178,14 @@ test('AI attacks immediately when already in range', () => {
   assert.equal(h.attacks.length, 1);
   assert.equal(h.moves.length, 0);
 });
+
+test('AI does not attack or chase a hidden enemy, and resumes when it is visible', () => {
+  const h = setup({ position: { x: 2, y: 2 }, target: { x: 4, y: 2 } });
+  h.victim.states = [{ id: 'invisibility', duration: 2 }];
+  h.turn();
+  assert.equal(h.attacks.length, 0);
+  assert.equal(h.moves.length, 0);
+  h.victim.states = [];
+  h.turn();
+  assert.ok(h.attacks.length > 0);
+});

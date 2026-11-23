@@ -264,3 +264,6 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
   .stat-column:nth-child(n+3) { padding-top: 8px; }
   .panel h1 { font-size: 18px; margin: 0; }
 }
+
+/* Скрываем только полевой спрайт, сохраняя портреты в обеих очередях. */
+#battlefield svg.battle-creature.entity-invisible { visibility: hidden; pointer-events: none; }

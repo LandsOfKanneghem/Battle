@@ -11,11 +11,14 @@ function setup(targetType = 'wizard') {
       cells: Array.from({ length: 144 }, () => ({ appendChild() {} })), effectBadges: [],
       keyOf: point => `${point.x},${point.y}`, isWater: type => ['deep-water', 'shallow-water'].includes(type),
       activeEntity() { return this.entities[0]; } },
-    document: { createElementNS: () => ({ style: {}, setAttribute() {} }), createElement: () => ({}) },
+    document: { getElementById: () => ({}), createElementNS: () => ({ style: {}, setAttribute() {} }), createElement: () => ({}) },
     renderPosition() {}
   };
   ctx.window = ctx;
   vm.createContext(ctx);
+  const fixtureState = ctx.gameState;
+  vm.runInContext(fs.readFileSync(path.join(root, 'gameState.js'), 'utf8'), ctx);
+  Object.assign(ctx.gameState, fixtureState);
   const scripts = [...fs.readFileSync(path.join(root, 'index.html'), 'utf8')
     .matchAll(/src="(data\/[^\"]+\.js)"/g)].map(match => match[1]);
   for (const file of [...scripts, 'combat.js', 'spellTargeting.js', 'spellLogic.js']) {

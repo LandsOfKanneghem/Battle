@@ -90,3 +90,9 @@ test('loading a battle clears history and round/disappearance tracking; text sta
   assert.deepEqual(lines().slice(0, 3), ['Ход 1', 'Ходит: Волшебник', 'Волшебник погибает.']);
   assert.equal(entries.children.at(-1).textContent, 'Волшебник применяет «<img src=x>».');
 });
+
+test('hidden obstacle message does not identify the concealed creature', () => {
+  const { log, lines } = setup();
+  log.blocked();
+  assert.deepEqual(lines(), ['Что-то преграждает дорогу!']);
+});

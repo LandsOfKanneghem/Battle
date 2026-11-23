@@ -228,7 +228,7 @@
       if (!cell || !gameState.battlefield.contains(cell)) return;
       const entity = gameState.entities.find(item => item.hp > 0 && item.position.x === Number(cell.dataset.x)
         && item.position.y === Number(cell.dataset.y));
-      if (entity) window.selectEntity(entity.id);
+      if (entity && !gameState.isHiddenFromPlayer(entity)) window.selectEntity(entity.id);
     });
 
     gameState.endTurnButton.addEventListener('click', () => {
@@ -248,7 +248,7 @@
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
-      gameState.fieldHoveredEntityId = gameState.entities.find(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))?.id ?? null;
+      gameState.fieldHoveredEntityId = gameState.entities.find(entity => !gameState.isHiddenFromPlayer(entity) && gameState.keyOf(entity.position) === gameState.keyOf(target))?.id ?? null;
       window.updatePanel();
       const mover = window.activeMover();
       if (gameState.isMoving || !mover) return;
@@ -265,12 +265,14 @@
       }
       // Повторные события в одной клетке не запускают A* заново.
       // Позиция, MP и Левитация включены в ключ, чтобы не использовать устаревшее превью.
-      const key = `${mover.id}:${gameState.keyOf(target)}:${gameState.keyOf(mover.position)}:${mover.mp}:${window.hasActiveState(mover, 'levitation')}`;
+      const blockers = gameState.entities.filter(entity => !gameState.isHiddenFrom(entity, mover))
+        .map(entity => `${entity.id}@${gameState.keyOf(entity.position)}`).join(';');
+      const key = `${blockers}:${mover.id}:${gameState.keyOf(target)}:${gameState.keyOf(mover.position)}:${mover.mp}:${window.hasActiveState(mover, 'levitation')}`;
       if (gameState.previewKey === key) return;
       window.clearHighlight();
       // Стоимость нужна только для свободного места назначения.
       // Даже свой персонаж занимает клетку: число под ним не показываем.
-      if (!gameState.isFree(target, mover) || gameState.entities.some(entity => gameState.keyOf(entity.position) === gameState.keyOf(target))) {
+      if (!gameState.isFree(target, mover, true) || gameState.entities.some(entity => !gameState.isHiddenFromPlayer(entity) && gameState.keyOf(entity.position) === gameState.keyOf(target))) {
         gameState.previewKey = key;
         return;
       }
@@ -300,7 +302,7 @@
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
-      if (!gameState.isFree(target, mover)) return;
+      if (!gameState.isFree(target, mover, true)) return;
       const path = window.buildPath(mover.position, target, mover);
       // Недоступный маршрут игнорируем, сохраняя текущее превью.
       if (mover.mp <= 0 || path === null || gameState.pathCost(path, mover) > mover.mp) return;

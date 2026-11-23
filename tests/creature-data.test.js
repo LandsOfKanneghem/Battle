@@ -242,7 +242,7 @@ test('invisibility spells are local, self-range dark spells with fixed two-turn 
   spell.cooldown = 4;
   assert.equal(specter.availableSpells[0].cooldown, 0);
   const state = vm.runInContext("stateTypes.get('invisibility')", ctx);
-  assert.equal(state.description, 'ПОКА ОТСУТСТВУЕТ.');
+  assert.equal(state.description, 'Цель становится невидимой для своих врагов. Использование умений и заклинаний не снимает невидимость.');
   assert.equal(state.permanent, false);
   assert.equal(state.modifiers, undefined);
 });

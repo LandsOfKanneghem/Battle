@@ -365,3 +365,11 @@ window.playBonusAnimation = function(cell, text, offset = 0) {
   label.setAttribute('aria-hidden', 'true');
   appendCombatPopup(cell, label, 1400, offset);
 };
+
+window.playBarrierAnimation = function(cell) {
+  const label = document.createElement('span');
+  label.className = 'miss-label barrier-label';
+  label.textContent = 'Преграда!';
+  label.setAttribute('aria-hidden', 'true');
+  appendCombatPopup(cell, label, 1200);
+};

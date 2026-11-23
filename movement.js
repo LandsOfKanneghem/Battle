@@ -10,7 +10,7 @@ window.scheduleBattleStep = function() {
 };
 
 window.buildPath = function(start, target, entity = window.gameState.activeEntity()) {
-  if (!window.gameState.isFree(start, entity) || !window.gameState.isFree(target, entity)) return null;
+  if (!window.gameState.isFree(start, entity, true) || !window.gameState.isFree(target, entity, true)) return null;
   // Воду можно пересекать с Левитацией, но точка назначения всегда на суше.
   if (window.gameState.isWater(window.gameState.terrain.get(window.gameState.keyOf(target)))) return null;
   const heuristic = (point) => Math.abs(point.x - target.x) + Math.abs(point.y - target.y);
@@ -34,7 +34,7 @@ window.buildPath = function(start, target, entity = window.gameState.activeEntit
     }
     for (const [dx, dy] of directions) {
       const next = { x: current.x + dx, y: current.y + dy };
-      if (!window.gameState.isFree(next, entity)) continue;
+      if (!window.gameState.isFree(next, entity, true)) continue;
       const g = current.g + window.gameState.entryCost(next, entity);
       if (g >= (bestCost.get(window.gameState.keyOf(next)) ?? Infinity)) continue;
       bestCost.set(window.gameState.keyOf(next), g);
@@ -58,6 +58,23 @@ window.takeStep = function() {
   const mover = window.activeMover();
   if (!window.gameState.isMoving || !mover || window.gameState.stepQueue.length === 0) return;
   const next = window.gameState.stepQueue[0];
+  // Маршрут строился по известным препятствиям; перед шагом проверяем настоящую занятость.
+  if (!window.gameState.isFree(next, mover)) {
+    const blocker = window.gameState.entities.find(entity => entity.hp > 0
+      && window.gameState.keyOf(entity.position) === window.gameState.keyOf(next)
+      && window.gameState.isHiddenFrom(entity, mover));
+    window.gameState.stepQueue = [];
+    window.gameState.isMoving = false;
+    window.gameState.battlefield.classList.remove('moving');
+    window.clearHighlight();
+    if (blocker) {
+      window.battleLog?.blocked();
+      const cell = window.gameState.cells[mover.position.y * window.gameState.SIZE + mover.position.x];
+      window.playBarrierAnimation?.(cell);
+    }
+    window.updatePanel();
+    return;
+  }
   if (window.gameState.entryCost(next, mover) > mover.mp) {
     window.gameState.stepQueue = [];
     window.gameState.isMoving = false;

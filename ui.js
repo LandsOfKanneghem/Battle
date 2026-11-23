@@ -421,6 +421,8 @@ window.updatePanel = function() {
   window.renderNextRoundQueue();
   // Завершение ранее начатого каста может сбросить isCasting; экран поражения сохраняет блокировку.
   if (document.getElementById('defeat-overlay')?.hidden === false) window.gameState.isCasting = true;
+  const fieldHovered = window.gameState.entities.find(entity => entity.id === window.gameState.fieldHoveredEntityId);
+  if (window.gameState.isHiddenFromPlayer(fieldHovered)) window.gameState.fieldHoveredEntityId = null;
   const queueHoveredId = window.gameState.queueHoveredEntityId ?? nextRoundHoveredEntityId;
   window.gameState.hoveredEntityId = queueHoveredId ?? window.gameState.fieldHoveredEntityId;
   if (window.gameState.selectedEntityId !== null && !window.gameState.entities.some(entity => entity.id === window.gameState.selectedEntityId)) window.gameState.selectedEntityId = null;
@@ -509,7 +511,11 @@ window.updatePanel = function() {
     slot.setAttribute('aria-pressed', window.gameState.activeEntity()?.availableSpells.includes(spell) && window.gameState.preparedSpellId === spell.id ? 'true' : 'false');
   }
   for (const entity of window.gameState.entities) {
-    entity.svg.classList.toggle('entity-hover', queueHoveredId === entity.id);
+    const hidden = window.gameState.isHiddenFromPlayer(entity);
+    if (hidden !== entity.svg.classList.contains('entity-invisible')) window.clearHighlight();
+    entity.svg.classList.toggle('entity-invisible', hidden);
+    entity.svg.setAttribute('aria-hidden', String(hidden));
+    entity.svg.classList.toggle('entity-hover', !hidden && queueHoveredId === entity.id);
     const active = entity.id === window.gameState.activeEntityId;
     window.gameState.turnSlots.get(entity.id).classList.toggle('active', active);
     window.gameState.turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');

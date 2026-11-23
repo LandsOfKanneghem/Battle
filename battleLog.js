@@ -3,7 +3,7 @@
   let disappearing = new WeakSet();
   let turnStartEntries = null;
   const beneficialEffects = new Set([
-    'speed', 'light', 'adrenaline', 'vigor', 'levitation', 'water-entity',
+    'invisibility', 'speed', 'light', 'adrenaline', 'vigor', 'levitation', 'water-entity',
     'liquid-membrane', 'sky-shot', 'power-hour', 'sprint',
     'fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin'
   ]);
@@ -56,6 +56,7 @@
     cast(caster, spell, target) {
       write(`${caster.name} применяет «${spell.name}»${target ? ` — цель: ${target.name}` : ''}.`);
     },
+    blocked() { write('Что-то преграждает дорогу!'); },
     miss(caster, target) { write(`${caster.name}: промах по цели ${target.name}.`); },
     failure(caster, spell) { write(`${caster.name}: заклинание «${spell.name}» провалилось!`); },
     applied(entity, effect, kind = 'состояние', refreshed = false) {

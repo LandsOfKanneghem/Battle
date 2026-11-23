@@ -4,7 +4,8 @@
   const manhattan = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   const current = (entity, version) => state().turnVersion === version
     && state().activeEntityId === entity.id && entity.hp > 0 && state().entities.includes(entity);
-  const enemies = () => state().entities.filter(target => target.hp > 0 && state().isAlly(target));
+  const enemies = () => state().entities.filter(target => target.hp > 0 && state().isAlly(target)
+    && !state().isHiddenFrom(target, state().activeEntity()));
   const failureChance = entity => Math.max(0, Math.min(100, window.getEffectiveStat(entity, 'sfc'))) / 100;
 
   window.runAI = function(entity) {

@@ -122,7 +122,7 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
   const keys = new Set(area.map(window.gameState.keyOf));
   const primary = spell.isSparks ? window.gameState.entities.find(entity => window.gameState.keyOf(entity.position) === window.gameState.keyOf(center)) : null;
   for (const entity of window.gameState.entities) {
-    if (entity.hp <= 0 || !keys.has(window.gameState.keyOf(entity.position))) continue;
+    if (entity.hp <= 0 || window.gameState.isHiddenFromPlayer(entity) || !keys.has(window.gameState.keyOf(entity.position))) continue;
     if (spell.isTonguePull && caster && window.gameState.isAlly(entity) === window.gameState.isAlly(caster)) continue;
     if (spell.target === 'enemy' && window.gameState.isAlly(entity)) continue;
     const badge = document.createElement('span');

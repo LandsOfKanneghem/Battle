@@ -116,7 +116,7 @@ test('sprite, portrait and local ability icon paths live with each creature and 
   const ctx = setup();
   for (const template of Object.values(ctx.CREATURE_TEMPLATES)) {
     const { sprite, portrait, sourceSize, displaySize, padding } = template.appearance;
-    for (const file of [sprite, portrait, ...(template.spells ?? []).map(spell => spell.iconPath)]) {
+    for (const file of [sprite, portrait, ...(template.spells ?? []).map(spell => spell.iconPath).filter(Boolean)]) {
       assert.ok(fs.existsSync(path.join(root, file)), file);
     }
     assert.ok(displaySize.width > 0 && displaySize.height > 0);
@@ -221,8 +221,28 @@ test('specter and shadow use their own stats without inheriting a party rank or 
     assert.notEqual(entity.attributes, template.attributes);
     assert.equal(entity.ai, type);
     assert.equal(entity.partyOrder, undefined);
-    assert.equal(entity.availableSpells.length, 0);
+    assert.equal(entity.availableSpells.length, 1);
     assert.equal(entity.spellPages.length, 1);
-    assert.ok(entity.spellPages[0].every(slot => slot === null));
+    assert.equal(entity.spellPages[0][0].id, 'turn-invisible');
+    assert.ok(entity.spellPages[0].slice(1).every(slot => slot === null));
+    assert.notEqual(entity.availableSpells[0], template.spells[0]);
   }
+});
+
+test('invisibility spells are local, self-range dark spells with fixed two-turn duration', () => {
+  const ctx = setup();
+  const shadow = ctx.createCreature('shadow', { x: 1, y: 1 });
+  const specter = ctx.createCreature('specter', { x: 2, y: 1 });
+  const spell = shadow.availableSpells[0];
+  for (const [key, value] of Object.entries({ abilityType: 'spell', magicSchool: 'dark',
+    target: 'ally', range: 0, minRange: 0, modifiable: false, noLOS: false,
+    apCost: 3, maxCooldown: 4, maxUsesPerTurn: 1, durationBase: 2, durationPerInt: 0,
+    isAOE: false, aoeSize: 1, stateId: 'invisibility' })) assert.equal(spell[key], value, key);
+  assert.notEqual(spell, specter.availableSpells[0]);
+  spell.cooldown = 4;
+  assert.equal(specter.availableSpells[0].cooldown, 0);
+  const state = vm.runInContext("stateTypes.get('invisibility')", ctx);
+  assert.equal(state.description, 'ПОКА ОТСУТСТВУЕТ.');
+  assert.equal(state.permanent, false);
+  assert.equal(state.modifiers, undefined);
 });

@@ -53,6 +53,12 @@
   function runCombatAI(entity, version) {
     if (!current(entity, version)) return;
     if (window.isFrozen(entity)) { finishAITurn(entity, version); return; }
+    const invisibility = usableSpells(entity).find(spell => spell.id === 'turn-invisible'
+      && !window.hasActiveState(entity, 'invisibility'));
+    if (invisibility) {
+      aiCast(entity, invisibility, entity, version, () => runCombatAI(entity, version));
+      return;
+    }
     const pairs = availablePairs(entity);
     const isCharacter = target => target.type === 'wizard' || target.type === 'monk';
     pairs.sort((a, b) => {
@@ -171,6 +177,7 @@
     spell.usesThisTurn++;
     if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
     spell.cooldown = spell.maxCooldown;
+    window.recordSpellAttempt?.(spell, caster, window.spellDeps);
     window.recordHitAttempt(spell, caster, window.spellDeps);
     const cell = state().cells[target.position.y * state().SIZE + target.position.x];
     window.updatePanel();
@@ -189,6 +196,9 @@
       window.battleLog?.failure(caster, spell);
       window.playFailureAnimation(cell);
       setTimeout(() => { if (current(caster, version)) onDone(); }, 0);
+    } else if (spell.id === 'turn-invisible') {
+      window.playStateAnimation(cell, spell.stateId);
+      setTimeout(finish, 500);
     } else if (spell.isTonguePull) {
       window.playTonguePullAnimation(state().cells[caster.position.y * state().SIZE + caster.position.x], cell);
       setTimeout(finish, 500);

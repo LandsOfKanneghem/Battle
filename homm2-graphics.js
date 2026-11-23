@@ -16,7 +16,9 @@
     ...Object.values(templates).flatMap(template => template.spells ?? [])])) {
     if (spell.iconPath || spellArt.has(spell.id)) spell.svg = icon(spell.iconPath ?? `${artRoot}spell-${spell.id}.png`);
   }
-  for (const state of stateTypes.values()) state.icon = sprite(`state-${state.id}`);
+  for (const state of stateTypes.values()) {
+    if (state.id !== 'invisibility') state.icon = sprite(`state-${state.id}`);
+  }
 
   const createSvg = window.createCreatureSvg;
   window.createCreatureSvg = function(kind) {

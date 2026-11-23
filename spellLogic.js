@@ -299,7 +299,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     }
   } else if (spell.stateId) {
     const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
-      && (spell.target !== 'ally' || isAlly(entity)) && (spell.target !== 'enemy' || !isAlly(entity)));
+      && (spell.target !== 'ally' || isAlly(entity) === isAlly(caster)) && (spell.target !== 'enemy' || isAlly(entity) !== isAlly(caster)));
     if (recipient) applySpellOnEntity(recipient, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
       description: stateTypes.get(spell.stateId).name,
@@ -335,6 +335,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'turn-invisible': ctx => {
+    ctx.deps.playStateAnimation(ctx.targetCell, ctx.spell.stateId);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
   'tongue-pull': ctx => {
     ctx.deps.playTonguePullAnimation(ctx.fromCell, ctx.targetCell);
     ctx.setTimeout(ctx.finishCast, 500);
@@ -479,6 +483,19 @@ const spellAnimationHandlers = {
   }
 };
 
+// Общий учёт оплаченных заклинаний игрока и ИИ, включая провалы.
+window.recordSpellAttempt = function(spell, caster, deps) {
+  if (spell.abilityType === 'spell' && (caster.spellCastCount ?? 0) < caster.maxSpellCasts) {
+    caster.spellCastCount = (caster.spellCastCount ?? 0) + 1;
+    if (caster.spellCastCount >= caster.maxSpellCasts && !deps.hasActiveState(caster, 'exhaustion')) {
+      deps.applyState(caster, {
+        id: 'exhaustion', duration: 0, permanent: true,
+        casterId: caster.id, casterName: caster.name
+      });
+    }
+  }
+};
+
 // Общий учёт оплаченных попыток атаки игрока и ИИ, включая промахи.
 window.recordHitAttempt = function(spell, caster, deps) {
   if ((spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike')
@@ -532,15 +549,7 @@ window.castSpell = function(targetCell, deps) {
   caster.ap -= spell.apCost;
   window.battleLog?.cast(caster, spell, entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)));
   // Считаем оплаченные заклинания до лимита, включая провалы SFC; способности не учитываем.
-  if (spell.abilityType === 'spell' && (caster.spellCastCount ?? 0) < caster.maxSpellCasts) {
-    caster.spellCastCount = (caster.spellCastCount ?? 0) + 1;
-    if (caster.spellCastCount >= caster.maxSpellCasts && !hasActiveState(caster, 'exhaustion')) {
-      applyState(caster, {
-        id: 'exhaustion', duration: 0, permanent: true,
-        casterId: caster.id, casterName: caster.name
-      });
-    }
-  }
+  window.recordSpellAttempt(spell, caster, deps);
   spell.usesThisTurn++;
   if (spell.maxUsesPerBattle !== undefined) spell.usesTotal++;
   spell.cooldown = spell.maxCooldown;

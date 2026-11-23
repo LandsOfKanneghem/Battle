@@ -114,4 +114,11 @@ const SHARP_SHELL = {
   permanent: true, unremovable: true, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 31 Q5 14 20 14 Q35 14 35 31 Z" fill="#9c562b" stroke="#3b261c" stroke-width="2"/><path d="M9 21 L8 10 L16 18 M17 16 L20 3 L24 17 M27 19 L33 9 L32 25" fill="#ffe4a4" stroke="#ad7633" stroke-width="1.5"/></svg>`
 };
-const stateTypes = new Map([[SHARP_SHELL.id, SHARP_SHELL], [OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+const INVISIBILITY = {
+  id: 'invisibility', name: 'Невидимость', duration: 2, mpBonus: 0, initiativeBonus: 0,
+  description: 'ПОКА ОТСУТСТВУЕТ.',
+  casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [],
+  permanent: false, innate: false,
+  icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#101020"/><path d="M16 6 H24 V14 H28 V23 H25 V34 H21 V26 H19 V34 H15 V23 H12 V14 H16 Z" fill="#343951" stroke="#9ba7d5" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M18 10 H20 M22 10 H24" stroke="#c8d9ff" stroke-width="2"/></svg>`
+};
+const stateTypes = new Map([[INVISIBILITY.id, INVISIBILITY], [SHARP_SHELL.id, SHARP_SHELL], [OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

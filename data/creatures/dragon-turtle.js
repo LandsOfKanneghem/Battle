@@ -1,6 +1,6 @@
 // Данные существа и его собственных способностей.
-window.CREATURE_TEMPLATES['alligator-snapping-turtle'] = {
-  name: 'Грифовая черепаха', type: 'alligator-snapping-turtle', ai: 'alligator-snapping-turtle',
+window.CREATURE_TEMPLATES['dragon-turtle'] = {
+  name: 'Драконовая черепаха', type: 'dragon-turtle', ai: 'dragon-turtle',
   level: 3, baseHP: 14, hpPerLevel: 6, baseWP: 10, wpPerLevel: 4, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
   baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
@@ -8,8 +8,8 @@ window.CREATURE_TEMPLATES['alligator-snapping-turtle'] = {
   attributes: { vit: 4, str: 4, att: 0, int: 0, wis: 3, cha: 0, luc: 0 },
   innateStates: ['sharp-shell'],
   appearance: {
-    sprite: 'assets/map-editor/mobs/alligator-snapping-turtle.png',
-    portrait: 'assets/homm2/portrait-alligator-snapping-turtle.png',
+    sprite: 'assets/map-editor/mobs/dragon-turtle.png',
+    portrait: 'assets/homm2/portrait-dragon-turtle.png',
     displaySize: { width: 90, height: 108 },
     padding: { top: 44, right: 2, bottom: 5, left: 2 },
     svg: `

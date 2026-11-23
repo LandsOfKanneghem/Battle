@@ -147,7 +147,7 @@ test('preview shows enemy damage and no damage badge on allied targets', () => {
 });
 
 test('tongue has no melee hit flag and does not trigger Sharp Shell retaliation', () => {
-  const { ctx, state, target, spell, deps } = setup('alligator-snapping-turtle');
+  const { ctx, state, target, spell, deps } = setup('dragon-turtle');
   const player = ctx.createCreature('wizard', { x: 5, y: 5 });
   state.entities[0] = player;
   const hp = player.hp, targetHP = target.hp;

@@ -49,7 +49,9 @@
       if (occupied.has(key)) throw new Error('На одной клетке не может быть несколько существ или объектов.');
       occupied.add(key);
     };
-    const normalizedMobs = mobs.map(mob => {
+    const normalizedMobs = mobs.map(savedMob => {
+      const mob = savedMob?.type === 'alligator-snapping-turtle'
+        ? { ...savedMob, type: 'dragon-turtle' } : savedMob;
       if (!mob || !Object.hasOwn(window.CREATURE_TEMPLATES, mob.type)) {
         throw new Error('Недостаточно данных для загрузки карты');
       }

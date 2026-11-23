@@ -208,3 +208,12 @@ for (const bad of [null, {}, { ambient: 80, cells: [] },
     assert.equal(ctx.gameState.battleVersion, 0);
   });
 }
+
+test('legacy turtle map ids normalize to dragon-turtle without mutating the file', () => {
+  const ctx = setup(), data = fixture();
+  ctx.CREATURE_TEMPLATES['dragon-turtle'] = { type: 'dragon-turtle', ai: 'dragon-turtle' };
+  data.mobs.push({ type: 'alligator-snapping-turtle', team: 'enemy', x: 3, y: 3 });
+  const loaded = ctx.validateBattleMap(data);
+  assert.equal(loaded.mobs[0].type, 'dragon-turtle');
+  assert.equal(data.mobs[0].type, 'alligator-snapping-turtle');
+});

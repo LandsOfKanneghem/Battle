@@ -27,7 +27,7 @@ function setup() {
     return entity;
   };
   const attacker = make('wolf', 1);
-  const turtle = make('alligator-snapping-turtle', 2);
+  const turtle = make('dragon-turtle', 2);
   const hit = { damage: 4, damageType: 'physical', abilityType: 'weapon-strike', isHit: true };
   const deps = { ...ctx, stateTypes: vm.runInContext('stateTypes', ctx) };
   return { ctx, make, attacker, turtle, hit, damage, labels, deps };
@@ -40,7 +40,7 @@ test('every turtle has its own permanent unremovable shell, surviving removal an
   assert.equal(shell.duration, 0);
   assert.equal(shell.casterId, turtle.id);
   assert.equal(attacker.states.some(state => state.id === shell.id), false);
-  assert.notEqual(shell, make('alligator-snapping-turtle', 3).states[0]);
+  assert.notEqual(shell, make('dragon-turtle', 3).states[0]);
   ctx.removeState(turtle, shell.id);
   for (let i = 0; i < 4; i++) ctx.tickCasterEffects(turtle.id);
   assert.ok(ctx.hasActiveState(turtle, shell.id));
@@ -106,7 +106,7 @@ test('reflected damage respects physical protection and freeze, and bypasses ES 
 
 test('two shells do not recurse; reflected damage is not reduced by Weakness or Exhaustion', () => {
   const { ctx, make, turtle, hit, damage } = setup();
-  const attacker = make('alligator-snapping-turtle', 3);
+  const attacker = make('dragon-turtle', 3);
   ctx.applyState(turtle, 'weakness', 2);
   ctx.applyState(turtle, 'exhaustion', 2);
   const hp = attacker.hp, targetHP = turtle.hp;

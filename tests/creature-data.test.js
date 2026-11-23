@@ -83,7 +83,7 @@ test('creatures with their own bite can be tuned without changing wolves or exis
   const ctx = setup();
   const wolfTemplate = ctx.CREATURE_TEMPLATES.wolf;
   const wolfDamage = wolfTemplate.spells[0].damageBase;
-  for (const type of ['alligator-snapping-turtle', 'hound', 'werewolf']) {
+  for (const type of ['dragon-turtle', 'hound', 'werewolf']) {
     const template = ctx.CREATURE_TEMPLATES[type];
     assert.notEqual(template.attributes, wolfTemplate.attributes);
     assert.notEqual(template.spells[0], wolfTemplate.spells[0]);

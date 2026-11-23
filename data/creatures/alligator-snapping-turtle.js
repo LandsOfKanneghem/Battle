@@ -11,7 +11,7 @@ window.CREATURE_TEMPLATES['alligator-snapping-turtle'] = {
     sprite: 'assets/map-editor/mobs/alligator-snapping-turtle.png',
     portrait: 'assets/homm2/portrait-alligator-snapping-turtle.png',
     displaySize: { width: 90, height: 108 },
-    padding: { top: 48.972222, right: 2.4, bottom: 4.777778, left: 2.4 },
+    padding: { top: 44, right: 2, bottom: 5, left: 2 },
     svg: `
         <path d="M8 27 L5 34 H11 L15 27 M24 27 L25 34 H31 L29 26" fill="#66693b" stroke="#30291b"/>
         <path d="M4 26 Q4 13 18 13 Q31 13 33 26 Z" fill="#84602f" stroke="#30291b" stroke-width="2"/>

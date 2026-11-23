@@ -56,8 +56,9 @@
         throw new Error('Недостаточно данных для загрузки карты');
       }
       checkPosition(mob);
-      const team = teamOf(window.CREATURE_TEMPLATES[mob.type]);
-      if (data.version >= 4 && mob.team !== team) throw new Error('Неверная сторона существа.');
+      const team = data.version >= 4 ? mob.team : teamOf(window.CREATURE_TEMPLATES[mob.type]);
+      if (!['ally', 'enemy'].includes(team) || (['wizard', 'monk'].includes(mob.type) && team !== 'ally'))
+        throw new Error('Неверная сторона существа.');
       return { type: mob.type, team, x: mob.x, y: mob.y };
     });
     const normalizedObjects = objects.map(object => {
@@ -160,6 +161,8 @@
     }
     for (const mob of map.mobs) {
       const creature = window.createCreature(mob.type, mob);
+      creature.team = mob.team;
+      if (mob.team === 'ally') delete creature.ai;
       state.entities.push(creature);
       createTurnSlot(creature);
     }

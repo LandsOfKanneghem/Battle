@@ -2,8 +2,10 @@
 // Данные читаются из window.gameState; UI обновляется только при вызове функций,
 // через window.updatePanel?.(), после инициализации основного скрипта.
 
-// Призванные существа считаются союзниками; структура gameState не меняется.
-window.gameState.isAlly = entity => entity.type === 'wizard' || entity.type === 'monk' || entity.isSummon === true;
+// Сторона задаётся картой; призывы сохраняют прежнюю принадлежность союзникам.
+// При отдельной загрузке боевого модуля устанавливаем ту же проверку.
+window.gameState.isAlly ??= entity => entity.isSummon === true || entity.team === 'ally'
+  || (entity.team === undefined && (entity.type === 'wizard' || entity.type === 'monk'));
 
 // Состояния: наложение, подавление, пересчёт характеристик и сроки источника.
 window.hasActiveState = function(entity, id) {

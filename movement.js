@@ -50,7 +50,7 @@ window.buildPath = function(start, target, entity = window.gameState.activeEntit
 window.activeMover = function() {
   if (window.gameState.isSkippingTurn) return undefined;
   return window.gameState.entities.find(entity => entity.id === window.gameState.activeEntityId && entity.hp > 0 && !window.isFrozen(entity)
-    && (entity.type === 'wizard' || entity.type === 'monk' || entity.isSummon === true));
+    && window.gameState.isAlly(entity));
 };
 
 window.takeStep = function() {

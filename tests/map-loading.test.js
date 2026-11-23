@@ -91,7 +91,7 @@ const invalid = {
   'missing wall styles': d => { delete d.wallStyles; },
   'mob in void': d => { d.mobs.push({ type: 'wolf', team: 'enemy', x: 1, y: 1 }); },
   'crate in void': d => { d.objects.push({ type: 'crate', x: 1, y: 1, blocking: true, interactive: false }); },
-  'incorrect team': d => { d.tiles[1][1] = 'grass'; d.mobs.push({ type: 'wolf', team: 'ally', x: 1, y: 1 }); }
+  'incorrect team': d => { d.tiles[1][1] = 'grass'; d.mobs.push({ type: 'wolf', team: 'unknown', x: 1, y: 1 }); }
 };
 for (const [name, mutate] of Object.entries(invalid)) {
   test(`reject ${name} before changing current combat`, async () => {
@@ -216,4 +216,12 @@ test('legacy turtle map ids normalize to dragon-turtle without mutating the file
   const loaded = ctx.validateBattleMap(data);
   assert.equal(loaded.mobs[0].type, 'dragon-turtle');
   assert.equal(data.mobs[0].type, 'alligator-snapping-turtle');
+});
+
+test('map side can differ from the default for creatures but never for heroes', () => {
+  const ctx = setup(), data = fixture();
+  data.mobs = [{ type: 'wolf', team: 'ally', x: 3, y: 3 }];
+  assert.equal(ctx.validateBattleMap(data).mobs[0].team, 'ally');
+  data.mobs[0] = { type: 'wizard', team: 'enemy', x: 3, y: 3 };
+  assert.throws(() => ctx.validateBattleMap(data));
 });

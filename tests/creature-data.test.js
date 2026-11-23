@@ -19,6 +19,12 @@ function setup() {
   return context;
 }
 
+test('every creature template file is connected to the game', () => {
+  for (const file of fs.readdirSync(path.join(root, 'data/creatures')).filter(file => file.endsWith('.js'))) {
+    assert.ok(dataScripts.includes(`data/creatures/${file}`), `${file} must be loaded by index.html`);
+  }
+});
+
 test('all registered creature books resolve, with independent local catalogs for nonheroes', () => {
   const ctx = setup();
   const common = vm.runInContext('SPELL_DEFINITIONS', ctx);
@@ -203,23 +209,20 @@ test('battle party numbers are exactly 1..N for subsets and duplicate hero types
   assert.equal(Object.hasOwn(spirit, 'partyOrder'), false);
 });
 
-test('specter copies monk combat stats without inheriting its party rank or spell book', () => {
+test('specter and shadow use their own stats without inheriting a party rank or spell book', () => {
   const ctx = setup();
-  const monk = ctx.CREATURE_TEMPLATES.monk;
-  const specter = ctx.CREATURE_TEMPLATES.specter;
-  for (const key of Object.keys(monk).filter(key => typeof monk[key] === 'number' && key !== 'partyOrder')) {
-    assert.equal(specter[key], monk[key], key);
+  for (const type of ['specter', 'shadow']) {
+    const template = ctx.CREATURE_TEMPLATES[type];
+    const entity = ctx.createCreature(type, { x: 2, y: 1 });
+    assert.equal(entity.level, template.level);
+    assert.equal(entity.hp, template.baseHP + template.hpPerLevel * (template.level + template.attributes.vit));
+    assert.equal(entity.wp, template.baseWP + template.wpPerLevel * (template.level + template.attributes.cha));
+    assert.deepEqual(entity.attributes, template.attributes);
+    assert.notEqual(entity.attributes, template.attributes);
+    assert.equal(entity.ai, type);
+    assert.equal(entity.partyOrder, undefined);
+    assert.equal(entity.availableSpells.length, 0);
+    assert.equal(entity.spellPages.length, 1);
+    assert.ok(entity.spellPages[0].every(slot => slot === null));
   }
-  assert.deepEqual(specter.attributes, monk.attributes);
-  assert.notEqual(specter.attributes, monk.attributes);
-  const entity = ctx.createCreature('specter', { x: 2, y: 1 });
-  const other = ctx.createCreature('monk', { x: 3, y: 1 });
-  for (const key of ['level', 'hp', 'maxHP', 'wp', 'maxWP', 'ap', 'maxAP', 'mp', 'maxMP', 'maxHitCount']) {
-    assert.equal(entity[key], other[key], key);
-  }
-  assert.equal(entity.ai, 'specter');
-  assert.equal(entity.partyOrder, undefined);
-  assert.equal(entity.availableSpells.length, 0);
-  assert.equal(entity.spellPages.length, 1);
-  assert.ok(entity.spellPages[0].every(slot => slot === null));
 });

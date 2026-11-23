@@ -20,10 +20,11 @@ window.getBlockedConeCells = function(coneCells, direction, entities, obstacles,
   const offsetOf = point => (point.x - axis.x) * -direction.y + (point.y - axis.y) * direction.x;
   const shadows = new Set();
   for (const point of coneCells) {
-    const crate = obstacles.get(keyOf(point)) === 'crate';
+    const obstacle = obstacles.get(keyOf(point));
+    const solid = obstacle === 'crate' || obstacle === 'void';
     const creature = entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(point));
-    if (crate) blocked.add(keyOf(point)); // Ящики не получают урон и не входят в подсветку.
-    if ((!crate && !creature) || point.depth === 3) continue;
+    if (solid) blocked.add(keyOf(point)); // Ящики и стены не входят в подсветку.
+    if ((!solid && !creature) || point.depth === 3) continue;
     if (point.depth === 1) {
       // Ближайшее препятствие закрывает весь конус за собой: второй и третий ряды.
       for (const behind of coneCells) {
@@ -108,7 +109,7 @@ window.getTonguePullDestination = function(caster, target) {
     const key = state.keyOf(next);
     // Не перепрыгиваем через препятствия и существ, не занимаем клетку самого кастера.
     if (next.x < 0 || next.x >= state.SIZE || next.y < 0 || next.y >= state.HEIGHT
-      || state.obstacles.has(key) || state.isWater(state.terrain.get(key))
+      || state.obstacles.has(key) || state.terrain.get(key) === 'void' || state.isWater(state.terrain.get(key))
       || state.entities.some(entity => entity !== target && entity.hp > 0 && state.keyOf(entity.position) === key)) break;
     point = next;
   }
@@ -119,6 +120,7 @@ window.getTonguePullDestination = function(caster, target) {
 // Только эффект: ресурсы уже оплачены в первой фазе каста.
 window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = null, shotHit = null) {
   const { entities, cells, SIZE, HEIGHT, keyOf, obstacles, terrain, isAlly } = window.gameState;
+  if (terrain?.get(keyOf(target)) === 'void') return;
   const {
     stateTypes, applyState, applyDamage, applySpellOnEntity, hasActiveState, shotHits, playMissAnimation,
     renderPosition, findSparkTargets, affectedCells, addElementalShield,
@@ -247,7 +249,8 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       // Тяжесть блокирует только толчок: обычная ходьба остаётся доступной.
       if (!victim || victim.states.some(state => state.id === 'heavy' && !state.suppressed
         && (state.duration > 0 || state.permanent || state.innate)) || destination.x < 0 || destination.x >= SIZE || destination.y < 0 || destination.y >= HEIGHT
-        || obstacles.get(keyOf(destination)) === 'crate' || gameState.isWater(terrain.get(keyOf(destination)))
+        || obstacles.has(keyOf(destination)) || terrain.get(keyOf(destination)) === 'void'
+        || gameState.isWater(terrain.get(keyOf(destination)))
         || entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(destination))) continue;
       victim.position = destination;
     }

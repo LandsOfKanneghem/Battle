@@ -7,6 +7,7 @@ window.gameState = {
   entities: [],
   cells: [],
   terrain: new Map(),
+  mapType: 'surface',
   obstacles: new Map(),
   turnOrderIds: [],
   roundNumber: 0,
@@ -50,7 +51,7 @@ window.gameState = {
     if (gameState.isWater(terrain)) {
       return entity && window.hasActiveState?.(entity, 'levitation') ? 1 : Infinity;
     }
-    return { grass: 1, dirt: 1, sand: 2, swamp: 2 }[terrain] ?? Infinity;
+    return { grass: 1, dirt: 1, 'monastery-floor': 1, 'cave-earth': 1, sand: 2, swamp: 2 }[terrain] ?? Infinity;
   },
   pathCost: (path, entity = gameState.activeEntity()) => path.reduce((cost, point) => cost + gameState.entryCost(point, entity), 0),
   isFree: ({ x, y }, entity = gameState.activeEntity()) => x >= 0 && x < gameState.SIZE && y >= 0 && y < gameState.HEIGHT

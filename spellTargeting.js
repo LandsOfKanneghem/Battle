@@ -19,7 +19,8 @@ window.checkLOS = function(from, to, ignoredEntityId = null) {
   let crossedX = 0, crossedY = 0;
 
   function blocked(cx, cy) {
-    if (window.gameState.obstacles.get(`${cx},${cy}`) === 'crate') return true;
+    const key = `${cx},${cy}`;
+    if (window.gameState.obstacles.get(key) === 'crate' || window.gameState.terrain.get(key) === 'void') return true;
     // Существо в исходной или целевой клетке не закрывает выстрел.
     if ((cx === from.x && cy === from.y) || (cx === to.x && cy === to.y)) return false;
     return window.gameState.entities.some(entity => entity.id !== ignoredEntityId && entity.position.x === cx && entity.position.y === cy);
@@ -66,6 +67,7 @@ window.inSpellReach = function(target, spell) {
   if (!caster || !spell || !caster.availableSpells.includes(spell)) return false;
   const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
   return target.x >= 0 && target.x < window.gameState.SIZE && target.y >= 0 && target.y < window.gameState.HEIGHT
+    && window.gameState.terrain.get(window.gameState.keyOf(target)) !== 'void'
     // Даже без LOS ящик в самой целевой клетке остаётся недопустимым.
     && (spell.isHeal || !window.gameState.obstacles.has(window.gameState.keyOf(target)))
     && !((spell.isSummon || spell.isTeleport) && window.gameState.isWater(window.gameState.terrain.get(window.gameState.keyOf(target))))

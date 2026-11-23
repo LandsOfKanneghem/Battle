@@ -1,24 +1,40 @@
 // Загрузка карт MapEditor. Весь файл проверяется до изменения текущего боя.
 (() => {
-  const terrainTypes = new Set(['grass', 'sand', 'deep-water', 'shallow-water', 'dirt', 'swamp']);
+  const terrainTypes = new Set(['grass', 'sand', 'deep-water', 'shallow-water', 'dirt', 'swamp',
+    'monastery-floor', 'cave-earth', 'void']);
+  const mapTypes = new Set(['surface', 'underground']);
+  const wallTypes = new Set(['monastery', 'dungeon']);
   const objectTypes = new Set(['crate']);
   const teamOf = template => template.type === 'wizard' || template.type === 'monk' || template.isSummon ? 'ally' : 'enemy';
 
   window.validateBattleMap = function(data) {
     const state = window.gameState;
-    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4].includes(data.version)) {
+    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6].includes(data.version)) {
       throw new Error('Неподдерживаемый формат или версия карты.');
     }
     if (data.width !== state.SIZE || data.height !== state.HEIGHT) throw new Error('Размер карты должен быть 12×12.');
-    if (!Array.isArray(data.tiles) || data.tiles.length !== state.HEIGHT ||
-        data.tiles.some(row => !Array.isArray(row) || row.length !== state.SIZE)) {
+    const mapType = data.version === 6 ? data.mapType : data.version === 5 ? data.activeLevel : 'surface';
+    if (!mapTypes.has(mapType)) throw new Error('Неизвестный тип карты.');
+    const content = data.version === 5 ? data.levels?.[mapType] : data;
+    if (!Array.isArray(content?.tiles) || content.tiles.length !== state.HEIGHT ||
+        content.tiles.some(row => !Array.isArray(row) || row.length !== state.SIZE)) {
       throw new Error('Неверное количество строк или клеток карты.');
     }
-    for (const row of data.tiles) for (const type of row) {
+    for (const row of content.tiles) for (const type of row) {
       if (!terrainTypes.has(type)) throw new Error('Недостаточно данных для загрузки карты');
+      if (mapType === 'surface' && type === 'void') throw new Error('Пустота допустима только под землёй.');
     }
-    const mobs = data.version === 1 ? [] : data.mobs;
-    const objects = data.version < 3 ? [] : data.objects;
+    let wallStyles = null;
+    if (mapType === 'underground') {
+      if (!Array.isArray(content.wallStyles) || content.wallStyles.length !== state.HEIGHT ||
+          content.wallStyles.some(row => !Array.isArray(row) || row.length !== state.SIZE ||
+            row.some(style => style !== null && !wallTypes.has(style)))) {
+        throw new Error('Неверные стили стен подземелья.');
+      }
+      wallStyles = content.wallStyles.map(row => [...row]);
+    }
+    const mobs = data.version === 1 ? [] : content.mobs;
+    const objects = data.version < 3 ? [] : content.objects;
     if (!Array.isArray(mobs) || !Array.isArray(objects) || mobs.length + objects.length > state.SIZE * state.HEIGHT) {
       throw new Error('Неверный список существ или объектов карты.');
     }
@@ -29,6 +45,7 @@
         throw new Error('Неверные координаты существа или объекта.');
       }
       const key = state.keyOf(item);
+      if (content.tiles[item.y][item.x] === 'void') throw new Error('Существо или объект не может находиться в пустоте.');
       if (occupied.has(key)) throw new Error('На одной клетке не может быть несколько существ или объектов.');
       occupied.add(key);
     };
@@ -38,7 +55,7 @@
       }
       checkPosition(mob);
       const team = teamOf(window.CREATURE_TEMPLATES[mob.type]);
-      if (data.version === 4 && mob.team !== team) throw new Error('Неверная сторона существа.');
+      if (data.version >= 4 && mob.team !== team) throw new Error('Неверная сторона существа.');
       return { type: mob.type, team, x: mob.x, y: mob.y };
     });
     const normalizedObjects = objects.map(object => {
@@ -47,7 +64,7 @@
       if (object.blocking !== true || object.interactive !== false) throw new Error('Неверные свойства препятствия.');
       return { type: object.type, x: object.x, y: object.y };
     });
-    return { tiles: data.tiles.map(row => [...row]), mobs: normalizedMobs, objects: normalizedObjects };
+    return { mapType, wallStyles, tiles: content.tiles.map(row => [...row]), mobs: normalizedMobs, objects: normalizedObjects };
   };
 
   function createTurnSlot(entity) {
@@ -74,7 +91,7 @@
 
   window.startBattleFromMap = async function(data) {
     const map = window.validateBattleMap(data);
-    const terrainCanvas = await window.createBattleTerrain(map.tiles);
+    const terrainCanvas = await window.createBattleTerrain(map.tiles, map.mapType, map.wallStyles);
     const state = window.gameState;
     // ИИ/заморозка проверяют turnVersion, касты/шаги — battleVersion.
     state.turnVersion++;
@@ -90,6 +107,7 @@
     state.spellSlots.clear();
     state.cells = [];
     state.terrain.clear();
+    state.mapType = map.mapType;
     state.obstacles.clear();
     state.activeEntityId = null;
     state.selectedEntityId = null;
@@ -121,8 +139,9 @@
       cell.dataset.x = x;
       cell.dataset.y = y;
       cell.dataset.terrain = type;
-      if (state.isWater(type)) cell.classList.add('blocked');
-      if (state.obstacles.has(`${x},${y}`)) {
+      if (type === 'void') state.obstacles.set(`${x},${y}`, 'void');
+      if (state.isWater(type) || type === 'void') cell.classList.add('blocked');
+      if (state.obstacles.get(`${x},${y}`) === 'crate') {
         cell.classList.add('blocked');
         const image = document.createElement('img');
         image.className = 'obstacle';

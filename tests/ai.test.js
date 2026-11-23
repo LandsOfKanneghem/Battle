@@ -75,6 +75,18 @@ function setup({ position, target, mp = 3, spells = [spell('bite', 1)], tiles, c
 
 const map = JSON.parse(fs.readFileSync(path.join(root, 'maps/MAP 1.json'), 'utf8'));
 
+test('ranged AI goes around an underground void wall and never enters it', () => {
+  const tiles = Array.from({ length: 12 }, () => Array(12).fill('cave-earth'));
+  for (let y = 0; y <= 6; y++) tiles[y][5] = 'void';
+  const h = setup({ position: { x: 3, y: 3 }, target: { x: 7, y: 3 }, tiles,
+    spells: [spell('boulder-throw', 4, { isShot: true })] });
+  assert.equal(h.ctx.checkLOS(h.caster.position, h.victim.position), false);
+  for (let i = 0; i < 10 && !h.attacks.length; i++) h.turn();
+  assert.ok(h.attacks.length, 'AI finds the detour and opens LOS');
+  assert.ok(h.moves.length);
+  assert.ok(h.moves.every(point => tiles[point.y][point.x] !== 'void'));
+});
+
 test('giant walks left around the screenshot lake over several turns and throws a boulder', () => {
   const start = { x: 10, y: 6 }, target = { x: 10, y: 11 };
   const h = setup({ position: start, target, tiles: map.tiles, crates: map.objects,

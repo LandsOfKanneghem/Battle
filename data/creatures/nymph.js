@@ -10,9 +10,8 @@ window.CREATURE_TEMPLATES['nymph'] = {
   appearance: {
     sprite: 'assets/map-editor/mobs/nymph.png',
     portrait: 'assets/homm2/portrait-nymph.png',
-    sourceSize: { width: 60, height: 72 },
     displaySize: { width: 72, height: 86 },
-    padding: { top: 4, right: 3, bottom: 4, left: 2 },
+    padding: { top: 4.777778, right: 3.6, bottom: 4.777778, left: 2.4 },
     svg: `<circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#fff" opacity=".6"/>`
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.

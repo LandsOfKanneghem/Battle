@@ -9,9 +9,8 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
   appearance: {
     sprite: 'assets/map-editor/mobs/giant-toad.png',
     portrait: 'assets/homm2/portrait-giant-toad.png',
-    sourceSize: { width: 60, height: 72 },
     displaySize: { width: 90, height: 108 },
-    padding: { top: 37, right: 2, bottom: 4, left: 2 },
+    padding: { top: 44.194444, right: 2.4, bottom: 4.777778, left: 2.4 },
     svg: `
         <ellipse cx="17" cy="25" rx="14" ry="10" fill="#a34422" stroke="#3e221d" stroke-width="2"/>
         <path d="M10 26 Q0 25 3 34 L12 34 M26 26 L27 35 H35 L31 32 L30 25" fill="#bd5727" stroke="#3e221d" stroke-width="2"/>

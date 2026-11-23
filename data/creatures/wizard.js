@@ -10,9 +10,8 @@ window.CREATURE_TEMPLATES['wizard'] = {
   appearance: {
     sprite: 'assets/map-editor/mobs/wizard.png',
     portrait: 'assets/homm2/portrait-wizard.png',
-    sourceSize: { width: 60, height: 72 },
     displaySize: { width: 72, height: 86 },
-    padding: { top: 4, right: 7, bottom: 4, left: 7 },
+    padding: { top: 4.777778, right: 8.4, bottom: 4.777778, left: 8.4 },
     svg: `
       <path d="M11 36 L15 20 L25 20 L30 36 Z" fill="#287dff" stroke="#102e70"/>
       <circle cx="20" cy="17" r="6" fill="#ffd6a0"/>

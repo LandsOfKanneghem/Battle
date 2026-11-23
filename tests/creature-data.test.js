@@ -115,7 +115,11 @@ test('hound starts with the ordinary wolf stats and abilities', () => {
 test('sprite, portrait and local ability icon paths live with each creature and point to existing assets', () => {
   const ctx = setup();
   for (const template of Object.values(ctx.CREATURE_TEMPLATES)) {
-    const { sprite, portrait, sourceSize, displaySize, padding } = template.appearance;
+    const { sprite, portrait, displaySize, padding } = template.appearance;
+    const sourceSize = template.appearance.sourceSize ?? ctx.DEFAULT_CREATURE_SOURCE_SIZE;
+    const png = fs.readFileSync(path.join(root, sprite));
+    assert.equal(png.readUInt32BE(16), sourceSize.width, `${template.type} PNG width`);
+    assert.equal(png.readUInt32BE(20), sourceSize.height, `${template.type} PNG height`);
     for (const file of [sprite, portrait, ...(template.spells ?? []).map(spell => spell.iconPath).filter(Boolean)]) {
       assert.ok(fs.existsSync(path.join(root, file)), file);
     }

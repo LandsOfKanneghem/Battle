@@ -26,7 +26,7 @@
     const appearance = templates[kind].appearance;
     if (appearance.sprite) {
       const { width, height } = appearance.displaySize;
-      const { width: sourceWidth, height: sourceHeight } = appearance.sourceSize;
+      const { width: sourceWidth, height: sourceHeight } = appearance.sourceSize ?? window.DEFAULT_CREATURE_SOURCE_SIZE;
       const { top, right, bottom, left } = appearance.padding;
       svg.removeAttribute('style');
       svg.classList.add('battle-creature');

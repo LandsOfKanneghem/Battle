@@ -9,9 +9,8 @@ window.CREATURE_TEMPLATES['werewolf'] = {
   appearance: {
     sprite: 'assets/map-editor/mobs/werewolf.png',
     portrait: 'assets/homm2/portrait-werewolf.png',
-    sourceSize: { width: 60, height: 72 },
     displaySize: { width: 90, height: 108 },
-    padding: { top: 4, right: 8, bottom: 4, left: 7 },
+    padding: { top: 4.777778, right: 9.6, bottom: 4.777778, left: 8.4 },
     svg: `
         <path d="M13 24 L11 36 H17 L20 28 L23 36 H29 L27 24 Z" fill="#795134" stroke="#3c2c25"/>
         <path d="M14 13 Q20 10 26 16 L26 25 H14 Z M14 15 L6 26 M26 17 L34 27" fill="#cfb490" stroke="#654d3d" stroke-width="3"/>

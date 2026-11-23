@@ -10,9 +10,8 @@ window.CREATURE_TEMPLATES['monk'] = {
   appearance: {
     sprite: 'assets/map-editor/mobs/monk.png',
     portrait: 'assets/homm2/portrait-monk.png',
-    sourceSize: { width: 60, height: 72 },
     displaySize: { width: 72, height: 86 },
-    padding: { top: 6, right: 9, bottom: 4, left: 9 },
+    padding: { top: 7.166667, right: 10.8, bottom: 4.777778, left: 10.8 },
     svg: `
       <path d="M10 37 L14 21 L26 21 L31 37 Z" fill="#b86028" stroke="#713c22"/>
       <path d="M15 22 L25 35 M25 22 L15 35" stroke="#e7a34a" stroke-width="3"/>

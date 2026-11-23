@@ -9,9 +9,8 @@ window.CREATURE_TEMPLATES['wolf'] = {
   appearance: {
     sprite: 'assets/map-editor/mobs/wolf.png',
     portrait: 'assets/homm2/portrait-wolf.png',
-    sourceSize: { width: 60, height: 72 },
     displaySize: { width: 90, height: 108 },
-    padding: { top: 36, right: 3, bottom: 4, left: 3 },
+    padding: { top: 43, right: 3.6, bottom: 4.777778, left: 3.6 },
     svg: `
         <path d="M11 21 L3 12 L2 23 L10 28 Z" fill="#73818e" stroke="#344453"/>
         <path d="M10 22 Q17 16 28 21 L30 29 H10 Z" fill="#8e9ca8" stroke="#344453"/>

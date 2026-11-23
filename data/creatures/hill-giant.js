@@ -10,9 +10,8 @@ window.CREATURE_TEMPLATES['hill-giant'] = {
   appearance: {
     sprite: 'assets/map-editor/mobs/hill-giant.png',
     portrait: 'assets/homm2/portrait-hill-giant.png',
-    sourceSize: { width: 60, height: 72 },
     displaySize: { width: 90, height: 108 },
-    padding: { top: 4, right: 9, bottom: 4, left: 8 },
+    padding: { top: 4.777778, right: 10.8, bottom: 4.777778, left: 9.6 },
     svg: `<path d="M8 37 L10 19 Q20 13 29 20 L31 37 H23 L21 29 L18 37 Z" fill="#807467" stroke="#c7b69c"/><path d="M10 21 L4 30 L8 33 L15 25 M27 22 L34 27" fill="none" stroke="#a59580" stroke-width="6" stroke-linecap="round"/><circle cx="20" cy="11" r="8" fill="#a59580" stroke="#5f544b"/><path d="M13 8 L17 4 H25 L28 10" fill="#544638"/><circle cx="17" cy="11" r="1.2" fill="#fff0c6"/><circle cx="23" cy="11" r="1.2" fill="#fff0c6"/><path d="M17 16 H23 M35 35 L32 15" stroke="#493425" stroke-width="3"/><path d="M29 4 L35 3 L39 17 L32 20 Z" fill="#76502d" stroke="#b18a53" stroke-width="2"/>`,
     svgStyle: { display: 'block', width: '100%', height: '100%',
       position: 'absolute', inset: '0', zIndex: '3', pointerEvents: 'none' }

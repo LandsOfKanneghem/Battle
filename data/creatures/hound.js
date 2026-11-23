@@ -9,9 +9,8 @@ window.CREATURE_TEMPLATES['hound'] = {
   appearance: {
     sprite: 'assets/map-editor/mobs/hound.png',
     portrait: 'assets/homm2/portrait-hound.png',
-    sourceSize: { width: 60, height: 72 },
     displaySize: { width: 72, height: 86 },
-    padding: { top: 19, right: 6, bottom: 4, left: 5 },
+    padding: { top: 22.694444, right: 7.2, bottom: 4.777778, left: 6 },
     svg: `
         <path d="M7 20 L3 14 L2 21 L8 26 M9 24 L8 36 H13 L15 27 M23 25 L24 36 H29 L28 24" fill="#794a30" stroke="#302128"/>
         <path d="M8 20 Q17 15 27 21 L29 29 H9 Z" fill="#925735" stroke="#302128"/>

@@ -10,7 +10,7 @@ const spell = (id, range, extra = {}) => ({ id, range, minRange: 1, modifiable: 
   noLOS: false, apCost: 4, cooldown: 0, maxCooldown: 0, usesThisTurn: 0,
   maxUsesPerTurn: 1, abilityType: 'weapon-strike', damage: 4, ...extra });
 
-function setup({ position, target, mp = 3, spells = [spell('bite', 1)], tiles, crates = [], levitation = false }) {
+function setup({ position, target, mp = 3, ap = 5, type = 'hill-giant', spells = [spell('bite', 1)], tiles, crates = [], levitation = false }) {
   const timers = [], moves = [], attacks = [];
   const ctx = { document: { getElementById: () => ({}), createElement: () => ({}), querySelectorAll: () => [] },
     setTimeout: fn => timers.push(fn) };
@@ -20,7 +20,7 @@ function setup({ position, target, mp = 3, spells = [spell('bite', 1)], tiles, c
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx);
   }
   const state = ctx.gameState;
-  const caster = { id: 'mob', type: 'hill-giant', ai: 'mob', hp: 1000, ap: 5,
+  const caster = { id: 'mob', type, ai: 'mob', hp: 1000, ap,
     mp, maxMP: mp, position: { ...position }, availableSpells: spells,
     states: levitation ? [{ id: 'levitation', duration: 10 }] : [], acc: 100, sfc: 0 };
   const victim = { id: 'wizard', type: 'wizard', hp: 1000, eva: 0, position: { ...target } };
@@ -40,9 +40,12 @@ function setup({ position, target, mp = 3, spells = [spell('bite', 1)], tiles, c
   ctx.renderPosition = () => moves.push({ ...caster.position, mp: caster.mp });
   ctx.recordHitAttempt = () => {};
   ctx.playBiteAnimation = () => {};
+  ctx.playStateAnimation = () => {};
+  ctx.playSpectralStrikeAnimation = () => {};
   ctx.playProjectileAnimation = (from, to, type, arrive) => arrive();
   ctx.applySpellEffect = (attack, point) => {
     attacks.push({ id: attack.id, from: { ...caster.position }, to: { ...point } });
+    if (attack.stateId === 'invisibility') caster.states.push({ id: 'invisibility', duration: 2 });
     assert.ok(distance(caster.position, point) <= attack.range);
     assert.ok(attack.noLOS || ctx.checkLOS(caster.position, point));
     assert.ok(!state.isWater(state.terrain.get(state.keyOf(caster.position))));
@@ -55,7 +58,7 @@ function setup({ position, target, mp = 3, spells = [spell('bite', 1)], tiles, c
   function turn() {
     state.turnVersion++;
     state.activeEntityId = caster.id;
-    caster.ap = 5;
+    caster.ap = ap;
     caster.mp = mp;
     for (const attack of spells) {
       attack.usesThisTurn = 0;
@@ -188,4 +191,81 @@ test('AI does not attack or chase a hidden enemy, and resumes when it is visible
   h.victim.states = [];
   h.turn();
   assert.ok(h.attacks.length > 0);
+});
+
+const spectralStrike = () => spell('spectral-strike', 4, {
+  apCost: 3, maxUsesPerTurn: 2, abilityType: 'spell', damage: 8, isShot: false
+});
+const invisibility = () => spell('turn-invisible', 0, {
+  minRange: 0, apCost: 3, maxCooldown: 4, abilityType: 'spell', stateId: 'invisibility'
+});
+
+for (const type of ['shadow', 'specter']) {
+  test(`${type} prioritizes invisibility, then strikes, and finishes on another cell at range four`, () => {
+    const start = { x: 5, y: 5 }, target = { x: 1, y: 5 };
+    const h = setup({ type, position: start, target, ap: 9, mp: 4,
+      spells: [spectralStrike(), invisibility()] });
+    h.turn();
+    assert.deepEqual(h.attacks.map(a => a.id), ['turn-invisible', 'spectral-strike', 'spectral-strike']);
+    assert.equal(distance(h.caster.position, target), 4);
+    assert.notDeepEqual(h.caster.position, start);
+    assert.ok(h.ctx.checkLOS(h.caster.position, target));
+    assert.equal(h.caster.ap, 0);
+  });
+}
+
+test('spectral caster retreats after spending its AP instead of approaching melee distance', () => {
+  const h = setup({ type: 'specter', position: { x: 4, y: 5 }, target: { x: 5, y: 5 },
+    ap: 6, mp: 4, spells: [spectralStrike()] });
+  h.turn();
+  assert.equal(h.attacks.length, 2);
+  assert.equal(distance(h.caster.position, h.victim.position), 4);
+  assert.ok(h.moves.length > 0);
+});
+
+test('spectral caster with no AP still changes position and stays in attack range', () => {
+  const start = { x: 5, y: 5 }, target = { x: 1, y: 5 };
+  const h = setup({ type: 'shadow', position: start, target, ap: 0, mp: 2, spells: [spectralStrike()] });
+  h.turn();
+  assert.equal(h.attacks.length, 0);
+  assert.notDeepEqual(h.caster.position, start);
+  assert.equal(distance(h.caster.position, target), 4);
+});
+
+test('spectral caster uses a closer firing cell when no other range-four position is reachable this turn', () => {
+  const start = { x: 5, y: 5 }, target = { x: 1, y: 5 };
+  const h = setup({ type: 'shadow', position: start, target, ap: 0, mp: 1, spells: [spectralStrike()] });
+  h.turn();
+  assert.notDeepEqual(h.caster.position, start);
+  assert.equal(distance(h.caster.position, target), 3);
+});
+
+test('spectral caster stays put when surrounded instead of overlapping obstacles', () => {
+  const start = { x: 5, y: 5 };
+  const h = setup({ type: 'specter', position: start, target: { x: 1, y: 5 }, ap: 0, mp: 4,
+    crates: [{ x: 4, y: 5 }, { x: 6, y: 5 }, { x: 5, y: 4 }, { x: 5, y: 6 }], spells: [spectralStrike()] });
+  h.turn();
+  assert.deepEqual(h.caster.position, start);
+  assert.equal(h.moves.length, 0);
+});
+
+test('spectral caster outside range approaches an attack position over several turns', () => {
+  const h = setup({ type: 'shadow', position: { x: 10, y: 5 }, target: { x: 1, y: 5 },
+    ap: 6, mp: 2, spells: [spectralStrike()] });
+  for (let i = 0; i < 5 && !h.attacks.length; i++) h.turn();
+  assert.ok(h.attacks.length > 0);
+  assert.equal(distance(h.caster.position, h.victim.position), 4);
+  assert.ok(h.moves.every(p => distance(p, h.victim.position) >= 4));
+});
+
+test('spectral caster finds LOS around a wall and keeps ranged positioning after attacking', () => {
+  const tiles = Array.from({ length: 12 }, () => Array(12).fill('cave-earth'));
+  for (let y = 0; y <= 6; y++) tiles[y][5] = 'void';
+  const h = setup({ type: 'specter', position: { x: 3, y: 3 }, target: { x: 7, y: 3 },
+    ap: 6, mp: 3, tiles, spells: [spectralStrike()] });
+  for (let i = 0; i < 10 && !h.attacks.length; i++) h.turn();
+  assert.ok(h.attacks.length > 0);
+  assert.equal(distance(h.caster.position, h.victim.position), 4);
+  assert.ok(h.ctx.checkLOS(h.caster.position, h.victim.position));
+  assert.ok(h.moves.every(p => tiles[p.y][p.x] !== 'void'));
 });

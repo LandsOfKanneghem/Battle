@@ -123,7 +123,7 @@ window.showSpellTooltip = function(icon, spell) {
   const schoolLabel = spell.magicSchool ? ` [${schoolNames[spell.magicSchool] ?? spell.magicSchool}]` : '';
   addLine('Тип', `${typeName}${schoolLabel}`);
   addLine('ОД', spell.apCost);
-  const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', physical: 'физический' };
+  const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', dark: 'тьма', physical: 'физический' };
   if (spell.damageBase !== undefined) {
     const damage = window.getSpellDamage(spell, caster);
     const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';

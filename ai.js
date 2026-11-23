@@ -12,7 +12,7 @@
     if (!entity.ai) return;
     state().isSkippingTurn = true; // Управление игрока заблокировано до конца хода ИИ.
     window.updatePanel();
-    runCombatAI(entity, state().turnVersion);
+    runCombatAI(entity, state().turnVersion, { start: { ...entity.position } });
   };
 
   function finishAITurn(entity, version) {
@@ -51,13 +51,13 @@
     return pairs;
   }
 
-  function runCombatAI(entity, version) {
+  function runCombatAI(entity, version, turn) {
     if (!current(entity, version)) return;
     if (window.isFrozen(entity)) { finishAITurn(entity, version); return; }
     const invisibility = usableSpells(entity).find(spell => spell.id === 'turn-invisible'
       && !window.hasActiveState(entity, 'invisibility'));
     if (invisibility) {
-      aiCast(entity, invisibility, entity, version, () => runCombatAI(entity, version));
+      aiCast(entity, invisibility, entity, version, () => runCombatAI(entity, version, turn));
       return;
     }
     const pairs = availablePairs(entity);
@@ -73,7 +73,11 @@
     });
     if (pairs.length) {
       const { spell, target } = pairs[0];
-      aiCast(entity, spell, target, version, () => runCombatAI(entity, version));
+      aiCast(entity, spell, target, version, () => runCombatAI(entity, version, turn));
+      return;
+    }
+    if (entity.type === 'shadow' || entity.type === 'specter') {
+      positionSpectralCaster(entity, version, turn);
       return;
     }
     if (entity.mp <= 0) { finishAITurn(entity, version); return; }
@@ -84,13 +88,13 @@
     for (const target of sorted) {
       const firingPosition = reachable.filter(node => spells.some(spell => canAttackFrom(entity, spell, target, node.point)))
         .sort((a, b) => a.cost - b.cost || manhattan(a.point, target.position) - manhattan(b.point, target.position))[0];
-      if (firingPosition) { advanceTowards(entity, firingPosition, version); return; }
+      if (firingPosition) { advanceTowards(entity, firingPosition, version, turn); return; }
     }
     // Если атаки сейчас потрачены, продолжаем обычное сближение до соседней клетки.
     for (const target of sorted) {
       const adjacent = reachable.filter(node => manhattan(node.point, target.position) === 1)
         .sort((a, b) => a.cost - b.cost)[0];
-      if (adjacent) { advanceTowards(entity, adjacent, version); return; }
+      if (adjacent) { advanceTowards(entity, adjacent, version, turn); return; }
     }
     // Цель может быть на отдельном острове: выбираем ближайший берег во ВСЕЙ области.
     let best = null;
@@ -102,7 +106,48 @@
         }
       }
     }
-    if (best) advanceTowards(entity, best.node, version);
+    if (best) advanceTowards(entity, best.node, version, turn);
+    else finishAITurn(entity, version);
+  }
+
+  function positionSpectralCaster(entity, version, turn) {
+    const strike = entity.availableSpells.find(spell => spell.id === 'spectral-strike');
+    const targets = enemies().sort((a, b) => manhattan(entity.position, a.position) - manhattan(entity.position, b.position)
+      || a.id.localeCompare(b.id));
+    if (!strike || entity.mp <= 0 || !targets.length) { finishAITurn(entity, version); return; }
+    // Позицию для следующей атаки выбираем и после исчерпания ОД/лимита кастов.
+    const reachable = reachablePositions(entity);
+    const startKey = state().keyOf(turn.start);
+    const candidates = [];
+    for (const node of reachable) for (const target of targets) {
+      if (canAttackFrom(entity, strike, target, node.point)) candidates.push({ node, target });
+    }
+    const affordable = candidates.filter(candidate => candidate.node.cost <= entity.mp);
+    let destination;
+    if (affordable.length) {
+      // Сначала сохраняем дистанцию атаки и LOS, затем меняем стартовую клетку,
+      // если это возможно; среди таких клеток предпочитаем дальность 4.
+      const changed = affordable.filter(candidate => state().keyOf(candidate.node.point) !== startKey);
+      const choices = changed.length ? changed : affordable;
+      choices.sort((a, b) => manhattan(b.node.point, b.target.position) - manhattan(a.node.point, a.target.position)
+        || a.node.cost - b.node.cost || a.node.point.y - b.node.point.y || a.node.point.x - b.node.point.x
+        || a.target.id.localeCompare(b.target.id));
+      destination = choices[0].node;
+    } else if (candidates.length) {
+      // Если стрельба пока недоступна, обходим препятствия к ближайшей огневой позиции.
+      candidates.sort((a, b) => a.node.cost - b.node.cost
+        || manhattan(b.node.point, b.target.position) - manhattan(a.node.point, a.target.position));
+      destination = candidates[0].node;
+    } else {
+      // Отдельный остров или закрытая комната: приблизиться, не искать милишную клетку.
+      const affordableNodes = reachable.filter(node => node.cost <= entity.mp);
+      const changed = affordableNodes.filter(node => state().keyOf(node.point) !== startKey);
+      const choices = changed.length ? changed : affordableNodes;
+      const distance = node => Math.min(...targets.map(target => manhattan(node.point, target.position)));
+      choices.sort((a, b) => distance(a) - distance(b) || a.cost - b.cost);
+      destination = choices[0];
+    }
+    if (destination && destination.cost > 0) advanceTowards(entity, destination, version, turn);
     else finishAITurn(entity, version);
   }
 
@@ -136,7 +181,7 @@
     return [...nodes.values()].filter(node => !state().isWater(state().terrain.get(state().keyOf(node.point))));
   }
 
-  function advanceTowards(entity, destination, version) {
+  function advanceTowards(entity, destination, version, turn) {
     const path = [];
     for (let node = destination; node.parent; node = node.parent) path.push(node.point);
     path.reverse();
@@ -147,7 +192,7 @@
       // Даже с Левитацией промежуточная остановка должна быть на суше.
       if (!state().isWater(state().terrain.get(state().keyOf(path[i])))) steps = i + 1;
     }
-    if (steps) aiMove(entity, path.slice(0, steps), version, () => runCombatAI(entity, version));
+    if (steps) aiMove(entity, path.slice(0, steps), version, () => runCombatAI(entity, version, turn));
     else finishAITurn(entity, version);
   }
 
@@ -199,6 +244,9 @@
       setTimeout(() => { if (current(caster, version)) onDone(); }, 0);
     } else if (spell.id === 'turn-invisible') {
       window.playStateAnimation(cell, spell.stateId);
+      setTimeout(finish, 500);
+    } else if (spell.id === 'spectral-strike') {
+      window.playSpectralStrikeAnimation(cell, spell);
       setTimeout(finish, 500);
     } else if (spell.isTonguePull) {
       window.playTonguePullAnimation(state().cells[caster.position.y * state().SIZE + caster.position.x], cell);

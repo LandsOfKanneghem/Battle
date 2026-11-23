@@ -373,3 +373,12 @@ window.playBarrierAnimation = function(cell) {
   label.setAttribute('aria-hidden', 'true');
   appendCombatPopup(cell, label, 1200);
 };
+
+window.playSpectralStrikeAnimation = function(cell, spell) {
+  const flash = document.createElement('span');
+  flash.className = 'spectral-strike-animation';
+  flash.setAttribute('aria-hidden', 'true');
+  flash.innerHTML = spell.svg;
+  cell.appendChild(flash);
+  setTimeout(() => flash.remove(), 500);
+};

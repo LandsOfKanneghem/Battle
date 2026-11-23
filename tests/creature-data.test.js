@@ -225,10 +225,11 @@ test('specter and shadow use their own stats without inheriting a party rank or 
     assert.notEqual(entity.attributes, template.attributes);
     assert.equal(entity.ai, type);
     assert.equal(entity.partyOrder, undefined);
-    assert.equal(entity.availableSpells.length, 1);
+    assert.equal(entity.availableSpells.length, 2);
     assert.equal(entity.spellPages.length, 1);
     assert.equal(entity.spellPages[0][0].id, 'turn-invisible');
-    assert.ok(entity.spellPages[0].slice(1).every(slot => slot === null));
+    assert.equal(entity.spellPages[0][1].id, 'spectral-strike');
+    assert.ok(entity.spellPages[0].slice(2).every(slot => slot === null));
     assert.notEqual(entity.availableSpells[0], template.spells[0]);
   }
 });

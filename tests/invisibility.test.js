@@ -215,3 +215,34 @@ for (const spellId of ['teleport', 'lake-spirit', 'future-empty-cell-spell']) {
     assert.equal(state.isCasting, false);
   });
 }
+
+test('Spectral Strike uses INT, dark magical damage and no shot/evasion checks, and preserves invisibility', () => {
+  const { ctx, state, wizard, shadow, hide, deps } = setup();
+  const strike = shadow.availableSpells.find(spell => spell.id === 'spectral-strike');
+  assert.equal(strike.name, 'Спектральный удар');
+  for (const [key, value] of Object.entries({ abilityType: 'spell', magicSchool: 'dark',
+    damageType: 'dark', damageBase: 6, damagePerInt: 1, isShot: false,
+    target: 'any', minRange: 1, range: 4, modifiable: false, noLOS: false,
+    apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2, isAOE: false, aoeSize: 1 })) {
+    assert.equal(strike[key], value, key);
+  }
+  assert.equal(ctx.getSpellDamage(strike, shadow), 8);
+  shadow.attributes.int = 10;
+  assert.equal(ctx.getSpellDamage(strike, shadow), 16);
+  shadow.attributes.int = 2;
+  wizard.eva = 1000;
+  wizard.baseES = 3;
+  const hp = wizard.hp;
+  hide(shadow);
+  ctx.applySpellEffect(strike, wizard.position, shadow, {
+    ...deps, shotHits() { throw new Error('Spectral Strike must not roll accuracy'); }
+  });
+  assert.equal(wizard.hp, hp - 5, 'dark damage is absorbed by ES before HP');
+  assert.equal(ctx.hasActiveState(shadow, 'invisibility'), true);
+  ctx.applyState(shadow, { id: 'exhaustion', duration: 2, casterId: shadow.id });
+  const victim = ctx.createCreature('wolf', { x: 5, y: 1 });
+  state.entities.push(victim);
+  const victimHP = victim.hp;
+  ctx.applySpellEffect(strike, victim.position, shadow, deps);
+  assert.equal(victim.hp, victimHP - 6, 'Exhaustion applies to the new spell too');
+});

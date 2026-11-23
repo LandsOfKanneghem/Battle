@@ -14,7 +14,7 @@ window.CREATURE_TEMPLATES['specter'] = {
     padding: { top: 0, right: 8, bottom: 3, left: 7 },
     svg: `<path d="M16 14 Q10 8 16 4 Q23 1 25 8 L23 14 L29 20 L34 29 L30 31 L25 24 L25 30 L30 38 H23 L20 31 L17 38 H10 L15 28 L14 22 L9 31 L5 29 L10 19 Z M17 8 H20 V10 H17 Z M18 18 H21 V21 H18 Z M21 25 H23 V28 H21 Z" fill="#000" fill-rule="evenodd"/>`
   },
-  // Собственная копия заклинания: параметры существа можно менять независимо.
+  // Собственные копии заклинаний: параметры существа можно менять независимо.
   spells: [{
     id: 'turn-invisible', name: 'Уйти в невидимость', abilityType: 'spell', magicSchool: 'dark',
     description: 'Накладывает на заклинателя Невидимость.', effectDescription: 'Невидимость',
@@ -22,9 +22,16 @@ window.CREATURE_TEMPLATES['specter'] = {
     target: 'ally', range: 0, minRange: 0, modifiable: false, noLOS: false,
     apCost: 3, maxCooldown: 4, maxUsesPerTurn: 1, isAOE: false, aoeSize: 1,
     svg: INVISIBILITY.icon
+  }, {
+    id: 'spectral-strike', name: 'Спектральный удар', abilityType: 'spell', magicSchool: 'dark',
+    description: 'Наносит урон тьмой по одиночной цели.',
+    damageType: 'dark', damageBase: 6, damagePerInt: 1, isShot: false,
+    target: 'any', range: 4, minRange: 1, modifiable: false, noLOS: false,
+    apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2, isAOE: false, aoeSize: 1,
+    svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#100b20"/><path d="M16 4 H25 V9 H30 V15 H35 V25 H29 V31 H23 V36 H13 V31 H7 V24 H4 V16 H10 V10 H16 Z" fill="#45326c"/><path d="M18 9 H24 V15 H29 V24 H23 V30 H15 V25 H10 V17 H18 Z" fill="#8d70d5"/><path d="M23 10 L13 22 H21 L17 32 L30 18 H22 Z" fill="#e1d4ff"/></svg>`
   }],
   spellPages: [
-    ['turn-invisible', null, null, null, null,
+    ['turn-invisible', 'spectral-strike', null, null, null,
       null, null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null]

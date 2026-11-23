@@ -319,6 +319,7 @@
     // Ссылки создаются после объявления всех обработчиков и до инициализации интерфейса.
     const spellDeps = {
       stateTypes,
+      playSpectralStrikeAnimation: window.playSpectralStrikeAnimation,
       WIZARD_SPELLS, MONK_SPELLS, FREEZE, HEAVY, ADRENALINE, VIGOR, WEAKNESS,
       applyState: window.applyState, applyDamage: window.applyDamage,
       applySpellOnEntity: window.applySpellOnEntity, hasActiveState: window.hasActiveState,

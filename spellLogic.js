@@ -338,6 +338,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'spectral-strike': ctx => {
+    ctx.deps.playSpectralStrikeAnimation(ctx.targetCell, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 500);
+  },
   'turn-invisible': ctx => {
     ctx.deps.playStateAnimation(ctx.targetCell, ctx.spell.stateId);
     ctx.setTimeout(ctx.finishCast, 500);

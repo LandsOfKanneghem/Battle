@@ -446,3 +446,14 @@
   65% { opacity: 1; }
   to { transform: translate(-50%, -30px); opacity: 0; }
 }
+
+.spectral-strike-animation {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  animation: spectral-strike-pulse 0.5s ease-out both;
+}
+.spectral-strike-animation svg { width: 85%; height: 85%; filter: drop-shadow(0 0 5px #b68cff); }
+@keyframes spectral-strike-pulse {
+  from { transform: scale(0.4); opacity: 1; }
+  to { transform: scale(1.3); opacity: 0; }
+}

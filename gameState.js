@@ -55,15 +55,18 @@ window.gameState = {
     return { grass: 1, dirt: 1, 'monastery-floor': 1, 'cave-earth': 1, sand: 2, swamp: 2 }[terrain] ?? Infinity;
   },
   pathCost: (path, entity = gameState.activeEntity()) => path.reduce((cost, point) => cost + gameState.entryCost(point, entity), 0),
-  // Планирование игнорирует скрытых противников; физическая занятость клетки — никогда.
+  isInvisible(entity) {
+    return !!entity?.states && !!window.hasActiveState?.(entity, 'invisibility');
+  },
   isHiddenFrom(entity, observer) {
     return !!entity && !!observer && gameState.isAlly(entity) !== gameState.isAlly(observer)
-      && !!entity.states && !!window.hasActiveState?.(entity, 'invisibility');
+      && gameState.isInvisible(entity);
   },
   isHiddenFromPlayer(entity) {
     return !!entity && !gameState.isAlly(entity)
-      && !!entity.states && !!window.hasActiveState?.(entity, 'invisibility');
+      && gameState.isInvisible(entity);
   },
+  // Планирование игнорирует скрытых противников; физическая занятость клетки — никогда.
   isFree: ({ x, y }, entity = gameState.activeEntity(), ignoreHidden = false) => x >= 0 && x < gameState.SIZE && y >= 0 && y < gameState.HEIGHT
     && Number.isFinite(gameState.entryCost({ x, y }, entity)) && gameState.obstacles.get(`${x},${y}`) !== 'crate'
     && !gameState.entities.some(other => other.id !== (entity?.id ?? gameState.activeEntityId)

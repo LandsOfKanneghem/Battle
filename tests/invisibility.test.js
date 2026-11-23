@@ -117,3 +117,92 @@ test('casting a spell and using a weapon do not break invisibility', () => {
     damageType: 'physical', target: 'enemy', aoeSize: 1 }, wizard.position, shadow, deps, null, true);
   assert.equal(ctx.hasActiveState(shadow, 'invisibility'), true);
 });
+
+test('Sparks preview treats a hidden primary as empty while a real hit bounces only to non-invisible creatures', () => {
+  const { ctx, state, wizard, shadow, monk, hide, deps, spell } = setup();
+  wizard.position = { x: 0, y: 0 };
+  shadow.position = { x: 4, y: 1 };
+  monk.position = { x: 11, y: 11 };
+  const visible = ctx.createCreature('wolf', { x: 4, y: 2 });
+  const hidden = ctx.createCreature('specter', { x: 5, y: 1 });
+  state.entities.push(visible, hidden);
+  hide(shadow); hide(hidden);
+  const sparks = spell('sparks');
+  state.preparedSpellId = sparks.id;
+  ctx.highlightSpellRange(shadow.position);
+  assert.equal(state.highlightedCells.length, 1, 'no bounce cell when hovering a hidden primary');
+  assert.equal(state.highlightedCells[0], state.cells[16]);
+  assert.equal(state.effectBadges.length, 0);
+  assert.deepEqual(plain(ctx.findSparkTargets(shadow, 3, 2, state.entities).map(e => e.id)), [visible.id]);
+  const original = { primary: shadow.hp, secondary: visible.hp, hidden: hidden.hp };
+  ctx.applySpellEffect(sparks, shadow.position, wizard, deps, null, true);
+  assert.equal(shadow.hp, original.primary - 4);
+  assert.equal(visible.hp, original.secondary - 2);
+  assert.equal(hidden.hp, original.hidden);
+  // A hidden creature is never used to fill a spare bounce slot.
+  visible.hp = 0;
+  assert.equal(ctx.findSparkTargets(shadow, 3, 2, state.entities).length, 0);
+});
+
+test('Sparks ignore invisible secondary targets in the preview and damage of a visible primary', () => {
+  const { ctx, state, wizard, shadow, monk, hide, deps, spell } = setup();
+  wizard.position = { x: 0, y: 0 };
+  shadow.position = { x: 4, y: 1 };
+  monk.position = { x: 4, y: 2 };
+  hide(monk);
+  const sparks = spell('sparks');
+  state.preparedSpellId = sparks.id;
+  ctx.highlightSpellRange(shadow.position);
+  assert.equal(state.highlightedCells.length, 1);
+  assert.equal(state.highlightedCells[0], state.cells[16]);
+  const hp = monk.hp;
+  ctx.applySpellEffect(sparks, shadow.position, wizard, deps, null, true);
+  assert.equal(monk.hp, hp, 'even an invisible ally cannot receive an automatic bounce');
+});
+
+test('invisible creatures block neither LOS nor the fire cone, while crates, void and visible creatures still do', () => {
+  const { ctx, state, wizard, shadow, hide, spell } = setup();
+  const beyond = { x: 5, y: 1 };
+  assert.equal(ctx.checkLOS(wizard.position, beyond), false);
+  shadow.position = { x: 2, y: 1 };
+  const area = () => ctx.affectedCells(shadow.position, spell('burning-hands'), wizard,
+    state.entities, state.obstacles, state.terrain, state.keyOf, 12);
+  assert.equal(area().length, 1);
+  hide(shadow);
+  assert.equal(ctx.checkLOS(wizard.position, beyond), true);
+  assert.equal(area().length, 8);
+  state.preparedSpellId = 'burning-hands';
+  ctx.highlightSpellRange(shadow.position);
+  assert.equal(state.highlightedCells.length, 8);
+  for (const [collection, value] of [[state.obstacles, 'crate'], [state.terrain, 'void']]) {
+    collection.set('2,1', value);
+    assert.equal(ctx.checkLOS(wizard.position, beyond), false);
+    if (collection === state.obstacles) collection.delete('2,1');
+    else collection.set('2,1', 'grass');
+  }
+  shadow.states[0].suppressed = true;
+  assert.equal(ctx.checkLOS(wizard.position, beyond), false);
+});
+
+test('teleport into a concealed enemy pays the cast and fails; a visible occupied target pays nothing', () => {
+  const { ctx, state, wizard, shadow, hide, deps } = setup();
+  const teleport = wizard.availableSpells.find(spell => spell.id === 'teleport');
+  state.preparedSpellId = teleport.id;
+  const targetCell = { dataset: { x: shadow.position.x, y: shadow.position.y } };
+  const failures = [];
+  const castDeps = { ...deps, playFailureAnimation: cell => failures.push(cell) };
+  const initial = { ap: wizard.ap, scc: wizard.spellCastCount, position: plain(wizard.position) };
+  assert.equal(ctx.castSpell(targetCell, castDeps), false);
+  assert.equal(wizard.ap, initial.ap);
+  assert.equal(teleport.cooldown, 0);
+  hide(shadow);
+  assert.equal(ctx.castSpell(targetCell, castDeps), true);
+  assert.equal(wizard.ap, initial.ap - teleport.apCost);
+  assert.equal(wizard.spellCastCount, initial.scc + 1);
+  assert.equal(teleport.cooldown, teleport.maxCooldown);
+  assert.equal(teleport.usesThisTurn, 1);
+  assert.deepEqual(plain(wizard.position), initial.position);
+  assert.deepEqual(failures, [targetCell]);
+  assert.equal(state.preparedSpellId, null);
+  assert.equal(state.isCasting, false);
+});

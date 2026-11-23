@@ -22,7 +22,8 @@ window.getBlockedConeCells = function(coneCells, direction, entities, obstacles,
   for (const point of coneCells) {
     const obstacle = obstacles.get(keyOf(point));
     const solid = obstacle === 'crate' || obstacle === 'void';
-    const creature = entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(point));
+    const creature = entities.some(entity => entity.hp > 0 && !window.gameState.isInvisible(entity)
+      && keyOf(entity.position) === keyOf(point));
     if (solid) blocked.add(keyOf(point)); // Ящики и стены не входят в подсветку.
     if ((!solid && !creature) || point.depth === 3) continue;
     if (point.depth === 1) {
@@ -48,7 +49,9 @@ window.findSparkTargets = function(primaryTarget, radius, count, entities) {
   if (!primaryTarget) return [];
   // Манхэттенская дистанция, затем угол по часовой стрелке: право → вниз → лево → верх.
   // LOS для отскоков не проверяется; источник тоже может оказаться среди целей.
-  return entities.filter(entity => entity.hp > 0 && entity.id !== primaryTarget.id)
+  // Невидимость исключает автоматический отскок, но не прямое попадание.
+  return entities.filter(entity => entity.hp > 0 && entity.id !== primaryTarget.id
+    && !window.gameState.isInvisible(entity))
     .map(entity => {
       const dx = entity.position.x - primaryTarget.position.x;
       const dy = entity.position.y - primaryTarget.position.y;
@@ -521,13 +524,17 @@ window.castSpell = function(targetCell, deps) {
   } = deps;
   if (gameState.isCasting) return false;
   const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
-  const spell = activeEntity()?.availableSpells.find(item => item.id === gameState.preparedSpellId);
+  const caster = activeEntity();
+  const spell = caster?.availableSpells.find(item => item.id === gameState.preparedSpellId);
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
   // Занятая клетка не расходует ресурсы призыва и сохраняет подготовку.
   if (spell.isSummon && entities.some(entity => entity.hp > 0
     && keyOf(entity.position) === keyOf(target))) return false;
-  if (spell.isTeleport && entities.some(entity => entity.hp > 0
-    && keyOf(entity.position) === keyOf(target))) return false;
+  const teleportOccupant = spell.isTeleport && entities.find(entity => entity.hp > 0
+    && keyOf(entity.position) === keyOf(target));
+  const teleportBlocked = teleportOccupant && gameState.isHiddenFrom(teleportOccupant, caster);
+  // Видимую занятую клетку отклоняем до оплаты; скрытое препятствие обнаруживается только при касте.
+  if (teleportOccupant && !teleportBlocked) return false;
   // Лечение и защита требуют живого союзника до оплаты.
   if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
@@ -536,10 +543,9 @@ window.castSpell = function(targetCell, deps) {
   if (spell.target === 'enemy' && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
-  const caster = activeEntity();
   // Отдельный бросок до оплаты: при SFC = 0 последовательность бросков выстрелов не меняется.
   const sfc = getEffectiveStat(caster, 'sfc');
-  const failed = spell.abilityType === 'spell' && sfc > 0 && Math.random() * 100 < sfc;
+  const failed = teleportBlocked || (spell.abilityType === 'spell' && sfc > 0 && Math.random() * 100 < sfc);
   const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
   // Этот же снимок целей используется для анимации и последующего урона.
   const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount, entities) : null;

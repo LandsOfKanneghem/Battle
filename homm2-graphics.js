@@ -9,7 +9,7 @@
     liquid-membrane rain ice-arrow deep-freeze lake-spirit
     haste wind-rose sparks sky-shot teleport water-walk slow dead-weight stone-skin
     heal-harm weakness-vigor sprint light-flash power-hour apply-old-age
-    fire-shield water-shield earth-shield air-shield`.split(/\s+/));
+    fire-shield water-shield earth-shield air-shield turn-invisible spectral-strike`.split(/\s+/));
   // Some book entries are copies of definitions. Decorate each distinct object,
   // preserving all references subsequently used as keys by spellSlots.
   for (const spell of new Set([...SPELL_DEFINITIONS, ...MONK_SPELLS, ...ELEMENTAL_SHIELD_SPELLS,
@@ -17,7 +17,7 @@
     if (spell.iconPath || spellArt.has(spell.id)) spell.svg = icon(spell.iconPath ?? `${artRoot}spell-${spell.id}.png`);
   }
   for (const state of stateTypes.values()) {
-    if (state.id !== 'invisibility') state.icon = sprite(`state-${state.id}`);
+    state.icon = state.id === 'invisibility' ? sprite('spell-turn-invisible') : sprite(`state-${state.id}`);
   }
 
   const createSvg = window.createCreatureSvg;

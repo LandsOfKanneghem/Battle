@@ -50,16 +50,30 @@
     const mounts = wallMounts(map, anchored ? object.wallX : object.x, anchored ? object.wallY : object.y)
       .filter(mount => !anchored || (mount.source.x === object.x && mount.source.y === object.y));
     const exact = mounts.find(mount => mount.facing === object.facing);
-    if (exact) return exact;
     // Old cardinal placements snap to the new corner geometry, preserving their wall side.
     const score = mount => { const [dx, dy] = FACES[mount.facing]; return (dx * requested[0] + dy * requested[1]) / Math.hypot(dx, dy); };
-    return mounts.filter(mount => score(mount) > 0).sort((a, b) => score(b) - score(a))[0] ?? null;
+    const selected = exact ?? mounts.filter(mount => score(mount) > 0).sort((a, b) => score(b) - score(a))[0];
+    if (!selected) return null;
+    if (selected.kind !== 'straight') return selected;
+    const wallX = anchored ? object.wallX : object.x, wallY = anchored ? object.wallY : object.y;
+    // A floor cell at an inside corner also adjoins two straight wall tiles.
+    // Snap their visual mount to the corner, keeping the saved attachment and light source.
+    const corners = floorMounts(map, selected.source.x, selected.source.y).filter(mount => mount.kind === 'concave');
+    const distance = corner => Math.hypot((corner.wallX - wallX) * 48 + corner.offsetX - selected.offsetX,
+      (corner.wallY - wallY) * 48 + corner.offsetY - selected.offsetY);
+    corners.sort((a, b) => distance(a) - distance(b));
+    const corner = corners[0];
+    return corner ? { ...selected, kind: 'concave',
+      offsetX: (corner.wallX - wallX) * 48 + corner.offsetX,
+      offsetY: (corner.wallY - wallY) * 48 + corner.offsetY } : selected;
   }
   function floorMounts(map, x, y) {
     if (!inside(map, x, y) || isVoid(map.tiles[y][x])) return [];
-    return Object.values(FACES).flatMap(([dx, dy]) => wallMounts(map, x - dx, y - dy)
+    const mounts = Object.values(FACES).flatMap(([dx, dy]) => wallMounts(map, x - dx, y - dy)
       .filter(mount => mount.source.x === x && mount.source.y === y)
       .map(mount => ({ ...mount, wallX: x - dx, wallY: y - dy })));
+    const corners = mounts.filter(mount => mount.kind === 'concave');
+    return corners.length ? corners : mounts;
   }
   function canonicalObject(map, object) {
     const item = { type: object.type, x: object.x, y: object.y };

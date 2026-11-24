@@ -558,7 +558,7 @@ window.castSpell = function(targetCell, deps) {
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.stateId && !spell.isRain && !spell.isShot && !window.isTorchSpellTarget?.(target, spell, caster) && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
     && (spell.target !== 'ally' || isAlly(entity)) && (spell.target !== 'enemy' || !isAlly(entity)))) return false;
-  if (spell.target === 'enemy' && !window.isTorchSpellTarget?.(target, spell, caster) && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
+  if (spell.target === 'enemy' && !spell.canCastOnAnyCell && !window.isTorchSpellTarget?.(target, spell, caster) && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
   // Отдельный бросок до оплаты: при SFC = 0 последовательность бросков выстрелов не меняется.

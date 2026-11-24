@@ -36,14 +36,14 @@ function setup() {
   return { ctx, state, wizard, torch, spell, deps };
 }
 
-test('an empty-cell fire shot lights a torch; water damage extinguishes it and restores underlying light', () => {
+test('non-shot fire lights a torch; non-shot water extinguishes it and restores underlying light', () => {
   const { ctx, state, wizard, torch, spell, deps } = setup();
   const object = torch('unlit-torch', 3, 1);
   state.lighting.cells[1][3] = 120;
-  ctx.applySpellEffect(spell('fire-shot'), object, wizard, deps());
+  ctx.applySpellEffect(spell('fire-cube'), object, wizard, deps());
   assert.equal(object.type, 'torch');
   assert.equal(ctx.BattleLighting.at(state.lighting, 3, 1), 1);
-  const water = { abilityType: 'spell', isShot: true, damageBase: 3, damageType: 'water', aoeSize: 1 };
+  const water = { abilityType: 'spell', isShot: false, damageBase: 3, damageType: 'water', aoeSize: 1 };
   ctx.applySpellEffect(water, object, wizard, deps());
   assert.equal(object.type, 'unlit-torch');
   assert.equal(ctx.BattleLighting.at(state.lighting, 3, 1), 1.2);
@@ -95,6 +95,7 @@ test('floor-anchored wall torch is targetable with ordinary LOS, and walls still
   const object = torch('unlit-wall-torch', 3, 1);
   Object.assign(object, { wallX: 3, wallY: 0, facing: 'south' });
   const fire = wizard.availableSpells.find(spell => spell.id === 'fire-shot');
+  fire.isShot = false; // A non-shot fire spell exercises wall targeting.
   assert(ctx.MapObjects.canPlace(state.battleMap, object, [], object));
   assert(ctx.canTarget(object, fire));
   state.preparedSpellId = fire.id;
@@ -154,4 +155,41 @@ test('mobile light respects static blockers and disappears with its source effec
   assert.equal(ctx.BattleLighting.at(state.lighting, 5, 7), 1);
   ctx.removeCasterEffects(wizard.id);
   assert.equal(ctx.BattleLighting.at(state.lighting, 5, 7), .6);
+});
+
+test('shots never change or outline any torch, including shots with an AOE or Wet', () => {
+  const { ctx, wizard, torch, spell, deps } = setup();
+  for (const type of ['torch', 'unlit-torch', 'wall-torch', 'unlit-wall-torch']) {
+    const object = torch(type, 3, 1);
+    for (const shot of [spell('fire-shot'), { ...spell('ice-arrow'), isAOE: true, aoeSize: 3 },
+      { ...spell('rain'), isShot: true }]) {
+      assert.equal(ctx.torchChanges([object], shot, wizard).length, 0);
+      ctx.highlightTorchChanges([object], shot, wizard);
+      assert(!object.element.classList.contains('spell-target'));
+      ctx.applySpellEffect(shot, object, wizard, deps());
+      assert.equal(object.type, type);
+    }
+  }
+});
+
+test('Light Flash pays for empty and allied cells but damages only enemies', () => {
+  const { ctx, state, wizard, deps } = setup();
+  const monk = ctx.createCreature('monk', { x: 1, y: 2 });
+  const enemy = ctx.createCreature('wolf', { x: 3, y: 2 });
+  state.entities.push(monk, enemy); state.activeEntityId = monk.id; monk.ap = 100;
+  const flash = monk.availableSpells.find(spell => spell.id === 'light-flash');
+  const before = wizard.hp;
+  const cast = point => {
+    flash.usesThisTurn = 0; state.preparedSpellId = flash.id;
+    assert(ctx.canTarget(point, flash));
+    const ap = monk.ap;
+    assert(ctx.castSpell(state.cells[point.y * 12 + point.x], { ...deps(), playLightFlashAnimation() {} }));
+    assert.equal(monk.ap, ap - flash.apCost);
+    assert.equal(flash.usesThisTurn, 1);
+  };
+  cast({ x: 2, y: 2 });
+  cast(wizard.position); assert.equal(wizard.hp, before);
+  assert(!ctx.isSpellPreviewTarget(wizard, flash, monk, wizard.position));
+  const hp = enemy.hp; cast(enemy.position);
+  assert(enemy.hp < hp);
 });

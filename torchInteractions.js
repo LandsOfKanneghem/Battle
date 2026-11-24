@@ -1,6 +1,6 @@
 // Факелы занимают доступную клетку пола; wallX/wallY отвечают только за крепление спрайта.
 window.torchSpellState = function(spell, caster) {
-  if (!spell || spell.isSummon || spell.isTeleport) return null;
+  if (!spell || spell.isShot || spell.isSummon || spell.isTeleport) return null;
   if (spell.stateId === 'wet' || spell.isRain) return false;
   if (!(window.getSpellDamage(spell, caster) > 0)) return null;
   if (spell.damageType === 'water') return false;

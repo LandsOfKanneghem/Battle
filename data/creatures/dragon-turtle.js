@@ -3,7 +3,7 @@ window.CREATURE_TEMPLATES['dragon-turtle'] = {
   name: 'Драконовая черепаха', type: 'dragon-turtle', ai: 'dragon-turtle',
   level: 3, baseHP: 14, hpPerLevel: 6, baseWP: 10, wpPerLevel: 4, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
   baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-  baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+  baseAC: 0, basePhysical: 2, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   attributes: { vit: 4, str: 4, att: 0, int: 0, wis: 3, cha: 0, luc: 0 },
   innateStates: ['sharp-shell'],

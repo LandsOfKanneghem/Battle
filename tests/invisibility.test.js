@@ -294,3 +294,17 @@ test('Alt preview reports capped hit chance, critical chance and current critica
   ctx.highlightSpellRange(shadow.position);
   assert.equal(state.effectBadges.length, 0);
 });
+
+test('outline eligibility respects target teams, living targets and invisibility', () => {
+  const { ctx, wizard, shadow, monk, hide } = setup();
+  assert.equal(ctx.isSpellPreviewTarget(shadow, { target: 'ally' }, wizard, shadow.position), false);
+  assert.equal(ctx.isSpellPreviewTarget(monk, { target: 'ally' }, wizard, monk.position), true);
+  assert.equal(ctx.isSpellPreviewTarget(wizard, { target: 'enemy' }, wizard, wizard.position), false);
+  assert.equal(ctx.isSpellPreviewTarget(shadow, { target: 'enemy' }, wizard, shadow.position), true);
+  assert.equal(ctx.isSpellPreviewTarget(shadow, { target: 'any' }, wizard, shadow.position), true);
+  assert.equal(ctx.isSpellPreviewTarget(monk, { target: 'none', isSummon: true }, wizard, monk.position), false);
+  hide(shadow);
+  assert.equal(ctx.isSpellPreviewTarget(shadow, { target: 'any' }, wizard, shadow.position), false);
+  monk.hp = 0;
+  assert.equal(ctx.isSpellPreviewTarget(monk, { target: 'ally' }, wizard, monk.position), false);
+});

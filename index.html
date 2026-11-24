@@ -287,7 +287,10 @@
         return;
       }
       const target = { x: Number(cell.dataset.x), y: Number(cell.dataset.y) };
-      gameState.fieldHoveredEntityId = gameState.entities.find(entity => !gameState.isHiddenFromPlayer(entity) && gameState.keyOf(entity.position) === gameState.keyOf(target))?.id ?? null;
+      const hovered = gameState.preparedSpellId
+        ? gameState.entities.find(entity => !gameState.isHiddenFromPlayer(entity) && gameState.keyOf(entity.position) === gameState.keyOf(target))
+        : window.getFieldEntityAtPointer(event.clientX, event.clientY);
+      gameState.fieldHoveredEntityId = hovered?.id ?? null;
       window.updatePanel();
       const mover = window.activeMover();
       if (gameState.isMoving || !mover) return;

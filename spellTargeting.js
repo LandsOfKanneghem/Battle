@@ -88,6 +88,17 @@ window.canTarget = function(target, spell) {
   return window.inSpellReach(target, spell);
 };
 
+// Подходящая цель превью: сторона относительно кастера, без раскрытия невидимых врагов.
+window.isSpellPreviewTarget = function(entity, spell, caster, center) {
+  const state = window.gameState;
+  if (!entity || entity.hp <= 0 || !caster || state.isHiddenFromPlayer(entity)
+    || spell.isSummon || spell.isTeleport || spell.target === 'none') return false;
+  const sameTeam = state.isAlly(entity) === state.isAlly(caster);
+  if ((spell.target === 'ally' && !sameTeam) || (spell.target === 'enemy' && sameTeam)) return false;
+  if (spell.isWindRose && Math.abs(entity.position.x - center.x) + Math.abs(entity.position.y - center.y) !== 1) return false;
+  return true;
+};
+
 window.highlightSpellRange = function(center = null) {
   window.clearHighlight();
   const spell = window.gameState.activeEntity()?.availableSpells.find(item => item.id === window.gameState.preparedSpellId);
@@ -109,6 +120,13 @@ window.highlightSpellRange = function(center = null) {
       const cell = window.gameState.cells[point.y * window.gameState.SIZE + point.x];
       cell.classList.add('spell-aoe');
       window.gameState.highlightedCells.push(cell);
+    }
+    const keys = new Set(area.map(window.gameState.keyOf));
+    for (const entity of previewEntities) {
+      if (keys.has(window.gameState.keyOf(entity.position))
+        && window.isSpellPreviewTarget(entity, spell, window.gameState.activeEntity(), center)) {
+        entity.svg?.classList?.add('spell-target');
+      }
     }
     window.showEffectPreview(area, spell, center);
   }

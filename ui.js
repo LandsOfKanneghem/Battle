@@ -519,7 +519,8 @@ window.updatePanel = function() {
     if (hidden !== entity.svg.classList.contains('entity-invisible')) window.clearHighlight();
     entity.svg.classList.toggle('entity-invisible', hidden);
     entity.svg.setAttribute('aria-hidden', String(hidden));
-    entity.svg.classList.toggle('entity-hover', !hidden && queueHoveredId === entity.id);
+    entity.svg.classList.toggle('entity-hover', !hidden && (queueHoveredId === entity.id
+      || (!window.gameState.preparedSpellId && window.gameState.fieldHoveredEntityId === entity.id)));
     const active = entity.id === window.gameState.activeEntityId;
     window.gameState.turnSlots.get(entity.id).classList.toggle('active', active);
     window.gameState.turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');
@@ -536,4 +537,20 @@ window.updatePanel = function() {
       }
     }
   }
+};
+
+// Наведение учитывает видимую часть большого спрайта, выступающую за его клетку.
+window.getFieldEntityAtPointer = function(x, y) {
+  const entities = [...window.gameState.entities].sort((a, b) => b.position.y - a.position.y);
+  return entities.find(entity => {
+    if (entity.hp <= 0 || window.gameState.isHiddenFromPlayer(entity)) return false;
+    const rect = entity.svg.getBoundingClientRect();
+    const appearance = window.CREATURE_TEMPLATES[entity.type].appearance;
+    const source = appearance.sourceSize ?? window.DEFAULT_CREATURE_SOURCE_SIZE;
+    const pad = appearance.padding;
+    return x >= rect.left + pad.left * rect.width / source.width
+      && x <= rect.right - pad.right * rect.width / source.width
+      && y >= rect.top + pad.top * rect.height / source.height
+      && y <= rect.bottom - pad.bottom * rect.height / source.height;
+  });
 };

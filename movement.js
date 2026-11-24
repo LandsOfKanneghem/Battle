@@ -262,6 +262,7 @@ window.clearHighlight = function() {
   for (const cell of window.gameState.rangeHighlightedCells) cell.classList.remove('spell-range');
   window.gameState.rangeHighlightedCells = [];
   window.gameState.previewKey = null;
+  window.gameState.spellPreviewCenter = null;
   window.gameState.costLabel.remove();
 };
 

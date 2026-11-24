@@ -101,6 +101,7 @@ window.highlightSpellRange = function(center = null) {
     window.gameState.rangeHighlightedCells.push(cell);
   }
   if (center && window.canTarget(center, spell)) {
+    window.gameState.spellPreviewCenter = { ...center };
     // Превью строится по видимым существам; настоящий каст использует полный список.
     const previewEntities = window.gameState.entities.filter(entity => !window.gameState.isHiddenFromPlayer(entity));
     const area = window.affectedCells(center, spell, window.gameState.activeEntity(), previewEntities, window.gameState.obstacles, window.gameState.terrain, window.gameState.keyOf, window.gameState.SIZE, window.gameState.HEIGHT);
@@ -138,9 +139,38 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
       badge.className = 'effect-preview damage';
       // Отскок — половина уже уменьшенного урона, как и в applySpellEffect.
       const previewSpell = spell.isSparks && entity !== primary ? { ...dmgSpell, damage: Math.floor(dmgSpell.damage / 2) } : dmgSpell;
-      badge.textContent = `-${window.spellDamage(previewSpell, entity)}`;
+      const damage = window.spellDamage(previewSpell, entity);
+      if (window.altHeld) {
+        const hitChance = spell.isShot || spell.isHit ? window.getHitChance(caster, entity) : 100;
+        const critChance = window.getCritChance(spell, caster, entity);
+        badge.classList.add('detailed-preview');
+        // Крит пока не меняет урон: показываем то же итоговое значение после защит и ES.
+        badge.textContent = `Урон: ${damage} [Крит: ${damage}]
+Шанс попадания: ${hitChance}%
+Крит шанс: ${critChance}%`;
+      } else badge.textContent = `-${damage}`;
     }
     window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x].appendChild(badge);
     window.gameState.effectBadges.push(badge);
+  }
+  if (window.altHeld) window.layoutDetailedPreviews();
+};
+
+window.layoutDetailedPreviews = function() {
+  const field = window.gameState.battlefield?.getBoundingClientRect?.();
+  if (!field) return;
+  const placed = [];
+  for (const badge of window.gameState.effectBadges) {
+    if (!badge.classList.contains('detailed-preview')) continue;
+    const rect = badge.getBoundingClientRect();
+    const clampX = x => Math.max(field.left + 2, Math.min(x, field.right - rect.width - 2));
+    const clampY = y => Math.max(field.top + 2, Math.min(y, field.bottom - rect.height - 2));
+    const xs = [rect.left, ...placed.flatMap(r => [r.left - rect.width - 4, r.right + 4])].map(clampX);
+    const ys = [rect.top, ...placed.flatMap(r => [r.top - rect.height - 4, r.bottom + 4])].map(clampY);
+    const candidates = xs.flatMap(x => ys.map(y => ({ left: x, top: y, right: x + rect.width, bottom: y + rect.height })));
+    candidates.sort((a, b) => Math.hypot(a.left - rect.left, a.top - rect.top) - Math.hypot(b.left - rect.left, b.top - rect.top));
+    const position = candidates.find(r => placed.every(p => r.right + 3 <= p.left || r.left >= p.right + 3 || r.bottom + 3 <= p.top || r.top >= p.bottom + 3)) ?? candidates[0];
+    badge.style.transform = `translate(${position.left - rect.left}px, ${position.top - rect.top}px)`;
+    placed.push(position);
   }
 };

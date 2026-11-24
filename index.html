@@ -16,6 +16,9 @@
     <button id="toggle-grid" class="battle-toolbar-button" type="button" aria-label="Сетка" title="Показать/скрыть сетку" aria-pressed="true" aria-controls="battlefield">
       <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3v18M12 3v18M18 3v18M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
+    <button id="show-hotkeys" class="battle-toolbar-button" type="button" aria-label="Горячие клавиши" title="Горячие клавиши" aria-haspopup="dialog" aria-controls="hotkeys-dialog">
+      <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="2" y="6" width="24" height="17" rx="1" fill="#dbc59e" stroke="#654c20" stroke-width="2"/><path d="M5 10h3m3 0h3m3 0h3m3 0h1M5 14h3m3 0h3m3 0h3m3 0h1M5 18h3m3 0h12" stroke="#4d2e15" stroke-width="2"/></svg>
+    </button>
     <input id="map-file" type="file" accept=".json,application/json" hidden>
     <span id="map-status" role="status" aria-live="polite"></span>
   </div>
@@ -88,6 +91,18 @@
       </div>
     </aside>
   </main>
+  <dialog id="hotkeys-dialog" aria-labelledby="hotkeys-title">
+    <button id="close-hotkeys" type="button" aria-label="Закрыть">×</button>
+    <h2 id="hotkeys-title">Горячие клавиши</h2>
+    <table><tbody>
+      <tr><th scope="row">← / →</th><td>Переключить страницу книги заклинаний</td></tr>
+      <tr><th scope="row">1–9, 0</th><td>Подготовить заклинание из слотов 1–10 текущей страницы</td></tr>
+      <tr><th scope="row">Ctrl + 1–9, 0</th><td>Подготовить заклинание из слотов 11–20</td></tr>
+      <tr><th scope="row">Esc</th><td>Отменить подготовку заклинания или закрыть это окно</td></tr>
+      <tr><th scope="row">Shift (удерживать)</th><td>Показать базовые формулы в тултипе заклинания</td></tr>
+      <tr><th scope="row">Alt (удерживать)</th><td>Показать урон, урон при крите, шанс попадания и крит-шанс в превью по цели</td></tr>
+    </tbody></table>
+  </dialog>
   <div id="defeat-overlay" hidden aria-live="assertive">
     <div class="defeat-message">Вы проиграли!</div>
     <div class="defeat-hint">Обновите страницу (F5), чтобы начать заново</div>
@@ -153,7 +168,29 @@
       if (spell && icon) window.showSpellTooltip(icon, spell);
     }
 
+    const hotkeysDialog = document.getElementById('hotkeys-dialog');
+    function setSpellPreviewAlt(held) {
+      if (window.altHeld === held) return;
+      window.altHeld = held;
+      const center = gameState.spellPreviewCenter;
+      if (gameState.preparedSpellId && !gameState.isCasting) window.highlightSpellRange(center);
+    }
+    document.getElementById('show-hotkeys').addEventListener('click', () => {
+      setSpellPreviewAlt(false);
+      window.hideSpellTooltip();
+      hotkeysDialog.showModal();
+    });
+    document.getElementById('close-hotkeys').addEventListener('click', () => hotkeysDialog.close());
     document.addEventListener('keydown', event => {
+      if (hotkeysDialog.open) {
+        if (event.key === 'Escape') { event.preventDefault(); hotkeysDialog.close(); }
+        return;
+      }
+      if (event.key === 'Alt' && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        setSpellPreviewAlt(true);
+        return;
+      }
       if (event.key === 'Shift') {
         setSpellTooltipShift(true);
         return;
@@ -185,6 +222,7 @@
 
     document.addEventListener('keyup', event => {
       if (event.key === 'Shift') setSpellTooltipShift(false);
+      if (event.key === 'Alt') setSpellPreviewAlt(false);
     });
     document.addEventListener('keydown', event => {
       // Одиночный левый Alt не активирует меню; Tab/F4 и Alt с модификаторами не перехватываем.
@@ -194,6 +232,7 @@
     });
     window.addEventListener('blur', () => {
       window.shiftHeld = false;
+      setSpellPreviewAlt(false);
       const spell = window.spellTooltipSpell;
       const icon = window.spellTooltipIcon;
       if (spell && icon) {

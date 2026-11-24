@@ -32,6 +32,7 @@ window.gameState = {
   rangeHighlightedCells: [],
   effectBadges: [],
   previewKey: null,
+  spellPreviewCenter: null,
 
   // DOM-ссылки и коллекции элементов интерфейса.
   battlefield: document.getElementById('battlefield'),

@@ -12,6 +12,7 @@ let spellTooltip = null;
 window.spellTooltipIcon = null;
 window.spellTooltipSpell = null;
 window.shiftHeld = false;
+window.altHeld = false;
 let effectPanelKey = null;
 let effectTooltip = null;
 let nextRoundPanelKey = null;

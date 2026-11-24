@@ -273,3 +273,19 @@ test('crit annotates damage without changing it and never triggers on a miss or 
   assert.equal(records.length, 1);
   assert.equal(popups.length, 1);
 });
+
+test('Alt preview reports capped hit chance, critical chance and current critical damage without revealing hidden targets', () => {
+  const { ctx, state, wizard, shadow, hide } = setup();
+  wizard.attributes.att = 25;
+  wizard.cri = 10;
+  ctx.altHeld = true;
+  state.preparedSpellId = 'fire-shot';
+  ctx.highlightSpellRange(shadow.position);
+  assert.equal(state.effectBadges[0].textContent, 'Урон: 4 [Крит: 4]\nШанс попадания: 100%\nКрит шанс: 35%');
+  assert.deepEqual(plain(state.spellPreviewCenter), plain(shadow.position));
+  ctx.clearHighlight();
+  assert.equal(state.spellPreviewCenter, null);
+  hide(shadow);
+  ctx.highlightSpellRange(shadow.position);
+  assert.equal(state.effectBadges.length, 0);
+});

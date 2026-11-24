@@ -27,8 +27,8 @@ const SPELL_DEFINITIONS = [{
   isTorchLight: true, target: 'ally', durationBase: 3, durationPerInt: 0,
   range: 0, minRange: 0, modifiable: false, noLOS: false,
   apCost: 2, maxCooldown: 5, maxUsesPerTurn: 1, isAOE: false, aoeSize: 1,
-  iconPath: 'assets/map-editor/objects/torch.png',
-  svg: '<svg viewBox="0 0 48 48" aria-hidden="true"><image href="assets/map-editor/objects/torch.png" width="48" height="48"/></svg>'
+  iconPath: 'assets/homm2/spell-torch.png',
+  svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-torch.png" width="64" height="64"/></svg>'
 }, {
   id: 'power-hour', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', magicSchool: 'light',
   name: 'Час силы', stackable: false, target: 'ally',

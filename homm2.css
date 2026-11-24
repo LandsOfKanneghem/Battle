@@ -275,6 +275,7 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
   font-size: clamp(11px, calc(1.4vmin + 2px), 16px);
   text-shadow: -1px -1px #000, 1px -1px #000, -1px 1px #000, 1px 1px #000;
 }
+.effect-preview.damage:not(.detailed-preview) { font-size: clamp(13px, calc(1.4vmin + 4px), 18px); }
 .effect-preview.detailed-preview { color: #ffff66; white-space: pre; text-align: left; z-index: 120; }
 #hotkeys-dialog {
   box-sizing: border-box; width: min(580px, calc(100vw - 32px)); max-height: calc(100vh - 32px);

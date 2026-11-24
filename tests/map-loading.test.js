@@ -259,3 +259,14 @@ test('torch rays match Battle static LOS including its corner rules', () => {
     assert.equal(ctx.MapObjects.lightLOS({ x: 5, y: 5 }, { x, y }, blocked), ctx.checkLOS({ x: 5, y: 5 }, { x, y }));
   }
 });
+
+test('convex wall torch imports old cardinal facing as a diagonal light source', () => {
+  const ctx = setup(), data = fixture('underground'); data.version = 7;
+  for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) if (x < 5 || y < 5) data.tiles[y][x] = 'cave-earth';
+  data.lighting = { mode: 'absolute', ambient: 60, cells: Array.from({ length: 12 }, () => Array(12).fill(null)) };
+  data.objects = [{ type: 'wall-torch', x: 5, y: 5, facing: 'west', blocking: false, interactive: false }];
+  const map = ctx.validateBattleMap(data);
+  assert.equal(map.objects[0].facing, 'north-west');
+  assert.equal(ctx.BattleLighting.at(map.lighting, 2, 4), 1);
+  assert.equal(ctx.BattleLighting.at(map.lighting, 5, 2), 0.6);
+});

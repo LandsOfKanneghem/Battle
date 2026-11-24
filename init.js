@@ -63,7 +63,7 @@
     const normalizedObjects = window.MapObjects.readObjects(objects, { mapType, tiles: content.tiles }, normalizedMobs);
     const lighting = window.BattleLighting.read(content.lighting);
     if (normalizedObjects.some(object => !window.MapObjects.TYPES[object.type].blocking)) {
-      lighting.torchCells = window.MapObjects.illuminated({ tiles: content.tiles, objects: normalizedObjects });
+      lighting.torchCells = window.MapObjects.illuminated({ mapType, tiles: content.tiles, objects: normalizedObjects });
     }
     return { mapType, wallStyles, lighting, tiles: content.tiles.map(row => [...row]), mobs: normalizedMobs, objects: normalizedObjects };
   };
@@ -159,13 +159,14 @@
     for (const object of map.objects.filter(object => !window.MapObjects.TYPES[object.type].blocking)) {
       const image = document.createElement('img');
       image.className = 'small-map-object';
-      image.src = `assets/map-editor/objects/${object.type}.png`;
+      image.src = `assets/map-editor/objects/${object.type === 'wall-torch' ? 'wall-torch-top' : object.type}.png`;
       image.alt = window.MapObjects.TYPES[object.type].name;
-      image.style.scale = object.facing === 'east' ? '-1 1' : '';
       image.draggable = false;
-      const [dx, dy] = object.type === 'wall-torch' ? window.MapObjects.FACES[object.facing] : [0, 0];
-      image.style.left = `${object.x * 48 + dx * 12}px`;
-      image.style.top = `${object.y * 48 + dy * 12}px`;
+      const mount = object.type === 'wall-torch' ? window.MapObjects.wallMount(map, object) : null;
+      image.style.left = `${object.x * 48 + (mount?.offsetX ?? 0)}px`;
+      image.style.top = `${object.y * 48 + (mount?.offsetY ?? 0)}px`;
+      image.dataset.mountKind = mount?.kind ?? '';
+      image.dataset.mountFacing = mount?.facing ?? '';
       state.battlefield.appendChild(image);
     }
     for (const mob of map.mobs) {

@@ -4,16 +4,15 @@
     'monastery-floor', 'cave-earth', 'void']);
   const mapTypes = new Set(['surface', 'underground']);
   const wallTypes = new Set(['monastery', 'dungeon']);
-  const objectTypes = new Set(['crate']);
   const teamOf = template => template.type === 'wizard' || template.type === 'monk' || template.isSummon ? 'ally' : 'enemy';
 
   window.validateBattleMap = function(data) {
     const state = window.gameState;
-    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6].includes(data.version)) {
+    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7].includes(data.version)) {
       throw new Error('Неподдерживаемый формат или версия карты.');
     }
     if (data.width !== state.SIZE || data.height !== state.HEIGHT) throw new Error('Размер карты должен быть 12×12.');
-    const mapType = data.version === 6 ? data.mapType : data.version === 5 ? data.activeLevel : 'surface';
+    const mapType = data.version >= 6 ? data.mapType : data.version === 5 ? data.activeLevel : 'surface';
     if (!mapTypes.has(mapType)) throw new Error('Неизвестный тип карты.');
     const content = data.version === 5 ? data.levels?.[mapType] : data;
     if (!Array.isArray(content?.tiles) || content.tiles.length !== state.HEIGHT ||
@@ -35,7 +34,7 @@
     }
     const mobs = data.version === 1 ? [] : content.mobs;
     const objects = data.version < 3 ? [] : content.objects;
-    if (!Array.isArray(mobs) || !Array.isArray(objects) || mobs.length + objects.length > state.SIZE * state.HEIGHT) {
+    if (!Array.isArray(mobs) || !Array.isArray(objects) || (mobs.length > state.SIZE * state.HEIGHT || objects.length > state.SIZE * state.HEIGHT)) {
       throw new Error('Неверный список существ или объектов карты.');
     }
     const occupied = new Set();
@@ -61,13 +60,11 @@
         throw new Error('Неверная сторона существа.');
       return { type: mob.type, team, x: mob.x, y: mob.y };
     });
-    const normalizedObjects = objects.map(object => {
-      if (!object || !objectTypes.has(object.type)) throw new Error('Недостаточно данных для загрузки карты');
-      checkPosition(object);
-      if (object.blocking !== true || object.interactive !== false) throw new Error('Неверные свойства препятствия.');
-      return { type: object.type, x: object.x, y: object.y };
-    });
+    const normalizedObjects = window.MapObjects.readObjects(objects, { mapType, tiles: content.tiles }, normalizedMobs);
     const lighting = window.BattleLighting.read(content.lighting);
+    if (normalizedObjects.some(object => !window.MapObjects.TYPES[object.type].blocking)) {
+      lighting.torchCells = window.MapObjects.illuminated({ tiles: content.tiles, objects: normalizedObjects });
+    }
     return { mapType, wallStyles, lighting, tiles: content.tiles.map(row => [...row]), mobs: normalizedMobs, objects: normalizedObjects };
   };
 
@@ -135,7 +132,7 @@
     document.getElementById('defeat-overlay').hidden = true;
     window.resetCreatureCounters();
     state.costLabel.className = 'path-cost';
-    for (const object of map.objects) state.obstacles.set(state.keyOf(object), object.type);
+    for (const object of map.objects) if (window.MapObjects.TYPES[object.type].blocking) state.obstacles.set(state.keyOf(object), object.type);
     for (let y = 0; y < state.HEIGHT; y++) for (let x = 0; x < state.SIZE; x++) {
       const type = map.tiles[y][x];
       state.terrain.set(`${x},${y}`, type);
@@ -158,6 +155,18 @@
       }
       state.cells.push(cell);
       state.battlefield.appendChild(cell);
+    }
+    for (const object of map.objects.filter(object => !window.MapObjects.TYPES[object.type].blocking)) {
+      const image = document.createElement('img');
+      image.className = 'small-map-object';
+      image.src = `assets/map-editor/objects/${object.type}.png`;
+      image.alt = window.MapObjects.TYPES[object.type].name;
+      image.style.scale = object.facing === 'east' ? '-1 1' : '';
+      image.draggable = false;
+      const [dx, dy] = object.type === 'wall-torch' ? window.MapObjects.FACES[object.facing] : [0, 0];
+      image.style.left = `${object.x * 48 + dx * 12}px`;
+      image.style.top = `${object.y * 48 + dy * 12}px`;
+      state.battlefield.appendChild(image);
     }
     for (const mob of map.mobs) {
       const creature = window.createCreature(mob.type, mob);

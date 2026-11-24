@@ -19,6 +19,7 @@ window.BattleLighting = (() => {
         : v === 100 ? null : clampBrightness(value.ambient * v / 100))) };
   }
 
-  const at = (lighting, x, y) => clampBrightness(lighting?.cells[y]?.[x] ?? lighting?.ambient ?? 100) / 100;
+  const at = (lighting, x, y) => lighting?.torchCells?.has(`${x},${y}`) ? 1
+    : clampBrightness(lighting?.cells[y]?.[x] ?? lighting?.ambient ?? 100) / 100;
   return Object.freeze({ read: readLighting, at });
 })();

@@ -10,7 +10,7 @@ function setup() {
   const ctx = { document: { getElementById: () => ({}), createElement: () => ({}) }, setTimeout() {} };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const file of ['gameState.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
+  for (const file of ['gameState.js', 'mapObjects.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
   }
   ctx.CREATURE_TEMPLATES = { wizard: { type: 'wizard' }, wolf: { type: 'wolf' } };
@@ -224,4 +224,38 @@ test('map side can differ from the default for creatures but never for heroes', 
   assert.equal(ctx.validateBattleMap(data).mobs[0].team, 'ally');
   data.mobs[0] = { type: 'wizard', team: 'enemy', x: 3, y: 3 };
   assert.throws(() => ctx.validateBattleMap(data));
+});
+
+test('version 7 torches share creature cells, light a D5 area, and do not count as massive blockers', () => {
+  const ctx = setup(), data = fixture(); data.version = 7;
+  data.lighting = { mode: 'absolute', ambient: 60, cells: Array.from({ length: 12 }, () => Array(12).fill(null)) };
+  data.mobs.push({ type: 'wizard', team: 'ally', x: 5, y: 5 });
+  data.objects.push({ type: 'torch', x: 5, y: 5, blocking: false, interactive: false });
+  data.objects.push({ type: 'crate', x: 6, y: 5, blocking: true, interactive: false });
+  const loaded = ctx.validateBattleMap(data);
+  assert.equal(ctx.BattleLighting.at(loaded.lighting, 5, 5), 1);
+  assert.equal(ctx.BattleLighting.at(loaded.lighting, 7, 5), 0.6);
+  assert.equal(ctx.BattleLighting.at(loaded.lighting, 6, 6), 1);
+  assert.equal(ctx.BattleLighting.at(loaded.lighting, 5, 8), 0.6);
+  assert.equal(loaded.objects[0].type, 'torch');
+  data.objects[0].blocking = true;
+  assert.throws(() => ctx.validateBattleMap(data));
+});
+test('a wall torch requires a real wall with its face directed into open terrain', () => {
+  const ctx = setup(), data = fixture('underground'); data.version = 7;
+  data.tiles[5][5] = 'monastery-floor';
+  data.objects = [{ type: 'wall-torch', x: 5, y: 4, facing: 'south', blocking: false, interactive: false }];
+  assert.equal(ctx.validateBattleMap(data).objects[0].facing, 'south');
+  data.objects[0].facing = 'north';
+  assert.throws(() => ctx.validateBattleMap(data));
+});
+test('torch rays match Battle static LOS including its corner rules', () => {
+  const ctx = setup();
+  for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) ctx.gameState.terrain.set(`${x},${y}`, 'grass');
+  ctx.gameState.obstacles.set('6,5', 'crate');
+  ctx.gameState.terrain.set('4,6', 'void');
+  const blocked = (x, y) => ctx.gameState.obstacles.has(`${x},${y}`) || ctx.gameState.terrain.get(`${x},${y}`) === 'void';
+  for (let y = 2; y < 9; y++) for (let x = 2; x < 9; x++) {
+    assert.equal(ctx.MapObjects.lightLOS({ x: 5, y: 5 }, { x, y }, blocked), ctx.checkLOS({ x: 5, y: 5 }, { x, y }));
+  }
 });

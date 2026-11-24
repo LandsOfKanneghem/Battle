@@ -8,7 +8,7 @@
 
   window.validateBattleMap = function(data) {
     const state = window.gameState;
-    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7].includes(data.version)) {
+    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7, 8].includes(data.version)) {
       throw new Error('Неподдерживаемый формат или версия карты.');
     }
     if (data.width !== state.SIZE || data.height !== state.HEIGHT) throw new Error('Размер карты должен быть 12×12.');
@@ -34,7 +34,7 @@
     }
     const mobs = data.version === 1 ? [] : content.mobs;
     const objects = data.version < 3 ? [] : content.objects;
-    if (!Array.isArray(mobs) || !Array.isArray(objects) || (mobs.length > state.SIZE * state.HEIGHT || objects.length > state.SIZE * state.HEIGHT)) {
+    if (!Array.isArray(mobs) || !Array.isArray(objects) || (mobs.length > state.SIZE * state.HEIGHT || objects.length > state.SIZE * state.HEIGHT * 9)) {
       throw new Error('Неверный список существ или объектов карты.');
     }
     const occupied = new Set();
@@ -60,7 +60,7 @@
         throw new Error('Неверная сторона существа.');
       return { type: mob.type, team, x: mob.x, y: mob.y };
     });
-    const normalizedObjects = window.MapObjects.readObjects(objects, { mapType, tiles: content.tiles }, normalizedMobs);
+    const normalizedObjects = window.MapObjects.readObjects(objects, { mapType, tiles: content.tiles }, normalizedMobs, data.version);
     const lighting = window.BattleLighting.read(content.lighting);
     if (normalizedObjects.some(object => !window.MapObjects.TYPES[object.type].blocking)) {
       lighting.torchCells = window.MapObjects.illuminated({ mapType, tiles: content.tiles, objects: normalizedObjects });
@@ -109,6 +109,8 @@
     state.cells = [];
     state.terrain.clear();
     state.mapType = map.mapType;
+    state.battleMap = map;
+    state.mapObjects = map.objects;
     state.lighting = map.lighting;
     state.obstacles.clear();
     state.activeEntityId = null;
@@ -159,16 +161,21 @@
     for (const object of map.objects.filter(object => !window.MapObjects.TYPES[object.type].blocking)) {
       const image = document.createElement('img');
       image.className = 'small-map-object';
-      image.src = `assets/map-editor/objects/${object.type === 'wall-torch' ? 'wall-torch-top' : object.type}.png`;
+      image.src = `assets/map-editor/objects/${window.MapObjects.spriteName(object)}.png`;
       image.alt = window.MapObjects.TYPES[object.type].name;
       image.draggable = false;
-      const mount = object.type === 'wall-torch' ? window.MapObjects.wallMount(map, object) : null;
-      image.style.left = `${object.x * 48 + (mount?.offsetX ?? 0)}px`;
-      image.style.top = `${object.y * 48 + (mount?.offsetY ?? 0)}px`;
+      const mount = window.MapObjects.isWallTorch(object) ? window.MapObjects.wallMount(map, object) : null;
+      image.style.left = `${(mount ? object.wallX : object.x) * 48 + (mount?.offsetX ?? 0)}px`;
+      image.style.top = `${(mount ? object.wallY : object.y) * 48 + (mount?.offsetY ?? 0)}px`;
       image.dataset.mountKind = mount?.kind ?? '';
       image.dataset.mountFacing = mount?.facing ?? '';
+      image.dataset.x = object.x;
+      image.dataset.y = object.y;
+      image.dataset.type = object.type;
+      object.element = image;
       state.battlefield.appendChild(image);
     }
+    window.refreshTorchLighting();
     for (const mob of map.mobs) {
       const creature = window.createCreature(mob.type, mob);
       creature.team = mob.team;

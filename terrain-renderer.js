@@ -141,11 +141,15 @@
     const litCanvas = canvas.cloneNode();
     const lit = litCanvas.getContext('2d');
     lit.imageSmoothingEnabled = false;
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLUMNS; x++) {
-      lit.filter = `brightness(${window.BattleLighting.at(lighting, x, y)})`;
-      lit.drawImage(canvas, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE,
-        x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    }
+    litCanvas.repaintLighting = currentLighting => {
+      lit.clearRect(0, 0, litCanvas.width, litCanvas.height);
+      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLUMNS; x++) {
+        lit.filter = `brightness(${window.BattleLighting.at(currentLighting, x, y)})`;
+        lit.drawImage(canvas, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE,
+          x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      }
+    };
+    litCanvas.repaintLighting(lighting);
     return litCanvas;
   };
 })();

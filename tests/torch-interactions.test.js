@@ -1,0 +1,118 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const root = path.join(__dirname, '..');
+function setup() {
+  const element = () => {
+    const classes = new Set();
+    return { dataset: {}, style: { setProperty() {} }, setAttribute() {}, appendChild() {}, remove() {}, querySelector() { return null; },
+      classList: { add: value => classes.add(value), remove: value => classes.delete(value), contains: value => classes.has(value) } };
+  };
+  const ctx = { document: { getElementById: element, createElement: element, createElementNS: element },
+    renderPosition() {}, updatePanel() {}, removeDefeatedEntities() {}, setTimeout: callback => callback(), queueMicrotask: callback => callback() };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  const data = [...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/src="(data\/[^\"]+\.js)"/g)].map(match => match[1]);
+  for (const file of ['gameState.js', ...data, 'mapObjects.js', 'lighting.js', 'torchInteractions.js', 'combat.js', 'spellTargeting.js', 'spellLogic.js', 'movement.js']) {
+    vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
+  }
+  const state = ctx.gameState;
+  const tiles = Array.from({ length: 12 }, () => Array(12).fill('grass'));
+  for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) state.terrain.set(`${x},${y}`, tiles[y][x]);
+  state.cells = Array.from({ length: 144 }, (_, i) => Object.assign(element(), { dataset: { x: i % 12, y: Math.floor(i / 12) } }));
+  state.lighting = ctx.BattleLighting.read(); state.lighting.ambient = 60;
+  state.battleMap = { mapType: 'surface', tiles, objects: state.mapObjects };
+  const wizard = ctx.createCreature('wizard', { x: 1, y: 1 });
+  wizard.ap = 100;
+  state.entities = [wizard]; state.activeEntityId = wizard.id;
+  const spell = id => vm.runInContext(`SPELL_DEFINITIONS.find(spell => spell.id === '${id}')`, ctx);
+  const torch = (type, x, y) => { const object = { type, x, y, element: element() }; state.mapObjects.push(object); return object; };
+  ctx.playMissAnimation = () => {};
+  ctx.playFailureAnimation = () => {};
+  ctx.playProjectileAnimation = (from, to, type, onDone) => onDone();
+  const deps = () => ({ ...ctx, stateTypes: vm.runInContext('stateTypes', ctx), shotHits: () => true });
+  return { ctx, state, wizard, torch, spell, deps };
+}
+
+test('an empty-cell fire shot lights a torch; water damage extinguishes it and restores underlying light', () => {
+  const { ctx, state, wizard, torch, spell, deps } = setup();
+  const object = torch('unlit-torch', 3, 1);
+  state.lighting.cells[1][3] = 120;
+  ctx.applySpellEffect(spell('fire-shot'), object, wizard, deps());
+  assert.equal(object.type, 'torch');
+  assert.equal(ctx.BattleLighting.at(state.lighting, 3, 1), 1);
+  const water = { abilityType: 'spell', isShot: true, damageBase: 3, damageType: 'water', aoeSize: 1 };
+  ctx.applySpellEffect(water, object, wizard, deps());
+  assert.equal(object.type, 'unlit-torch');
+  assert.equal(ctx.BattleLighting.at(state.lighting, 3, 1), 1.2);
+  assert.equal(ctx.BattleLighting.at(state.lighting, 4, 1), .6);
+  assert.equal(state.lighting.cells[1][3], 120, 'torch never overwrites brush values');
+});
+
+test('AOE and Wet affect both variants; unrelated spells and already matching states are not outlined', () => {
+  const { ctx, wizard, torch, spell, deps } = setup();
+  const a = torch('unlit-torch', 3, 1), b = torch('wall-torch', 4, 2), far = torch('torch', 10, 10);
+  const area = [{ x: 3, y: 1 }, { x: 4, y: 2 }];
+  ctx.highlightTorchChanges(area, spell('fire-cube'), wizard);
+  assert(a.element.classList.contains('spell-target'));
+  assert(!b.element.classList.contains('spell-target'));
+  ctx.clearHighlight();
+  assert(!a.element.classList.contains('spell-target'));
+  ctx.applySpellEffect(spell('fire-cube'), { x: 3, y: 1 }, wizard, deps());
+  assert.equal(a.type, 'torch');
+  ctx.highlightTorchChanges(area, spell('rain'), wizard);
+  assert(a.element.classList.contains('spell-target') && b.element.classList.contains('spell-target'));
+  ctx.applySpellEffect(spell('rain'), { x: 3, y: 1 }, wizard, deps());
+  assert.equal(a.type, 'unlit-torch'); assert.equal(b.type, 'unlit-wall-torch'); assert.equal(far.type, 'torch');
+  assert.equal(ctx.torchChanges(area, spell('rain'), wizard).length, 0);
+  assert.equal(ctx.torchChanges(area, spell('haste'), wizard).length, 0);
+  assert.equal(ctx.torchChanges(area, spell('sparks'), wizard).length, 0);
+});
+
+test('paid failed casts and missed shots do not change torches', () => {
+  const { ctx, state, wizard, torch, deps } = setup();
+  const object = torch('unlit-torch', 3, 1);
+  const fire = wizard.availableSpells.find(spell => spell.id === 'fire-shot');
+  state.preparedSpellId = fire.id;
+  ctx.getEffectiveStat = () => 100; // SFC guarantees failure.
+  assert(ctx.castSpell(state.cells[15], deps()));
+  assert.equal(object.type, 'unlit-torch');
+  assert.equal(wizard.ap, 100 - fire.apCost);
+  assert.equal(fire.usesThisTurn, 1);
+  const enemy = ctx.createCreature('wolf', { x: 3, y: 1 }); state.entities.push(enemy);
+  ctx.applySpellEffect(fire, object, wizard, { ...deps(), shotHits: () => false });
+  assert.equal(object.type, 'unlit-torch', 'a miss on a creature sharing the torch cell has no effect');
+});
+
+test('floor-anchored wall torch is targetable with ordinary LOS, and walls still block light and casts', () => {
+  const { ctx, state, wizard, torch, deps } = setup();
+  state.battleMap.mapType = 'underground';
+  for (let x = 0; x < 12; x++) {
+    state.battleMap.tiles[0][x] = 'void'; state.terrain.set(`${x},0`, 'void'); state.obstacles.set(`${x},0`, 'void');
+  }
+  const object = torch('unlit-wall-torch', 3, 1);
+  Object.assign(object, { wallX: 3, wallY: 0, facing: 'south' });
+  const fire = wizard.availableSpells.find(spell => spell.id === 'fire-shot');
+  assert(ctx.MapObjects.canPlace(state.battleMap, object, [], object));
+  assert(ctx.canTarget(object, fire));
+  state.preparedSpellId = fire.id;
+  assert(ctx.castSpell(state.cells[15], deps()));
+  assert.equal(object.type, 'wall-torch');
+  assert(!state.lighting.torchCells.has('3,0'));
+  state.terrain.set('2,1', 'void'); state.obstacles.set('2,1', 'void');
+  assert(!ctx.canTarget(object, fire), 'the wall between caster and torch blocks the spell');
+  assert.equal(wizard.mp, wizard.maxMP, 'torch interactions do not spend movement');
+});
+
+test('cone shadows also exclude torches behind solid obstacles', () => {
+  const { ctx, state, wizard, torch, spell, deps } = setup();
+  const near = torch('unlit-torch', 2, 1), behind = torch('unlit-torch', 3, 1);
+  state.obstacles.set('2,1', 'crate');
+  ctx.applySpellEffect(spell('burning-hands'), { x: 2, y: 1 }, wizard, deps());
+  assert.equal(near.type, 'unlit-torch'); assert.equal(behind.type, 'unlit-torch');
+  state.obstacles.clear();
+  ctx.applySpellEffect(spell('burning-hands'), { x: 2, y: 1 }, wizard, deps());
+  assert.equal(near.type, 'torch'); assert.equal(behind.type, 'torch');
+});

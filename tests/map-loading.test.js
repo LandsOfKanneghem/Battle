@@ -269,4 +269,20 @@ test('convex wall torch imports old cardinal facing as a diagonal light source',
   assert.equal(map.objects[0].facing, 'north-west');
   assert.equal(ctx.BattleLighting.at(map.lighting, 2, 4), 1);
   assert.equal(ctx.BattleLighting.at(map.lighting, 5, 2), 0.6);
+  assert.deepEqual(plain(map.objects[0]), { type: 'wall-torch', x: 4, y: 4, wallX: 5, wallY: 5, facing: 'north-west' });
+});
+
+test('v8 lit and unlit wall torches load on floor cells with separate valid wall anchors', () => {
+  const ctx = setup(), data = fixture('underground'); data.version = 8;
+  for (let y = 2; y < 10; y++) for (let x = 2; x < 10; x++) data.tiles[y][x] = 'monastery-floor';
+  data.lighting = { mode: 'absolute', ambient: 60, cells: Array.from({ length: 12 }, () => Array(12).fill(null)) };
+  data.objects = [{ type: 'unlit-wall-torch', x: 5, y: 2, wallX: 5, wallY: 1, facing: 'south', blocking: false, interactive: true },
+    { type: 'unlit-torch', x: 6, y: 6, blocking: false, interactive: true }];
+  let map = ctx.validateBattleMap(data);
+  assert.equal(map.objects[0].x, 5); assert.equal(map.objects[0].y, 2);
+  assert.equal(map.lighting.torchCells.size, 0);
+  data.objects[0].type = 'wall-torch'; map = ctx.validateBattleMap(data);
+  assert.equal(ctx.BattleLighting.at(map.lighting, 5, 3), 1);
+  data.objects[0].wallY = 2;
+  assert.throws(() => ctx.validateBattleMap(data), /крепление|стена/);
 });

@@ -129,6 +129,7 @@ window.highlightSpellRange = function(center = null) {
         entity.svg?.classList?.add('spell-target');
       }
     }
+    window.highlightTorchChanges?.(area, spell, window.gameState.activeEntity());
     window.showEffectPreview(area, spell, center);
   }
 };

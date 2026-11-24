@@ -138,8 +138,12 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   const adjustedSpell = { ...spell, damage: Math.floor((baseDamage ?? 0) * damageMultiplier) };
   // Фиксируем срок один раз до эффектов: собственный бафф INT от Часа силы его не меняет.
   const duration = window.getSpellDuration(spell, caster);
-  // Пустая клетка — допустимый выстрел, но без урона, состояния и броска уклонения.
-  if (spell.isShot && !directTarget) return;
+  const effectArea = affectedCells(target, spell, caster, entities, obstacles, terrain, keyOf, SIZE, HEIGHT);
+  // Без существа выстрел действует только на факелы; броска уклонения нет.
+  if (spell.isShot && !directTarget) {
+    window.applyTorchSpell?.(effectArea, spell, caster);
+    return;
+  }
   // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
   if ((spell.isShot || spell.isHit) && directTarget && !(shotHit ?? shotHits(caster, directTarget))) {
     // Общая точка промаха, включая готовый результат Искр: надпись появляется один раз.
@@ -147,6 +151,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     playMissAnimation(cells[target.y * SIZE + target.x]);
     return;
   }
+  window.applyTorchSpell?.(effectArea, spell, caster);
   if (spell.isSummon) {
     const creature = window.createCreature('lake-spirit', target);
     // Поставленный на карту дух — обычный моб; призыв управляется его владельцем.
@@ -541,9 +546,9 @@ window.castSpell = function(targetCell, deps) {
   // Лечение и защита требуют живого союзника до оплаты.
   if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
-  if (spell.stateId && !spell.isRain && !spell.isShot && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
+  if (spell.stateId && !spell.isRain && !spell.isShot && !window.isTorchSpellTarget?.(target, spell, caster) && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
     && (spell.target !== 'ally' || isAlly(entity)) && (spell.target !== 'enemy' || !isAlly(entity)))) return false;
-  if (spell.target === 'enemy' && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
+  if (spell.target === 'enemy' && !window.isTorchSpellTarget?.(target, spell, caster) && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
   if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
   // Отдельный бросок до оплаты: при SFC = 0 последовательность бросков выстрелов не меняется.

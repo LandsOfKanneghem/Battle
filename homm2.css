@@ -299,4 +299,5 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .spell-area-marker-underlay { stroke: #102b3d; stroke-width: 4; }
 .spell-area-marker { stroke: #e0f7ff; stroke-width: 2; }
 
-#battlefield .small-map-object { position: absolute; width: 48px; height: 48px; z-index: 2; pointer-events: none; image-rendering: pixelated; }
+#battlefield .small-map-object { position: absolute; width: 48px; height: 48px; z-index: 2; pointer-events: auto; image-rendering: pixelated; filter: brightness(var(--entity-lighting, 1)); }
+#battlefield .small-map-object.spell-target { filter: brightness(var(--entity-lighting, 1)) url('#queue-entity-outline'); }

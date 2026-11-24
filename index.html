@@ -139,6 +139,7 @@
   <script src="turnQueue.js"></script>
   <script src="undergroundRenderer.js"></script>
   <script src="mapObjects.js"></script>
+  <script src="torchInteractions.js"></script>
   <script src="lighting.js"></script>
   <script src="terrain-renderer.js"></script>
   <script src="maps/MAP%201.js"></script>
@@ -264,7 +265,7 @@
     });
     gameState.battlefield.addEventListener('contextmenu', event => {
       event.preventDefault();
-      const cell = event.target.closest('.cell');
+      const cell = window.battleCellFromEvent(event);
       if (!cell || !gameState.battlefield.contains(cell)) return;
       const entity = gameState.entities.find(item => item.hp > 0 && item.position.x === Number(cell.dataset.x)
         && item.position.y === Number(cell.dataset.y));
@@ -279,7 +280,7 @@
 
     gameState.battlefield.addEventListener('mousemove', (event) => {
       if (gameState.isCasting) return;
-      const cell = event.target.closest('.cell');
+      const cell = window.battleCellFromEvent(event);
       if (!cell || !gameState.battlefield.contains(cell)) {
         gameState.fieldHoveredEntityId = null;
         window.updatePanel();
@@ -338,7 +339,7 @@
       // Новая цель не прерывает уже начатый маршрут.
       const mover = window.activeMover();
       if (gameState.isMoving || !mover) return;
-      const cell = event.target.closest('.cell');
+      const cell = window.battleCellFromEvent(event);
       if (!cell || !gameState.battlefield.contains(cell)) return;
       if (gameState.preparedSpellId) {
         castSpell(cell, spellDeps);

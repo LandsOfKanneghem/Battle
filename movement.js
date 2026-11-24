@@ -256,6 +256,7 @@ window.clearHighlight = function() {
   window.gameState.aoeOverlay?.remove();
   window.gameState.aoeOverlay = null;
   for (const entity of window.gameState.entities) entity.svg?.classList?.remove('spell-target');
+  window.clearTorchHighlight?.();
   for (const badge of window.gameState.effectBadges) badge.remove();
   window.gameState.effectBadges = [];
   for (const cell of window.gameState.highlightedCells) {

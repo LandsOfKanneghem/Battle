@@ -23,7 +23,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
 const SPELL_DEFINITIONS = [{
   id: 'torch', abilityType: 'spell', magicSchool: 'fire', name: 'Факел', stackable: false,
   description: 'Освещает территорию вокруг заклинателя.',
-  effectDescription: 'Освещение как от факела; вода и Влага не тушат его.',
+  effectDescription: 'Освещает область на расстоянии двух клеток от заклинателя.',
   isTorchLight: true, target: 'ally', durationBase: 3, durationPerInt: 0,
   range: 0, minRange: 0, modifiable: false, noLOS: false,
   apCost: 2, maxCooldown: 5, maxUsesPerTurn: 1, isAOE: false, aoeSize: 1,

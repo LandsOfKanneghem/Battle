@@ -146,8 +146,8 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
         badge.classList.add('detailed-preview');
         // Крит пока не меняет урон: показываем то же итоговое значение после защит и ES.
         badge.textContent = `Урон: ${damage} [Крит: ${damage}]
-Шанс попадания: ${hitChance}%
-Крит шанс: ${critChance}%`;
+Попадание: ${hitChance}%
+Крит: ${critChance}%`;
       } else badge.textContent = `-${damage}`;
     }
     window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x].appendChild(badge);

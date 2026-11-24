@@ -11,7 +11,7 @@ function setup(targetType = 'wizard') {
       cells: Array.from({ length: 144 }, () => ({ appendChild() {} })), effectBadges: [],
       keyOf: point => `${point.x},${point.y}`, isWater: type => ['deep-water', 'shallow-water'].includes(type),
       activeEntity() { return this.entities[0]; } },
-    document: { getElementById: () => ({}), createElementNS: () => ({ style: {}, setAttribute() {} }), createElement: () => ({}) },
+    document: { getElementById: () => ({}), createElementNS: () => ({ style: {}, setAttribute() {} }), createElement: () => ({ classList: { add() {} } }) },
     renderPosition() {}
   };
   ctx.window = ctx;
@@ -140,9 +140,10 @@ test('range 1 through 6 requires a living target and LOS before any cast payment
 test('preview shows enemy damage and no damage badge on allied targets', () => {
   for (const type of ['wizard', 'wolf']) {
     const { ctx, state, target, spell } = setup(type);
+    ctx.altHeld = true;
     ctx.showEffectPreview([target.position], spell);
     assert.equal(state.effectBadges.length, type === 'wizard' ? 1 : 0);
-    if (type === 'wizard') assert.equal(state.effectBadges[0].textContent, '-9');
+    if (type === 'wizard') assert.ok(state.effectBadges[0].textContent.startsWith('Урон: 9 [Крит: 9]'));
   }
 });
 

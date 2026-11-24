@@ -115,6 +115,7 @@ window.highlightSpellRange = function(center = null) {
 };
 
 window.showEffectPreview = function(area, spell, center = area[0]) {
+  if (!window.altHeld) return;
   // Бейдж нужен только для урона; дальность и зона подсвечиваются отдельно.
   if (spell.damageBase === undefined && !(spell.damage > 0)) return;
   const caster = window.gameState.activeEntity();

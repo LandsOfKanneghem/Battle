@@ -95,6 +95,7 @@ test('invisible enemies have no damage preview but receive direct, state and are
   hide(shadow);
   const fire = spell('fire-shot');
   const area = [shadow.position, monk.position];
+  ctx.altHeld = true;
   ctx.showEffectPreview(area, fire, shadow.position);
   assert.equal(state.effectBadges.length, 1, 'only the visible monk receives a preview');
   const before = shadow.hp;
@@ -278,8 +279,12 @@ test('Alt preview reports capped hit chance, critical chance and current critica
   const { ctx, state, wizard, shadow, hide } = setup();
   wizard.attributes.att = 25;
   wizard.cri = 10;
-  ctx.altHeld = true;
+  ctx.altHeld = false;
   state.preparedSpellId = 'fire-shot';
+  ctx.highlightSpellRange(shadow.position);
+  assert.equal(state.effectBadges.length, 0, 'no ordinary numeric preview');
+  assert.ok(state.highlightedCells.length > 0, 'area highlighting remains');
+  ctx.altHeld = true;
   ctx.highlightSpellRange(shadow.position);
   assert.equal(state.effectBadges[0].textContent, 'Урон: 4 [Крит: 4]\nПопадание: 100%\nКрит: 35%');
   assert.deepEqual(plain(state.spellPreviewCenter), plain(shadow.position));

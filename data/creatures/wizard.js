@@ -24,7 +24,7 @@ window.CREATURE_TEMPLATES['wizard'] = {
       <circle cx="34" cy="19" r="2.5" fill="#86e8ff"/>`
   },
   spellPages: [
-    ['fire-shot', 'burning-hands', 'reckless', null, 'teleport',
+    ['fire-shot', 'burning-hands', 'reckless', 'torch', 'teleport',
       'liquid-membrane', 'rain', 'ice-arrow', 'lake-spirit', null,
       'haste', 'wind-rose', 'sparks', 'sky-shot', 'water-walk',
       'slow', 'dead-weight', null, null, 'apply-old-age'],

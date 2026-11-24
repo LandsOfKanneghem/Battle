@@ -242,6 +242,7 @@ window.tickCasterEffects = function(casterId) {
       .map(effect => effect.casterId === casterId ? { ...effect, turnsLeft: effect.turnsLeft - 1 } : effect)
       .filter(effect => effect.turnsLeft > 0));
   }
+  window.refreshTorchLighting?.();
 };
 
 window.removeCasterEffects = function(casterId) {
@@ -268,6 +269,7 @@ window.removeCasterEffects = function(casterId) {
     if (target.mpBonuses.length !== oldMpCount) recalculateStateStats(target);
     storeElementalShields(target, elementalShieldEffects(target).filter(effect => effect.casterId !== casterId));
   }
+  window.refreshTorchLighting?.();
 };
 
 window.applySpellOnEntity = function(entity, spellOnMe) {

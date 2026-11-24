@@ -21,6 +21,15 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'torch', abilityType: 'spell', magicSchool: 'fire', name: 'Факел', stackable: false,
+  description: 'Освещает территорию вокруг заклинателя.',
+  effectDescription: 'Освещение как от факела; вода и Влага не тушат его.',
+  isTorchLight: true, target: 'ally', durationBase: 3, durationPerInt: 0,
+  range: 0, minRange: 0, modifiable: false, noLOS: false,
+  apCost: 2, maxCooldown: 5, maxUsesPerTurn: 1, isAOE: false, aoeSize: 1,
+  iconPath: 'assets/map-editor/objects/torch.png',
+  svg: '<svg viewBox="0 0 48 48" aria-hidden="true"><image href="assets/map-editor/objects/torch.png" width="48" height="48"/></svg>'
+}, {
   id: 'power-hour', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', magicSchool: 'light',
   name: 'Час силы', stackable: false, target: 'ally',
   description: 'Все союзные существа в области вокруг заклинателя временно получают основные параметры.',
@@ -172,7 +181,7 @@ const SPELL_DEFINITIONS = [{
 // Определения сохранены; вернуть скрытые заклинания можно строкой WIZARD_SPELLS.push(...HIDDEN_SPELLS).
 const HIDDEN_SPELLS = SPELL_DEFINITIONS.filter(spell => ['fire-cube', 'deep-freeze', 'armageddon'].includes(spell.id));
 const WIZARD_SPELLS = [
-  'fire-shot', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin',
+  'fire-shot', 'torch', 'fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin',
   'haste', 'slow', 'liquid-membrane', 'rain', 'wind-rose', 'dead-weight', 'burning-hands', 'ice-arrow', 'sparks', 'sky-shot', 'reckless', 'lake-spirit'
 ].map(id => SPELL_DEFINITIONS.find(spell => spell.id === id));
 

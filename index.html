@@ -248,7 +248,8 @@
       window.updatePanel();
     });
 
-    function renderPosition() {
+    function renderPosition(refreshLighting = true) {
+      if (refreshLighting) window.refreshTorchLighting(false);
       // Перенос DOM-элемента мгновенный: никаких CSS-переходов.
       for (const entity of gameState.entities) {
         entity.svg.style.setProperty('--entity-lighting', window.BattleLighting.at(gameState.lighting, entity.position.x, entity.position.y));

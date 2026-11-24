@@ -116,3 +116,42 @@ test('cone shadows also exclude torches behind solid obstacles', () => {
   ctx.applySpellEffect(spell('burning-hands'), { x: 2, y: 1 }, wizard, deps());
   assert.equal(near.type, 'torch'); assert.equal(behind.type, 'torch');
 });
+
+test('Torch spell follows its carrier, survives rain, and expires after three caster ticks', () => {
+  const { ctx, state, wizard, spell, deps } = setup();
+  const light = wizard.availableSpells.find(spell => spell.id === 'torch');
+  assert(light && light.magicSchool === 'fire');
+  assert.equal(light.apCost, 2); assert.equal(light.maxCooldown, 5);
+  assert.equal(ctx.getSpellDuration(light, wizard), 3);
+  assert(ctx.canTarget(wizard.position, light));
+  assert(!ctx.canTarget({ x: 2, y: 1 }, light));
+  state.preparedSpellId = light.id;
+  assert(ctx.castSpell(state.cells[13], deps()));
+  assert.equal(wizard.ap, 98); assert.equal(light.cooldown, 5);
+  assert.equal(wizard.appliedEffects.find(effect => effect.isTorchLight).duration, 3);
+  assert.equal(state.lighting.torchCells.size, 11, 'D5 is clipped at the map edge');
+  wizard.position = { x: 5, y: 5 }; ctx.refreshTorchLighting();
+  assert.equal(state.lighting.torchCells.size, 13);
+  assert.equal(ctx.BattleLighting.at(state.lighting, 1, 1), .6);
+  assert.equal(ctx.BattleLighting.at(state.lighting, 7, 5), 1);
+  ctx.applySpellEffect(spell('rain'), wizard.position, wizard, deps());
+  assert(ctx.hasActiveState(wizard, 'wet'));
+  assert.equal(wizard.appliedEffects.find(effect => effect.isTorchLight).duration, 3);
+  assert.equal(ctx.BattleLighting.at(state.lighting, 7, 5), 1);
+  ctx.tickCasterEffects(wizard.id); ctx.tickCasterEffects(wizard.id);
+  assert.equal(ctx.BattleLighting.at(state.lighting, 7, 5), 1);
+  ctx.tickCasterEffects(wizard.id);
+  assert(!wizard.appliedEffects.some(effect => effect.isTorchLight));
+  assert.equal(ctx.BattleLighting.at(state.lighting, 7, 5), .6);
+});
+
+test('mobile light respects static blockers and disappears with its source effect', () => {
+  const { ctx, state, wizard, spell, deps } = setup();
+  wizard.position = { x: 5, y: 5 };
+  state.mapObjects.push({ type: 'crate', x: 6, y: 5 });
+  ctx.applySpellEffect(spell('torch'), wizard.position, wizard, deps());
+  assert.equal(ctx.BattleLighting.at(state.lighting, 7, 5), .6);
+  assert.equal(ctx.BattleLighting.at(state.lighting, 5, 7), 1);
+  ctx.removeCasterEffects(wizard.id);
+  assert.equal(ctx.BattleLighting.at(state.lighting, 5, 7), .6);
+});

@@ -36,10 +36,14 @@ window.applyTorchSpell = function(area, spell, caster) {
   if (changed.length) window.refreshTorchLighting();
 };
 
-window.refreshTorchLighting = function() {
+window.refreshTorchLighting = function(updateEntities = true) {
   const state = window.gameState;
   if (!state.battleMap) return;
-  state.lighting.torchCells = window.MapObjects.illuminated(state.battleMap);
+  const mobileLights = state.entities.filter(entity => entity.hp > 0 && entity.appliedEffects?.some(effect =>
+    effect.isTorchLight && effect.duration > 0 && !effect.suppressed))
+    .map(entity => ({ type: 'torch', ...entity.position }));
+  state.lighting.torchCells = window.MapObjects.illuminated({ ...state.battleMap,
+    objects: [...state.mapObjects, ...mobileLights] });
   state.battlefield.querySelector('.battle-terrain')?.repaintLighting?.(state.lighting);
   for (const object of state.mapObjects) {
     if (!object.element) continue;
@@ -53,7 +57,7 @@ window.refreshTorchLighting = function() {
   for (const cell of state.cells) {
     cell.querySelector('.obstacle')?.style.setProperty('--entity-lighting', window.BattleLighting.at(state.lighting, Number(cell.dataset.x), Number(cell.dataset.y)));
   }
-  window.renderPosition?.();
+  if (updateEntities) window.renderPosition?.(false);
 };
 
 // Клик по выступающему за край клетки спрайту адресуется его клетке пола, а не стене.

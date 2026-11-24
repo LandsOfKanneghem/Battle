@@ -218,6 +218,15 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       id: isAlly(directTarget) ? 'vigor' : 'weakness', duration,
       casterId: caster.id, casterName: caster.name
     });
+  } else if (spell.isTorchLight) {
+    if (directTarget && isAlly(directTarget) === isAlly(caster)) {
+      applySpellOnEntity(directTarget, {
+        id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg,
+        isTorchLight: true, duration, casterId: caster.id, casterName: caster.name,
+        description: spell.effectDescription, stackable: false
+      });
+      window.refreshTorchLighting?.();
+    }
   } else if (spell.isMpBuff) {
     if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
@@ -343,6 +352,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'torch': ctx => ctx.setTimeout(ctx.finishCast, 0),
   'spectral-strike': ctx => {
     ctx.deps.playSpectralStrikeAnimation(ctx.targetCell, ctx.spell);
     ctx.setTimeout(ctx.finishCast, 500);

@@ -246,3 +246,30 @@ test('Spectral Strike uses INT, dark magical damage and no shot/evasion checks, 
   ctx.applySpellEffect(strike, victim.position, shadow, deps);
   assert.equal(victim.hp, victimHP - 6, 'Exhaustion applies to the new spell too');
 });
+
+test('crit annotates damage without changing it and never triggers on a miss or immunity', () => {
+  const { ctx, state, wizard, deps } = setup();
+  const wolf = ctx.createCreature('wolf', { x: 2, y: 1 });
+  state.entities.push(wolf);
+  wolf.cri = 100;
+  const bite = wolf.availableSpells[0];
+  const records = [], popups = [];
+  let misses = 0;
+  ctx.battleLog = { damage: (...args) => records.push(args), miss: () => misses++, applied() {} };
+  ctx.playCritAnimation = cell => popups.push(cell);
+  vm.runInContext('Math.random = () => 0.5', ctx);
+  const hp = wizard.hp;
+  ctx.applySpellEffect(bite, wizard.position, wolf, deps, null, true);
+  assert.equal(wizard.hp, hp - 4);
+  assert.equal(records.length, 1);
+  assert.equal(records[0][3], true);
+  assert.equal(popups.length, 1);
+  ctx.applySpellEffect(bite, wizard.position, wolf, deps, null, false);
+  assert.equal(misses, 1);
+  assert.equal(records.length, 1);
+  assert.equal(popups.length, 1);
+  wizard.states.push({ id: 'freeze', duration: 2 });
+  ctx.applyDamage({ ...bite, damage: 4 }, wizard, wolf);
+  assert.equal(records.length, 1);
+  assert.equal(popups.length, 1);
+});

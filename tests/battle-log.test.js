@@ -96,3 +96,10 @@ test('hidden obstacle message does not identify the concealed creature', () => {
   log.blocked();
   assert.deepEqual(lines(), ['Что-то преграждает дорогу!']);
 });
+
+test('critical damage uses the requested prefix and damage color', () => {
+  const { log, wolf, lines, entries } = setup();
+  log.damage(wolf, 4, 0, true);
+  assert.deepEqual(lines(), ['Критический удар! Волк -4 ОЗ.']);
+  assert.equal(entries.children[0].className, 'battle-log-damage');
+});

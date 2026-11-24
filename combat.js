@@ -383,12 +383,15 @@ window.applyDamage = function(spell, entity, attacker = null) {
     && spell.abilityType === 'weapon-strike' && spell.isHit && !spell.isShot
     && hasActiveState(entity, 'sharp-shell');
   const { absorbed, hpDamage } = damageBreakdown(spell, entity);
+  const critChance = window.getCritChance(spell, attacker, entity);
+  const critical = critChance > 0 && Math.random() * 100 < critChance;
   consumeES(entity, absorbed);
   entity.hp = Math.max(0, entity.hp - hpDamage);
-  window.battleLog?.damage(entity, hpDamage, absorbed);
+  window.battleLog?.damage(entity, hpDamage, absorbed, critical);
   // Показываем и поглощение ES, и нулевой урон после сопротивления; иммунитеты выше.
   const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
   window.playDamageAnimation?.(cell, absorbed + hpDamage);
+  if (critical) window.playCritAnimation?.(cell);
   if (reflectsMelee && absorbed + hpDamage > 0) {
     // Отдельный физический урон: без броска попадания, штрафов атак и ответного отражения.
     // Смертельный удар тоже задевает панцирь; удаление погибших выполнит вызывающий код.
@@ -396,11 +399,22 @@ window.applyDamage = function(spell, entity, attacker = null) {
   }
 };
 
-window.getHitChance = function(caster, target) {
+window.getRawHitChance = function(caster, target) {
   // ACC уже включает базовую точность, ATT и эффекты. Штраф только за LUC ниже нуля.
   const negativeLuck = Math.max(0, -getEffectiveStat(caster, 'luc'));
-  return Math.max(0, Math.min(100,
-    getEffectiveStat(caster, 'acc') - getEffectiveStat(target, 'eva') - 5 * negativeLuck));
+  return getEffectiveStat(caster, 'acc') - getEffectiveStat(target, 'eva') - 5 * negativeLuck;
+};
+
+window.getHitChance = function(caster, target) {
+  return Math.max(0, Math.min(100, window.getRawHitChance(caster, target)));
+};
+
+window.getCritChance = function(spell, caster, target) {
+  if (!caster || !['spell', 'ability', 'weapon-strike'].includes(spell.abilityType)) return 0;
+  const base = spell.abilityType === 'weapon-strike' ? (spell.baseCritChance ?? 0) : 0;
+  const overflow = spell.abilityType !== 'spell' || spell.isShot
+    ? Math.max(0, window.getRawHitChance(caster, target) - 100) : 0;
+  return Math.max(0, Math.min(100, base + getEffectiveStat(caster, 'cri') + overflow));
 };
 
 window.shotHits = function(caster, target) {

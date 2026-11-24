@@ -64,8 +64,8 @@
       write(`${source ? `${source} ${refreshed ? 'обновляет' : 'накладывает'} ${kind}` : `${entity.name}: ${kind}`} «${effect.name}»${source ? ` — цель: ${entity.name}` : ''}.`,
         beneficialEffects.has(effect.stateId ?? effect.id) ? 'benefit' : 'event');
     },
-    damage(entity, amount, absorbed = 0) {
-      write(`${entity.name} -${amount} ОЗ${absorbed ? ` (${absorbed} урона поглощено ES)` : ''}.`, 'damage');
+    damage(entity, amount, absorbed = 0, critical = false) {
+      write(`${critical ? 'Критический удар! ' : ''}${entity.name} -${amount} ОЗ${absorbed ? ` (${absorbed} урона поглощено ES)` : ''}.`, 'damage');
     },
     markDisappearance(entity) { disappearing.add(entity); },
     removed(entity) {

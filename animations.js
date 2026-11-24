@@ -382,3 +382,11 @@ window.playSpectralStrikeAnimation = function(cell, spell) {
   cell.appendChild(flash);
   setTimeout(() => flash.remove(), 500);
 };
+
+window.playCritAnimation = function(cell) {
+  const label = document.createElement('span');
+  label.className = 'miss-label crit-label';
+  label.textContent = 'Crit!';
+  label.setAttribute('aria-hidden', 'true');
+  appendCombatPopup(cell, label, 1200);
+};

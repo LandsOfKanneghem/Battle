@@ -141,6 +141,9 @@ window.showSpellTooltip = function(icon, spell) {
       addLine('Урон', damageText, damageColor);
     }
   }
+  if (spell.abilityType === 'weapon-strike' && (spell.baseCritChance ?? 0) > 0) {
+    addLine('Базовый крит шанс', `${spell.baseCritChance}%`);
+  }
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
   if (spell.isSummon) {
     addLine('Призыв', spell.name);

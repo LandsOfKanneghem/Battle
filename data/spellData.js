@@ -40,7 +40,7 @@ const SPELL_DEFINITIONS = [{
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="9" fill="#ffdc36" stroke="#fff9c4" stroke-width="2"/><path d="M20 2 V7 M20 33 V38 M2 20 H7 M33 20 H38 M7 7 L11 11 M29 29 L33 33 M7 33 L11 29 M29 11 L33 7" fill="none" stroke="#fff9c4" stroke-width="3" stroke-linecap="round"/><path d="M20 12 L17 21 H22 L20 28" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>`
 }, {
   id: 'apply-old-age', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', magicSchool: 'dark',
-  name: 'Наложить Старость', stackable: false, target: 'enemy',
+  name: 'Наложить Старость', stackable: false, target: 'enemy', canCastOnAnyCell: true,
   description: 'Накладывает Старость на вражескую цель.', effectDescription: 'Старость',
   stateId: 'old-age',
   range: 6, minRange: 1, modifiable: false, noLOS: true,
@@ -95,13 +95,13 @@ const SPELL_DEFINITIONS = [{
   maxCooldown: 3, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 12 H26 Q36 12 33 6 Q30 2 27 6 M4 20 H32 Q40 20 36 27 Q32 31 29 26 M6 29 H20 Q28 29 23 35" fill="none" stroke="#a7eced" stroke-width="3" stroke-linecap="round"/></svg>`
 }, {
-  id: 'slow', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', effectDescription: 'Медлительность', name: 'Замедление', stackable: false, magicSchool: 'earth', stateId: 'slowness', target: 'enemy',
+  id: 'slow', durationBase: 2, durationPerInt: 0.025, abilityType: 'spell', effectDescription: 'Медлительность', name: 'Замедление', stackable: false, magicSchool: 'earth', stateId: 'slowness', target: 'enemy', canCastOnAnyCell: true,
   description: 'Накладывает на вражескую цель Медлительность.',
   minRange: 0, range: 4, modifiable: true, apCost: 3, maxUsesPerTurn: 1,
   maxCooldown: 3, isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 24 Q0 17 12 17 Q17 9 25 17 Q39 15 37 25 Q40 35 21 35 Q4 38 3 24" fill="#78522f" stroke="#bc8c50"/><ellipse cx="20" cy="24" rx="10" ry="4" fill="none" stroke="#c49e68"/><circle cx="29" cy="11" r="3" fill="#916337"/></svg>`
 }, {
-  id: 'deep-freeze', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Заморозка', magicSchool: 'water', name: 'Глубокая заморозка', stackable: false, stateId: 'freeze', target: 'any',
+  id: 'deep-freeze', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Заморозка', magicSchool: 'water', name: 'Глубокая заморозка', stackable: false, stateId: 'freeze', target: 'enemy', canCastOnAnyCell: true,
   minRange: 1, range: 5, modifiable: true, apCost: 4, maxUsesPerTurn: 1,
   maxCooldown: 4, isAOE: false, aoeSize: 1, svg: FREEZE.icon
 }, ...ELEMENTAL_SHIELD_SPELLS, {
@@ -127,7 +127,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="none" stroke="#70aebc" stroke-width="2"/><path d="M20 2 L24 16 L38 20 L24 24 L20 38 L16 24 L2 20 L16 16 Z" fill="#b8f3f5" stroke="#498998"/><path d="M20 8 V32 M8 20 H32" stroke="#fff" stroke-width="2"/><circle cx="20" cy="20" r="3" fill="#447d99"/></svg>`
 }, {
-  id: 'dead-weight', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Тяжесть', magicSchool: 'earth', name: 'Мёртвый груз', stackable: false, target: 'any', stateId: 'heavy',
+  id: 'dead-weight', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Тяжесть', magicSchool: 'earth', name: 'Мёртвый груз', stackable: false, target: 'enemy', stateId: 'heavy', canCastOnAnyCell: true,
   description: 'Накладывает на одиночную цель Тяжесть.',
   minRange: 0, range: 4, modifiable: false, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 3,

@@ -556,7 +556,7 @@ window.castSpell = function(targetCell, deps) {
   // Лечение и защита требуют живого союзника до оплаты.
   if ((spell.isElementalShield || spell.isMembrane || spell.isSkyShot || spell.isMpBuff) && !entities.some(entity => entity.hp > 0 && isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;
-  if (spell.stateId && !spell.isRain && !spell.isShot && !window.isTorchSpellTarget?.(target, spell, caster) && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
+  if (spell.stateId && !spell.canCastOnAnyCell && !spell.isRain && !spell.isShot && !window.isTorchSpellTarget?.(target, spell, caster) && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
     && (spell.target !== 'ally' || isAlly(entity)) && (spell.target !== 'enemy' || !isAlly(entity)))) return false;
   if (spell.target === 'enemy' && !spell.canCastOnAnyCell && !window.isTorchSpellTarget?.(target, spell, caster) && !entities.some(entity => entity.hp > 0 && !isAlly(entity)
     && keyOf(entity.position) === keyOf(target))) return false;

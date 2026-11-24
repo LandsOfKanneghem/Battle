@@ -31,6 +31,34 @@ function setup() {
   return { ctx, state, wizard, shadow, monk, hide, deps, spell };
 }
 
+for (const [id, stateId] of [['slow', 'slowness'], ['apply-old-age', 'old-age'], ['dead-weight', 'heavy'], ['deep-freeze', 'freeze']]) {
+  for (const targetKind of ['empty', 'ally', 'hidden-enemy']) {
+    test(`${id}: paid cast on ${targetKind}, effects only on the hidden enemy`, () => {
+      const { ctx, state, wizard, shadow, monk, hide, deps, spell } = setup();
+      const debuff = wizard.availableSpells.find(item => item.id === id)
+        ?? { ...spell(id), cooldown: 0, usesThisTurn: 0, usesTotal: 0 };
+      if (!wizard.availableSpells.includes(debuff)) wizard.availableSpells.push(debuff);
+      monk.position = { x: 2, y: 2 };
+      hide(shadow); wizard.ap = 100;
+      const target = targetKind === 'empty' ? { x: 1, y: 3 } : targetKind === 'ally' ? monk.position : shadow.position;
+      state.preparedSpellId = id;
+      assert(ctx.canTarget(target, debuff));
+      assert(!ctx.isSpellPreviewTarget(targetKind === 'ally' ? monk : shadow, debuff, wizard, target));
+      const allyStates = plain(monk.states), casterStates = plain(wizard.states);
+      const cell = { dataset: { x: target.x, y: target.y } };
+      assert(ctx.castSpell(cell, { ...deps, setTimeout: callback => callback(), queueMicrotask: callback => callback(),
+        removeDefeatedEntities() {}, playStateAnimation() {}, playOldAgeAnimation() {} }));
+      assert.equal(wizard.ap, 100 - debuff.apCost);
+      assert.equal(debuff.cooldown, debuff.maxCooldown);
+      assert.equal(debuff.usesThisTurn, 1);
+      assert.deepEqual(plain(monk.states), allyStates);
+      assert.deepEqual(plain(wizard.states), casterStates);
+      assert.equal(ctx.hasActiveState(shadow, stateId), targetKind === 'hidden-enemy');
+      assert(state.isHiddenFromPlayer(shadow));
+    });
+  }
+}
+
 test('visibility is relative to teams and respects suppression and expiry', () => {
   const { ctx, state, wizard, shadow, monk, hide } = setup();
   hide(shadow); hide(monk);

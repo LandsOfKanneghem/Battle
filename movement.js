@@ -253,6 +253,8 @@ window.highlightPath = function(path, mp, entity = window.gameState.activeEntity
 };
 
 window.clearHighlight = function() {
+  window.gameState.aoeOverlay?.remove();
+  window.gameState.aoeOverlay = null;
   for (const entity of window.gameState.entities) entity.svg?.classList?.remove('spell-target');
   for (const badge of window.gameState.effectBadges) badge.remove();
   window.gameState.effectBadges = [];

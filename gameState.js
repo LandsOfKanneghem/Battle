@@ -33,6 +33,7 @@ window.gameState = {
   effectBadges: [],
   previewKey: null,
   spellPreviewCenter: null,
+  aoeOverlay: null,
 
   // DOM-ссылки и коллекции элементов интерфейса.
   battlefield: document.getElementById('battlefield'),

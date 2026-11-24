@@ -121,6 +121,7 @@ window.highlightSpellRange = function(center = null) {
       cell.classList.add('spell-aoe');
       window.gameState.highlightedCells.push(cell);
     }
+    window.drawSpellAreaOverlay(area, center);
     const keys = new Set(area.map(window.gameState.keyOf));
     for (const entity of previewEntities) {
       if (keys.has(window.gameState.keyOf(entity.position))
@@ -192,4 +193,40 @@ window.layoutDetailedPreviews = function() {
     badge.style.transform = `translate(${position.left - rect.left}px, ${position.top - rect.top}px)`;
     placed.push(position);
   }
+};
+
+// Обводим только открытые стороны клеток: соседние клетки не создают внутренних линий.
+window.getSpellAreaPaths = function(area, size = 48) {
+  const cells = new Map(area.map(point => [`${point.x},${point.y}`, point]));
+  const fill = [], outline = [];
+  for (const { x, y } of cells.values()) {
+    const left = x * size, top = y * size, right = left + size, bottom = top + size;
+    fill.push(`M${left} ${top}H${right}V${bottom}H${left}Z`);
+    if (!cells.has(`${x},${y - 1}`)) outline.push(`M${left} ${top}H${right}`);
+    if (!cells.has(`${x + 1},${y}`)) outline.push(`M${right} ${top}V${bottom}`);
+    if (!cells.has(`${x},${y + 1}`)) outline.push(`M${right} ${bottom}H${left}`);
+    if (!cells.has(`${x - 1},${y}`)) outline.push(`M${left} ${bottom}V${top}`);
+  }
+  return { fill: fill.join(''), outline: outline.join('') };
+};
+
+window.drawSpellAreaOverlay = function(area, center) {
+  if (!area.length) return;
+  const state = window.gameState;
+  const size = 48;
+  const paths = window.getSpellAreaPaths(area, size);
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'spell-area-overlay');
+  svg.setAttribute('viewBox', `0 0 ${state.SIZE * size} ${state.HEIGHT * size}`);
+  svg.setAttribute('aria-hidden', 'true');
+  const x = center.x * size + 6, y = center.y * size + 6, endX = x + size - 12, endY = y + size - 12;
+  const marker = `M${x} ${y + 8}V${y}H${x + 8}M${endX - 8} ${y}H${endX}V${y + 8}`
+    + `M${endX} ${endY - 8}V${endY}H${endX - 8}M${x + 8} ${endY}H${x}V${endY - 8}`;
+  svg.innerHTML = `<path class="spell-area-fill" d="${paths.fill}"/>`
+    + `<path class="spell-area-underlay" d="${paths.outline}"/>`
+    + `<path class="spell-area-contour" d="${paths.outline}"/>`
+    + `<path class="spell-area-marker-underlay" d="${marker}"/>`
+    + `<path class="spell-area-marker" d="${marker}"/>`;
+  state.aoeOverlay = svg;
+  state.battlefield.appendChild(svg);
 };

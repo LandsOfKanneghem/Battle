@@ -288,3 +288,13 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 #hotkeys-dialog table { width: 100%; border-collapse: collapse; }
 #hotkeys-dialog th, #hotkeys-dialog td { padding: 8px 6px; text-align: left; vertical-align: top; border-bottom: 1px solid #98764e; }
 #hotkeys-dialog th { width: 145px; }
+
+/* Одна область АОЕ без рамок между соседними клетками. */
+.cell.spell-aoe::after { box-shadow: none; background-image: none; }
+.spell-area-overlay { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; shape-rendering: crispEdges; }
+.spell-area-fill { fill: #70cfff; fill-opacity: 0.13; stroke: none; }
+.spell-area-underlay, .spell-area-contour, .spell-area-marker-underlay, .spell-area-marker { fill: none; stroke-linecap: square; stroke-linejoin: miter; }
+.spell-area-underlay { stroke: #102b3d; stroke-width: 4; }
+.spell-area-contour { stroke: #8bdbff; stroke-width: 2; }
+.spell-area-marker-underlay { stroke: #102b3d; stroke-width: 4; }
+.spell-area-marker { stroke: #e0f7ff; stroke-width: 2; }

@@ -16,7 +16,7 @@ function setup({ position, target, mp = 3, ap = 5, type = 'hill-giant', spells =
     setTimeout: fn => timers.push(fn) };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const file of ['gameState.js', 'spellTargeting.js', 'movement.js']) {
+  for (const file of ['gameState.js', 'combat.js', 'spellTargeting.js', 'movement.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx);
   }
   const state = ctx.gameState;

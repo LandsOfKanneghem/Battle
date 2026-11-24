@@ -396,9 +396,15 @@ window.applyDamage = function(spell, entity, attacker = null) {
   }
 };
 
+window.getHitChance = function(caster, target) {
+  // ACC уже включает базовую точность, ATT и эффекты. Штраф только за LUC ниже нуля.
+  const negativeLuck = Math.max(0, -getEffectiveStat(caster, 'luc'));
+  return Math.max(0, Math.min(100,
+    getEffectiveStat(caster, 'acc') - getEffectiveStat(target, 'eva') - 5 * negativeLuck));
+};
+
 window.shotHits = function(caster, target) {
-  const hitChance = Math.max(0, Math.min(100, getEffectiveStat(caster, 'acc') - getEffectiveStat(target, 'eva')));
-  return Math.random() * 100 < hitChance;
+  return Math.random() * 100 < window.getHitChance(caster, target);
 };
 
 window.isFrozen = function(entity) {

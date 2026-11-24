@@ -127,7 +127,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="none" stroke="#70aebc" stroke-width="2"/><path d="M20 2 L24 16 L38 20 L24 24 L20 38 L16 24 L2 20 L16 16 Z" fill="#b8f3f5" stroke="#498998"/><path d="M20 8 V32 M8 20 H32" stroke="#fff" stroke-width="2"/><circle cx="20" cy="20" r="3" fill="#447d99"/></svg>`
 }, {
-  id: 'dead-weight', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Тяжесть', magicSchool: 'earth', name: 'Мёртвый груз', stackable: false, target: 'enemy', stateId: 'heavy', canCastOnAnyCell: true,
+  id: 'dead-weight', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Тяжесть', magicSchool: 'earth', name: 'Мёртвый груз', stackable: false, target: 'any', stateId: 'heavy', canCastOnAnyCell: true,
   description: 'Накладывает на одиночную цель Тяжесть.',
   minRange: 0, range: 4, modifiable: false, noLOS: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 3,

@@ -33,7 +33,7 @@ function setup() {
 
 for (const [id, stateId] of [['slow', 'slowness'], ['apply-old-age', 'old-age'], ['dead-weight', 'heavy'], ['deep-freeze', 'freeze']]) {
   for (const targetKind of ['empty', 'ally', 'hidden-enemy']) {
-    test(`${id}: paid cast on ${targetKind}, effects only on the hidden enemy`, () => {
+    test(`${id}: paid cast on ${targetKind}, effects follow target type`, () => {
       const { ctx, state, wizard, shadow, monk, hide, deps, spell } = setup();
       const debuff = wizard.availableSpells.find(item => item.id === id)
         ?? { ...spell(id), cooldown: 0, usesThisTurn: 0, usesTotal: 0 };
@@ -43,7 +43,7 @@ for (const [id, stateId] of [['slow', 'slowness'], ['apply-old-age', 'old-age'],
       const target = targetKind === 'empty' ? { x: 1, y: 3 } : targetKind === 'ally' ? monk.position : shadow.position;
       state.preparedSpellId = id;
       assert(ctx.canTarget(target, debuff));
-      assert(!ctx.isSpellPreviewTarget(targetKind === 'ally' ? monk : shadow, debuff, wizard, target));
+      assert.equal(ctx.isSpellPreviewTarget(targetKind === 'ally' ? monk : shadow, debuff, wizard, target), id === 'dead-weight' && targetKind === 'ally');
       const allyStates = plain(monk.states), casterStates = plain(wizard.states);
       const cell = { dataset: { x: target.x, y: target.y } };
       assert(ctx.castSpell(cell, { ...deps, setTimeout: callback => callback(), queueMicrotask: callback => callback(),
@@ -51,7 +51,8 @@ for (const [id, stateId] of [['slow', 'slowness'], ['apply-old-age', 'old-age'],
       assert.equal(wizard.ap, 100 - debuff.apCost);
       assert.equal(debuff.cooldown, debuff.maxCooldown);
       assert.equal(debuff.usesThisTurn, 1);
-      assert.deepEqual(plain(monk.states), allyStates);
+      if (id === 'dead-weight' && targetKind === 'ally') assert(ctx.hasActiveState(monk, 'heavy'));
+      else assert.deepEqual(plain(monk.states), allyStates);
       assert.deepEqual(plain(wizard.states), casterStates);
       assert.equal(ctx.hasActiveState(shadow, stateId), targetKind === 'hidden-enemy');
       assert(state.isHiddenFromPlayer(shadow));

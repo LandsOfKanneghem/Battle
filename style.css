@@ -270,6 +270,7 @@
     }
     .light-flash { position: absolute; inset: 0; z-index: 6; pointer-events: none; animation: light-burst .4s ease-out both; }
     .light-flash svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 6px #fff4ae); }
+    .sword-strike-animation svg { filter: none; }
     @keyframes light-burst {
       from { transform: scale(.35); opacity: 1; }
       to { transform: scale(1.3); opacity: 0; }

@@ -209,6 +209,12 @@
       "team": "enemy",
       "x": 10,
       "y": 2
+    },
+    {
+      "type": "warrior",
+      "team": "ally",
+      "x": 5,
+      "y": 7
     }
   ],
   "objects": [

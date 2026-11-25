@@ -25,6 +25,31 @@ test('every creature template file is connected to the game', () => {
   }
 });
 
+test('warrior is the third allied hero with separate body armor and shield and a sword strike', () => {
+  const ctx = setup();
+  vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
+  const warrior = ctx.createCreature('warrior', { x: 1, y: 1 });
+  assert.equal(warrior.name, 'Воин'); assert.equal(warrior.level, 1);
+  assert.equal(warrior.id, 'warrior'); assert(ctx.gameState.isAlly(warrior));
+  assert.equal(warrior.ai, undefined); assert.equal(warrior.partyOrder, 3);
+  assert.equal(warrior.baseHP, 16); assert.equal(warrior.hpPerLevel, 8); assert.equal(warrior.maxHP, 40);
+  assert.equal(warrior.baseWP, 10); assert.equal(warrior.wpPerLevel, 4); assert.equal(warrior.maxWP, 14);
+  assert.equal(warrior.maxAP, 6); assert.equal(warrior.maxMP, 4);
+  assert.equal(JSON.stringify(warrior.attributes), JSON.stringify({vit:2,str:2,att:2,int:0,wis:1,cha:0,luc:1}));
+  assert.equal(ctx.getEffectiveStat(warrior, 'ac'), 5);
+  assert.deepEqual(Array.from(warrior.armorSources, source => [source.ac, source.maxDurability, source.durability]), [[4,10,10],[1,5,5]]);
+  assert.equal(warrior.availableSpells.length, 1);
+  const strike = warrior.availableSpells[0];
+  for (const [key, value] of Object.entries({ id: 'sword-strike', name: 'Удар мечом', description: undefined,
+    abilityType: 'weapon-strike', apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2,
+    damageType: 'physical', damageBase: 2, damagePerStr: 1, minRange: 1, range: 1,
+    modifiable: false, noLOS: false, aoeSize: 1, target: 'any', isHit: true, isShot: false })) assert.equal(strike[key], value, key);
+  assert.equal(ctx.getSpellDamage(strike, warrior), 4);
+  const mage = ctx.createCreature('wizard', { x: 2, y: 1 }), monk = ctx.createCreature('monk', { x: 3, y: 1 });
+  ctx.preparePartyOrder([warrior, monk, mage]);
+  assert.deepEqual([mage.partyOrder, monk.partyOrder, warrior.partyOrder], [1,2,3]);
+});
+
 test('all registered creature books resolve, with independent local catalogs for nonheroes', () => {
   const ctx = setup();
   const common = vm.runInContext('SPELL_DEFINITIONS', ctx);

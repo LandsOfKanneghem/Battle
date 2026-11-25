@@ -212,6 +212,12 @@ window.DEFAULT_BATTLE_MAP = {
       "x": 10,
       "y": 2
     },
+    {
+      "type": "warrior",
+      "team": "ally",
+      "x": 5,
+      "y": 7
+    }
   ],
   "objects": [
     {
@@ -236,4 +242,4 @@ window.DEFAULT_BATTLE_MAP = {
       "interactive": false
     }
   ]
-}
+};

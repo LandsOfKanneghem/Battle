@@ -352,6 +352,10 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
 
 // Каждый id имеет явный обработчик; обработчики только запускают анимацию и завершают каст.
 const spellAnimationHandlers = {
+  'sword-strike': ctx => {
+    window.playSwordStrikeAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 400);
+  },
   'torch': ctx => ctx.setTimeout(ctx.finishCast, 0),
   'spectral-strike': ctx => {
     ctx.deps.playSpectralStrikeAnimation(ctx.targetCell, ctx.spell);

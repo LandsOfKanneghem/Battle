@@ -60,7 +60,7 @@
       return;
     }
     const pairs = availablePairs(entity);
-    const isCharacter = target => target.type === 'wizard' || target.type === 'monk';
+    const isCharacter = target => ['wizard', 'monk', 'warrior'].includes(target.type);
     pairs.sort((a, b) => {
       const aKill = Number(a.pKill >= 0.5), bKill = Number(b.pKill >= 0.5);
       if (aKill !== bKill) return bKill - aKill;

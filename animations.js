@@ -383,6 +383,15 @@ window.playSpectralStrikeAnimation = function(cell, spell) {
   setTimeout(() => flash.remove(), 500);
 };
 
+window.playSwordStrikeAnimation = function(cell) {
+  const slash = document.createElement('span');
+  slash.className = 'light-flash sword-strike-animation';
+  slash.setAttribute('aria-hidden', 'true');
+  slash.innerHTML = '<svg viewBox="0 0 48 48"><path d="M5 43L30 7L43 3L18 37Z" fill="#f4faff" stroke="#92a7be" stroke-width="2"/></svg>';
+  cell.appendChild(slash);
+  setTimeout(() => slash.remove(), 400);
+};
+
 window.playCritAnimation = function(cell) {
   const label = document.createElement('span');
   label.className = 'miss-label crit-label';

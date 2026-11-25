@@ -102,7 +102,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 #turn-orders {
   grid-area: queue;
   width: var(--queue-width); min-height: 0; height: var(--battlefield-height); border-radius: 0;
-  overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable;
+  overflow-x: hidden; overflow-y: scroll; scrollbar-gutter: stable;
   background: transparent; box-shadow: none;
   scrollbar-color: #8c774a #1b211c;
   scrollbar-width: thin;

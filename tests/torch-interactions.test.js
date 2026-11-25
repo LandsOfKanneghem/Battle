@@ -193,3 +193,28 @@ test('Light Flash pays for empty and allied cells but damages only enemies', () 
   const hp = enemy.hp; cast(enemy.position);
   assert(enemy.hp < hp);
 });
+
+for (const adrenalineFirst of [true, false]) {
+  test(`monk SCC exhaustion survives Adrenaline (${adrenalineFirst ? 'limit reached during buff' : 'buff applied after limit'})`, () => {
+    const { ctx, state, wizard, deps } = setup();
+    const monk = ctx.createCreature('monk', { x: 2, y: 1 });
+    state.entities.push(monk);
+    const buff = () => ctx.applyState(monk, { id: 'adrenaline', duration: 2, casterId: wizard.id, casterName: wizard.name });
+    if (adrenalineFirst) buff();
+    monk.spellCastCount = 6;
+    ctx.recordSpellAttempt(monk.availableSpells[0], monk, deps());
+    if (!adrenalineFirst) buff();
+    const exhaustion = monk.states.find(s => s.id === 'exhaustion');
+    assert(exhaustion && exhaustion.permanent && exhaustion.suppressed);
+    assert.equal(ctx.getEffectiveStat(monk, 'sfc'), 0);
+    ctx.recordSpellAttempt(monk.availableSpells[0], monk, deps());
+    assert.equal(monk.spellCastCount, 7);
+    assert.equal(monk.states.filter(s => s.id === 'exhaustion').length, 1);
+    ctx.tickCasterEffects(wizard.id); ctx.tickCasterEffects(wizard.id);
+    assert(ctx.hasActiveState(monk, 'exhaustion'));
+    assert.equal(ctx.getEffectiveStat(monk, 'sfc'), 40, '30 exhaustion + 10 adrenaline crash');
+    ctx.tickCasterEffects(wizard.id);
+    assert.equal(ctx.getEffectiveStat(monk, 'sfc'), 30);
+    assert.equal(monk.states.find(s => s.id === 'exhaustion'), exhaustion);
+  });
+}

@@ -52,7 +52,7 @@ const CHILL = {
 const ADRENALINE = {
   id: 'adrenaline', name: 'Адреналин', duration: 2, apBonus: 2, evaBonus: 10, mpBonus: 0, initiativeBonus: 0,
   description: '+2 ОД, +10% уклонения, иммунитет к Слабости и Истощению. После окончания действия на цель накладывается Адреналиновый откат на 1 ход.', casterName: '', suppressed: false,
-  overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  overrides: ['exhaustion'], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 36 Q0 23 4 12 Q10 1 20 10 Q30 1 36 12 Q40 23 20 36 Z" fill="#d84458" stroke="#ffb2b6" stroke-width="2"/><path d="M23 7 L13 22 H21 L17 34 L29 17 H22 Z" fill="#fff2a3"/></svg>`
 };
 const ADRENALINE_CRASH = {

@@ -83,7 +83,8 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
   const isPermanent = input.permanent ?? template.permanent;
   if (stateDuration < 0 || (stateDuration === 0 && !isPermanent)) return false;
   // Иммунитет Адреналина действует самостоятельно, без Бодрости.
-  if (['weakness', 'exhaustion'].includes(input.id) && hasActiveState(entity, 'adrenaline')) return false;
+  if (['weakness', 'exhaustion'].includes(input.id) && hasActiveState(entity, 'adrenaline')
+    && !(input.id === 'exhaustion' && isPermanent)) return false;
   if (input.id === 'weakness' && hasActiveState(entity, 'vigor')) return false;
   if (['adrenaline', 'vigor'].includes(input.id) && hasActiveState(entity, 'adrenaline-crash')) return false;
   const neutralizes = input.neutralizes ?? template.neutralizes;
@@ -124,7 +125,8 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     entity.suspendedWeakness ??= [];
     entity.states = entity.states.filter(state => {
       if (state.unremovable) return true;
-      if (state.id === 'exhaustion' && input.id === 'adrenaline') return false;
+      // Постоянное Истощение от SCC только подавляется Адреналином и вернётся после него.
+      if (state.id === 'exhaustion' && input.id === 'adrenaline') return state.permanent;
       if (state.id !== 'weakness') return true;
       // Адреналин сохраняет постоянную Слабость для возврата после своего спада.
       if (state.permanent && input.id === 'adrenaline') entity.suspendedWeakness.push(state);

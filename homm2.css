@@ -33,15 +33,16 @@ body {
   margin: 12px 0;
 }
 .battle-log {
+  position: relative;
   grid-area: logs; align-self: start; display: flex; flex-direction: column;
   width: 220px; height: 582px; margin-top: 2px; margin-right: 0;
   border: 2px solid #555; background: #fff; color: #171717;
   font: 14px/1.4 system-ui, sans-serif; min-width: 0;
 }
-#battle-log-entries { flex: 1; min-height: 0; overflow-y: scroll; overflow-wrap: anywhere; padding: 6px 9px; scrollbar-gutter: stable; }
+#battle-log-entries { flex: 1; min-height: 0; overflow-y: scroll; overflow-wrap: anywhere; padding: 32px 9px 6px; scrollbar-gutter: stable; }
 #battle-log-entries p { margin: 0 0 7px; }
-.battle-log-actions { display: flex; justify-content: flex-end; flex: 0 0 26px; padding: 1px 5px; }
-#copy-battle-log { display: grid; place-items: center; width: 24px; height: 24px; padding: 1px; border: 0; background: transparent; color: #514431; cursor: pointer; }
+.battle-log-actions { position: absolute; inset: 0 0 auto; z-index: 1; display: flex; justify-content: flex-end; padding: 1px 5px; overflow-y: hidden; scrollbar-gutter: stable; background: #fff; background-clip: content-box; pointer-events: none; }
+#copy-battle-log { display: grid; place-items: center; width: 24px; height: 24px; padding: 1px; border: 0; background: transparent; color: #514431; cursor: pointer; pointer-events: auto; }
 #copy-battle-log:hover { color: #111; }
 #copy-battle-log:focus-visible { outline: 1px solid #514431; outline-offset: -1px; }
 #copy-battle-log[data-copied='true'] { color: #166534; }

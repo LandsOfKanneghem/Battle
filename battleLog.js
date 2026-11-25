@@ -30,12 +30,13 @@
   const appendLine = (text, kind = 'event') => {
     const list = document.getElementById('battle-log-entries');
     if (!list) return;
-    const follow = list.scrollHeight - list.scrollTop - list.clientHeight < 24;
+    const scroll = document.getElementById('battle-log-scroll') ?? list;
+    const follow = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 24;
     const line = document.createElement('p');
     line.className = `battle-log-${kind}`;
     line.textContent = text;
     list.appendChild(line);
-    if (follow) list.scrollTop = list.scrollHeight;
+    if (follow) scroll.scrollTop = scroll.scrollHeight;
   };
   const write = (text, kind = 'event') => {
     if (turnStartEntries) turnStartEntries.push([text, kind]);
@@ -80,6 +81,8 @@
       disappearing = new WeakSet();
       turnStartEntries = null;
       document.getElementById('battle-log-entries')?.replaceChildren();
+      const scroll = document.getElementById('battle-log-scroll');
+      if (scroll) scroll.scrollTop = 0;
     },
     beginRound(number) {
       finishTurnStart();

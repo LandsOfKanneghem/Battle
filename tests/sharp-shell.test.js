@@ -52,10 +52,10 @@ test('real bite effect reflects once and produces damage logs and floating label
   const { ctx, attacker, turtle, damage, labels, deps } = setup();
   const attackerHP = attacker.hp, turtleHP = turtle.hp;
   ctx.applySpellEffect({ ...attacker.availableSpells[0], bleedChance: 0 }, turtle.position, attacker, deps, null, true);
-  assert.equal(turtle.hp, turtleHP - 4);
+  assert.equal(turtle.hp, turtleHP - 2); // AC 2 reduces the bite; reflection ignores AC.
   assert.equal(attacker.hp, attackerHP - 3);
-  assert.deepEqual(labels, [4, 3]);
-  assert.deepEqual(damage, [[turtle.id, 4, 0], [attacker.id, 3, 0]]);
+  assert.deepEqual(labels, [2, 3]);
+  assert.deepEqual(damage, [[turtle.id, 2, 0], [attacker.id, 3, 0]]);
 });
 
 test('spells, abilities, ranged weapons and periodic damage do not reflect', () => {
@@ -112,7 +112,7 @@ test('two shells do not recurse; reflected damage is not reduced by Weakness or 
   const hp = attacker.hp, targetHP = turtle.hp;
   ctx.applyDamage(hit, turtle, attacker);
   assert.equal(attacker.hp, hp - 3);
-  assert.equal(turtle.hp, targetHP - 4);
+  assert.equal(turtle.hp, targetHP - 2);
   assert.equal(damage.length, 2);
 });
 

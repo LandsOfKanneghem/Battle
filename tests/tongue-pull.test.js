@@ -153,6 +153,6 @@ test('tongue has no melee hit flag and does not trigger Sharp Shell retaliation'
   state.entities[0] = player;
   const hp = player.hp, targetHP = target.hp;
   ctx.applySpellEffect(spell, target.position, player, deps);
-  assert.equal(target.hp, targetHP - 4);
+  assert.equal(target.hp, targetHP - 2); // Weapon attack: the turtle's AC 2 applies.
   assert.equal(player.hp, hp);
 });

@@ -365,8 +365,11 @@ window.damageBreakdown = function(spell, entity) {
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) {
     return { absorbed: 0, hpDamage: 0 }; // Иммунитет сохраняет и HP, и ES.
   }
-  // Учитываем защиту нужного типа (включая physical) один раз, до ES/HP.
-  const resistance = getEffectiveStat(entity, spell.damageType);
+  // Физический резист защищает от любого физического урона; AC добавляется
+  // только к физическим атакам оружием, включая выстрелы и броски.
+  const armor = spell.damageType === 'physical' && spell.abilityType === 'weapon-strike'
+    ? getEffectiveStat(entity, 'ac') : 0;
+  const resistance = getEffectiveStat(entity, spell.damageType) + armor;
   const afterResistance = Math.max(0, spell.damage - resistance);
   const absorbed = isMagicalDamage(spell.damageType)
     ? Math.min(getCurrentES(entity), afterResistance) : 0;

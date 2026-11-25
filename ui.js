@@ -500,8 +500,20 @@ window.updatePanel = function() {
     const id = `res-${key}`;
     // Базовая защита и бонусы читаются по имени характеристики в корне.
     const value = window.getEffectiveStat(displayed, key);
-    writeAttribute(id, String(value), statColor(value, key));
-    document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${value}` : `${label}: —`);
+    let text = String(value);
+    if (key === 'ac' && attributes) {
+      const sources = displayed.armorSources ?? [];
+      const durability = sources.length ? ` [Пр.: ${sources.map(source => source.indestructible ? '∞' : source.durability).join(' | ')}]` : '';
+      const element = document.getElementById(id);
+      element.textContent = '';
+      element.style.color = '';
+      const number = document.createElement('span');
+      number.textContent = String(value);
+      if (sources.some(window.isArmorBroken)) number.style.color = '#ff4d4d';
+      element.append(number, document.createTextNode(durability));
+      text += durability;
+    } else writeAttribute(id, text, statColor(value, key));
+    document.getElementById(id).parentElement.setAttribute('aria-label', attributes ? `${label}: ${text}` : `${label}: —`);
   }
   window.gameState.endTurnButton.disabled = !displayed || window.gameState.isMoving || window.gameState.isCasting || window.gameState.isSkippingTurn || window.isFrozen(window.gameState.activeEntity()) || !window.activeMover();
   // Характеристики учитывают наведение, заклинания — только активного участника.

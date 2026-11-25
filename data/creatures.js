@@ -68,6 +68,14 @@ window.captureInitialStats = function(creature) {
     const level = template.level ?? 1;
     const maxHP = template.baseHP + template.hpPerLevel * (level + attributes.vit);
     const maxWP = template.baseWP + template.wpPerLevel * (level + attributes.cha);
+    // Каждый источник получает отдельную полную прочность на новый бой.
+    const armorSources = (template.armorSources ?? ((template.baseAC ?? 0) > 0
+      ? [{ id: 'armor', name: 'Броня', ac: template.baseAC, maxDurability: 10 }] : []))
+      .map(source => {
+        const maxDurability = Math.max(0, Math.floor(source.maxDurability ?? 10));
+        return { ...source, indestructible: source.indestructible === true,
+          maxDurability, durability: maxDurability };
+      });
     const creature = {
       id, name: template.name, type: template.type,
       level, baseHP: template.baseHP, hpPerLevel: template.hpPerLevel, hp: maxHP, maxHP,
@@ -83,7 +91,7 @@ window.captureInitialStats = function(creature) {
       baseSFC: template.baseSFC, sfc: template.baseSFC,
       baseBLO: template.baseBLO, blo: template.baseBLO,
       baseRA: template.baseRA, ra: template.baseRA,
-      baseAC: template.baseAC, ac: template.baseAC,
+      baseAC: armorSources.reduce((sum, source) => sum + source.ac, 0), ac: 0, armorSources,
       basePhysical: template.basePhysical, physical: template.basePhysical,
       baseFire: template.baseFire, fire: template.baseFire,
       baseWater: template.baseWater, water: template.baseWater,

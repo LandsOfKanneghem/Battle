@@ -359,6 +359,14 @@ window.getSpellDuration = function(spell, caster) {
   return spell.durationBase ?? 0;
 };
 
+window.isArmorBroken = source => !source.indestructible && source.durability <= 0;
+window.getArmorSourceAC = source => window.isArmorBroken(source) ? Math.floor(source.ac * 0.25) : source.ac;
+window.wearArmor = function(entity) {
+  for (const source of entity.armorSources ?? []) {
+    if (!source.indestructible) source.durability = Math.max(0, source.durability - 1);
+  }
+};
+
 window.damageBreakdown = function(spell, entity) {
   // Здесь damage уже вычислен вызывающим кодом: INT и штрафы повторно не применяем.
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
@@ -384,6 +392,7 @@ window.spellDamage = function(spell, entity) {
 window.applyDamage = function(spell, entity, attacker = null) {
   if (isFrozen(entity)) return; // Не расходуем ни HP, ни ES, ни бонусы защиты.
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) return;
+  const wearsArmor = entity.hp > 0 && spell.abilityType === 'weapon-strike';
   const reflectsMelee = entity.hp > 0 && attacker && attacker !== entity && attacker.hp > 0
     && spell.abilityType === 'weapon-strike' && spell.isHit && !spell.isShot
     && hasActiveState(entity, 'sharp-shell');
@@ -392,6 +401,8 @@ window.applyDamage = function(spell, entity, attacker = null) {
   const critical = critChance > 0 && Math.random() * 100 < critChance;
   consumeES(entity, absorbed);
   entity.hp = Math.max(0, entity.hp - hpDamage);
+  // Этот удар использует защиту до износа. Ломается только источник, его запись остаётся.
+  if (wearsArmor) window.wearArmor(entity);
   window.battleLog?.damage(entity, hpDamage, absorbed, critical);
   // Показываем и поглощение ES, и нулевой урон после сопротивления; иммунитеты выше.
   const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
@@ -437,7 +448,8 @@ window.getEffectiveStat = function(entity, statName) {
   const valueAt = object => statName.split('.').reduce((value, key) => value?.[key], object);
   const innate = ['vit', 'str', 'att', 'int', 'wis', 'cha', 'luc'];
   const protectionStats = ['ac', 'physical', 'fire', 'water', 'air', 'earth', 'mind', 'poison'];
-  const base = (innate.includes(statName) ? entity.attributes?.[statName] : entity[statName]) ?? 0;
+  const base = ((innate.includes(statName) ? entity.attributes?.[statName] : entity[statName]) ?? 0)
+    + (statName === 'ac' ? (entity.armorSources ?? []).reduce((sum, source) => sum + window.getArmorSourceAC(source), 0) : 0);
   const effects = [
     ...entity.states.filter(state => !state.suppressed && (state.duration > 0 || state.permanent || state.innate)),
     ...entity.appliedEffects.filter(effect => effect.duration > 0 && !effect.suppressed),

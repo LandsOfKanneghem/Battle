@@ -77,6 +77,7 @@ test('misses, zero damage, full resistance and frozen targets cause no reflectio
   deps.playMissAnimation = () => {};
   ctx.applySpellEffect(attacker.availableSpells[0], turtle.position, attacker, deps, null, false);
   assert.equal(damage.length, 0);
+  assert.equal(turtle.armorSources[0].durability, 10, 'a missed weapon attack never wears armor');
   ctx.applyDamage({ ...hit, damage: 0 }, turtle, attacker);
   turtle.physical = 4;
   ctx.applyDamage(hit, turtle, attacker);

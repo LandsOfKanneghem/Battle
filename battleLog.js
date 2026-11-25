@@ -2,6 +2,26 @@
 (() => {
   let disappearing = new WeakSet();
   let turnStartEntries = null;
+  let copyFeedbackTimer;
+  const legacyCopy = text => {
+    const focus = document.activeElement;
+    const selection = window.getSelection?.();
+    const ranges = selection ? Array.from({ length: selection.rangeCount }, (_, i) => selection.getRangeAt(i).cloneRange()) : [];
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', '');
+    input.style.cssText = 'position:fixed;left:-9999px;top:0;';
+    document.body.appendChild(input);
+    try {
+      input.focus({ preventScroll: true });
+      input.select();
+      return document.execCommand('copy');
+    } finally {
+      input.remove();
+      focus?.focus({ preventScroll: true });
+      if (selection) { selection.removeAllRanges(); for (const range of ranges) selection.addRange(range); }
+    }
+  };
   const beneficialEffects = new Set([
     'invisibility', 'speed', 'light', 'adrenaline', 'vigor', 'levitation', 'water-entity',
     'liquid-membrane', 'sky-shot', 'power-hour', 'sprint',
@@ -29,6 +49,33 @@
   const sourceName = effect => effect.casterName
     || window.gameState.entities.find(entity => entity.id === effect.casterId)?.name;
   window.battleLog = {
+    getText() {
+      const entries = Array.from(document.getElementById('battle-log-entries')?.children ?? [], line => line.textContent);
+      return [...entries, ...(turnStartEntries ?? []).map(([text]) => text)].join('\n');
+    },
+    async copy() {
+      const text = window.battleLog.getText();
+      let copied = false;
+      try {
+        if (window.navigator?.clipboard?.writeText) {
+          try { await window.navigator.clipboard.writeText(text); copied = true; } catch { /* Try local-file compatible copying. */ }
+        }
+        if (!copied) copied = legacyCopy(text);
+      } catch { copied = false; }
+      const button = document.getElementById('copy-battle-log');
+      if (button) {
+        clearTimeout(copyFeedbackTimer);
+        button.dataset.copied = String(copied);
+        button.title = copied ? 'Логи скопированы' : 'Не удалось скопировать логи. Попробуйте ещё раз.';
+        button.setAttribute('aria-label', button.title);
+        copyFeedbackTimer = setTimeout(() => {
+          delete button.dataset.copied;
+          button.title = 'Скопировать все логи';
+          button.setAttribute('aria-label', button.title);
+        }, 2000);
+      }
+      return copied;
+    },
     reset() {
       disappearing = new WeakSet();
       turnStartEntries = null;

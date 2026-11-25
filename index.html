@@ -24,6 +24,11 @@
   </div>
   <main class="game">
     <aside class="battle-log" aria-label="Журнал боя">
+      <div class="battle-log-actions">
+        <button id="copy-battle-log" type="button" title="Скопировать все логи" aria-label="Скопировать все логи">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M8 8V3h12v13h-4"/><rect x="3" y="8" width="13" height="13" rx="1"/></svg>
+        </button>
+      </div>
       <div id="battle-log-entries" role="log" aria-live="polite" aria-relevant="additions" tabindex="0"></div>
     </aside>
     <section class="arena" aria-label="Поле и очередь ходов">
@@ -279,6 +284,7 @@
       if (gameState.isMoving || !window.activeMover()) return;
       window.endTurn();
     });
+    document.getElementById('copy-battle-log').addEventListener('click', () => window.battleLog.copy());
 
     gameState.battlefield.addEventListener('mousemove', (event) => {
       if (gameState.isCasting) return;

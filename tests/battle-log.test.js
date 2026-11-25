@@ -21,6 +21,17 @@ function setup() {
     lines: () => entries.children.map(line => line.textContent) };
 }
 
+test('copy text includes all entries and queued turn events in order without changing the log', () => {
+  const { log, wizard, wolf, lines } = setup();
+  log.beginRound(1); log.beginTurn(wizard); log.damage(wolf, 4);
+  assert.equal(log.getText(), 'Ход 1\nХодит: Волшебник\nВолк -4 ОЗ.');
+  assert.equal(lines().length, 2, 'taking a copy does not flush queued events');
+  log.finishTurnStart();
+  const text = log.getText();
+  assert.equal(text, 'Ход 1\nХодит: Волшебник\nВолк -4 ОЗ.');
+  log.reset(); assert.equal(log.getText(), '');
+});
+
 test('round headings follow the scheduler rather than guessing from creature order', () => {
   const { log, wizard, wolf, lines } = setup();
   log.beginRound(1);

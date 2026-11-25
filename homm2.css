@@ -40,6 +40,11 @@ body {
 }
 #battle-log-entries { flex: 1; min-height: 0; overflow-y: scroll; overflow-wrap: anywhere; padding: 6px 9px; scrollbar-gutter: stable; }
 #battle-log-entries p { margin: 0 0 7px; }
+.battle-log-actions { display: flex; justify-content: flex-end; flex: 0 0 26px; padding: 1px 5px; }
+#copy-battle-log { display: grid; place-items: center; width: 24px; height: 24px; padding: 1px; border: 0; background: transparent; color: #514431; cursor: pointer; }
+#copy-battle-log:hover { color: #111; }
+#copy-battle-log:focus-visible { outline: 1px solid #514431; outline-offset: -1px; }
+#copy-battle-log[data-copied='true'] { color: #166534; }
 .battle-log-round { font-weight: 800; border-top: 1px solid #bbb; padding-top: 7px; }
 .battle-log-round:first-child { border-top: 0; padding-top: 0; }
 .battle-log-turn { font-weight: 700; }

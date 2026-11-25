@@ -169,7 +169,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
   background: var(--panel-frame-color); box-shadow: 0 1px #d2b77933; pointer-events: none;
 }
 .stat-column > span { min-height: 15px; }
-.resistance-stat svg { width: 14px; height: 14px; flex-basis: 14px; }
+.resistance-stat svg { width: 16px; height: 16px; flex-basis: 16px; }
 button { -webkit-tap-highlight-color: transparent; }
 #end-turn, .spell-pages button, .close-effects {
   border: 2px outset #b8a16a; border-radius: 0;

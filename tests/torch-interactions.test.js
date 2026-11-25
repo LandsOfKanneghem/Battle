@@ -218,3 +218,60 @@ for (const adrenalineFirst of [true, false]) {
     assert.equal(monk.states.find(s => s.id === 'exhaustion'), exhaustion);
   });
 }
+
+for (const buffId of ['vigor', 'adrenaline']) {
+  for (const buffFirst of [true, false]) {
+    test(`HC weakness survives ${buffId}: ${buffFirst ? 'limit during buff' : 'buff after limit'}`, () => {
+      const { ctx, state, wizard, deps } = setup();
+      const warrior = ctx.createCreature('warrior', { x: 2, y: 1 }); state.entities.push(warrior);
+      const initialACC = ctx.getEffectiveStat(warrior, 'acc');
+      const buff = () => ctx.applyState(warrior, { id: buffId, duration: 2, casterId: wizard.id });
+      if (buffFirst) buff();
+      warrior.hitCount = warrior.maxHitCount - 1;
+      ctx.recordHitAttempt(warrior.availableSpells[0], warrior, deps());
+      if (!buffFirst) buff();
+      const weakness = warrior.states.find(s => s.id === 'weakness');
+      assert(weakness && weakness.permanent && weakness.suppressed);
+      assert.equal(ctx.getEffectiveStat(warrior, 'acc'), initialACC);
+      ctx.recordHitAttempt(warrior.availableSpells[0], warrior, deps());
+      assert.equal(warrior.hitCount, warrior.maxHitCount);
+      ctx.tickCasterEffects(wizard.id); ctx.tickCasterEffects(wizard.id);
+      assert(ctx.hasActiveState(warrior, 'weakness'));
+      assert.equal(ctx.getEffectiveStat(warrior, 'acc'), initialACC - 30 - (buffId === 'adrenaline' ? 10 : 0));
+      ctx.tickCasterEffects(wizard.id);
+      assert.equal(ctx.getEffectiveStat(warrior, 'acc'), initialACC - 30);
+      assert.equal(warrior.states.find(s => s.id === 'weakness'), weakness);
+      assert.equal(warrior.states.filter(s => s.id === 'weakness').length, 1);
+    });
+  }
+}
+
+test('permanent weakness stays suppressed until all suppressing buffs are gone', () => {
+  const { ctx, state, wizard, deps } = setup();
+  const warrior = ctx.createCreature('warrior', { x: 2, y: 1 }); state.entities.push(warrior);
+  warrior.hitCount = warrior.maxHitCount - 1;
+  ctx.recordHitAttempt(warrior.availableSpells[0], warrior, deps());
+  ctx.applyState(warrior, { id: 'adrenaline', duration: 3, casterId: wizard.id });
+  ctx.applyState(warrior, { id: 'vigor', duration: 1, casterId: wizard.id });
+  ctx.tickCasterEffects(wizard.id);
+  assert(!ctx.hasActiveState(warrior, 'weakness'));
+  ctx.removeState(warrior, 'adrenaline');
+  assert(ctx.hasActiveState(warrior, 'weakness'));
+  ctx.applyState(warrior, { id: 'vigor', duration: 2, casterId: wizard.id });
+  ctx.removeCasterEffects(wizard.id);
+  assert(ctx.hasActiveState(warrior, 'weakness'), 'death of the buff caster restores the warrior-owned penalty');
+  assert.equal(warrior.states.filter(s => s.id === 'weakness').length, 1);
+});
+
+test('limit penalties upgrade existing temporary Weakness and Exhaustion to permanent', () => {
+  const { ctx, wizard, deps } = setup();
+  ctx.applyState(wizard, { id: 'weakness', duration: 2 });
+  wizard.hitCount = wizard.maxHitCount - 1;
+  ctx.recordHitAttempt({ abilityType: 'weapon-strike' }, wizard, deps());
+  assert(wizard.states.find(s => s.id === 'weakness').permanent);
+  ctx.applyState(wizard, { id: 'exhaustion', duration: 2 });
+  wizard.spellCastCount = wizard.maxSpellCasts - 1;
+  ctx.recordSpellAttempt(wizard.availableSpells[0], wizard, deps());
+  // Already active temporary penalties must also be promoted by the counter handler.
+  assert(wizard.states.find(s => s.id === 'exhaustion').permanent);
+});

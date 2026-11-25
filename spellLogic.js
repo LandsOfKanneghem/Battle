@@ -513,7 +513,7 @@ const spellAnimationHandlers = {
 window.recordSpellAttempt = function(spell, caster, deps) {
   if (spell.abilityType === 'spell' && (caster.spellCastCount ?? 0) < caster.maxSpellCasts) {
     caster.spellCastCount = (caster.spellCastCount ?? 0) + 1;
-    if (caster.spellCastCount >= caster.maxSpellCasts && !deps.hasActiveState(caster, 'exhaustion')) {
+    if (caster.spellCastCount >= caster.maxSpellCasts && !caster.states?.some(state => state.id === 'exhaustion' && state.permanent)) {
       deps.applyState(caster, {
         id: 'exhaustion', duration: 0, permanent: true,
         casterId: caster.id, casterName: caster.name
@@ -527,7 +527,7 @@ window.recordHitAttempt = function(spell, caster, deps) {
   if ((spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike')
     && (caster.hitCount ?? 0) < caster.maxHitCount) {
     caster.hitCount = (caster.hitCount ?? 0) + 1;
-    if (caster.hitCount >= caster.maxHitCount && !deps.hasActiveState(caster, 'weakness')) {
+    if (caster.hitCount >= caster.maxHitCount && !caster.states?.some(state => state.id === 'weakness' && state.permanent)) {
       deps.applyState(caster, {
         id: 'weakness', duration: 0, permanent: true,
         casterId: caster.id, casterName: caster.name

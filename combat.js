@@ -13,12 +13,6 @@ window.hasActiveState = function(entity, id) {
     && (state.duration > 0 || state.permanent || state.innate));
 };
 
-window.restoreSuspendedWeakness = function(entity) {
-  for (const state of entity.suspendedWeakness ?? []) window.battleLog?.applied(entity, state);
-  entity.states.push(...(entity.suspendedWeakness ?? []));
-  entity.suspendedWeakness = [];
-};
-
 window.recalculateStateStats = function(entity, allowNegativeMP = false) {
   const oldMaxAP = entity.maxAP;
   entity.maxAP = Math.max(1, entity.baseAP + entity.states.filter(state => !state.suppressed)
@@ -83,9 +77,8 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
   const isPermanent = input.permanent ?? template.permanent;
   if (stateDuration < 0 || (stateDuration === 0 && !isPermanent)) return false;
   // Иммунитет Адреналина действует самостоятельно, без Бодрости.
-  if (['weakness', 'exhaustion'].includes(input.id) && hasActiveState(entity, 'adrenaline')
-    && !(input.id === 'exhaustion' && isPermanent)) return false;
-  if (input.id === 'weakness' && hasActiveState(entity, 'vigor')) return false;
+  if (['weakness', 'exhaustion'].includes(input.id) && hasActiveState(entity, 'adrenaline') && !isPermanent) return false;
+  if (input.id === 'weakness' && hasActiveState(entity, 'vigor') && !isPermanent) return false;
   if (['adrenaline', 'vigor'].includes(input.id) && hasActiveState(entity, 'adrenaline-crash')) return false;
   const neutralizes = input.neutralizes ?? template.neutralizes;
   if (entity.states.some(state => neutralizes.includes(state.id))) {
@@ -118,19 +111,17 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
   // Стакающиеся состояния всегда создают отдельный экземпляр и собственный таймер.
   const sameInstance = state => template.stackable !== true && state.id === input.id;
   const existing = entity.states.find(sameInstance);
-  if (existing && (existing.unremovable || existing.permanent || existing.innate || existing.duration > stateDuration
-    || (existing.duration === stateDuration && input.id !== 'burning'))) return false;
+  if (existing && (existing.unremovable || existing.permanent || existing.innate || (!isPermanent && (existing.duration > stateDuration
+    || (existing.duration === stateDuration && input.id !== 'burning'))))) return false;
   // Равное по длительности Горение обновляет источник; меньшая длительность игнорируется.
   if (input.id === 'adrenaline' || input.id === 'vigor') {
-    entity.suspendedWeakness ??= [];
     entity.states = entity.states.filter(state => {
       if (state.unremovable) return true;
       // Постоянное Истощение от SCC только подавляется Адреналином и вернётся после него.
       if (state.id === 'exhaustion' && input.id === 'adrenaline') return state.permanent;
       if (state.id !== 'weakness') return true;
-      // Адреналин сохраняет постоянную Слабость для возврата после своего спада.
-      if (state.permanent && input.id === 'adrenaline') entity.suspendedWeakness.push(state);
-      return false;
+      // Постоянная Слабость от HC остаётся на месте и только подавляется баффом.
+      return state.permanent;
     });
   }
   // Откат снимает Бодрость до создания Слабости, чтобы иммунитет уже не действовал.
@@ -149,16 +140,12 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
 
 window.removeState = function(entity, stateId) {
   if (stateId === 'weakness' && hasActiveState(entity, 'adrenaline-crash')) return;
-  const hadAdrenaline = entity.states.some(state => state.id === 'adrenaline');
   if (stateTypes.get(stateId)?.stackable === true) {
     const latest = entity.states.filter(state => state.id === stateId && !state.unremovable && !state.permanent && !state.innate)
       .reduce((last, state) => !last || state.appliedOrder > last.appliedOrder ? state : last, null);
     entity.states = entity.states.filter(state => state !== latest);
   } else {
     entity.states = entity.states.filter(state => state.id !== stateId || state.unremovable || state.permanent || state.innate);
-  }
-  if (hadAdrenaline && !entity.states.some(state => state.id === 'adrenaline')) {
-    restoreSuspendedWeakness(entity);
   }
   resolveStateSuppression(entity);
   recalculateStateStats(entity);
@@ -221,7 +208,6 @@ window.tickCasterEffects = function(casterId) {
       for (const adrenaline of expiredAdrenaline) applyState(target, {
         id: 'adrenaline-crash', duration: 1, casterId: adrenaline.casterId, casterName: adrenaline.casterName
       });
-      restoreSuspendedWeakness(target);
     }
     resolveStateSuppression(target);
     // Срок заклинания независим от срока созданного им состояния.
@@ -256,11 +242,7 @@ window.removeCasterEffects = function(casterId) {
   }
   // Смерть источника снимает его эффекты сразу, даже если сейчас ход другой цели.
   for (const target of window.gameState.entities) {
-    const lostAdrenaline = target.states.some(state => state.id === 'adrenaline' && state.casterId === casterId);
-    target.suspendedWeakness = (target.suspendedWeakness ?? []).filter(state => state.casterId !== casterId);
     target.states = target.states.filter(state => state.casterId !== casterId);
-    // Смерть источника снимает его эффекты; чужая приостановленная Слабость возвращается.
-    if (lostAdrenaline) restoreSuspendedWeakness(target);
     resolveStateSuppression(target);
     target.appliedEffects = target.appliedEffects.filter(effect => effect.casterId !== casterId);
     recalculateStateStats(target);

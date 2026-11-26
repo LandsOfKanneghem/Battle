@@ -176,3 +176,37 @@ test('weapon attacks and magical shots check accuracy, while non-shot spells do 
     assert.equal(target.position.x, 9, kind);
   }
 });
+
+test('only allied tongue pulls skip accuracy; allied weapons and shots still roll', () => {
+  for (const team of ['ally', 'enemy']) for (const kind of ['tongue', 'weapon', 'shot']) {
+    const { ctx, caster, target, spell, deps } = setup();
+    caster.team = target.team = team;
+    let rolls = 0, misses = 0;
+    deps.shotHits = () => { rolls++; return false; };
+    deps.playMissAnimation = () => { misses++; };
+    const attack = kind === 'tongue' ? spell : {
+      abilityType: kind === 'weapon' ? 'weapon-strike' : 'spell', isShot: kind === 'shot',
+      baseAccuracy: 100, damageBase: 4, damageType: 'physical', target: 'any', isAOE: false, aoeSize: 1
+    };
+    const hp = target.hp;
+    ctx.applySpellEffect(attack, target.position, caster, deps, null, false);
+    assert.equal(target.hp, hp, `${team}/${kind}`);
+    assert.equal(target.position.x, kind === 'tongue' ? 7 : 9);
+    assert.equal(rolls, 0); // Cached misses need no second roll.
+    assert.equal(misses, kind === 'tongue' ? 0 : 1);
+    target.position.x = 9;
+    ctx.applySpellEffect(attack, target.position, caster, deps);
+    assert.equal(rolls, kind === 'tongue' ? 0 : 1);
+    assert.equal(target.position.x, kind === 'tongue' ? 7 : 9);
+  }
+});
+
+test('allied tongue hit helper performs no random roll despite zero accuracy and extreme evasion', () => {
+  const { ctx, caster, target, spell } = setup();
+  caster.team = target.team = 'ally';
+  caster.attributes.att = -1000;
+  target.eva = 1000;
+  vm.runInContext('Math.random = () => { throw new Error("no allied tongue accuracy roll"); }', ctx);
+  assert.equal(ctx.getHitChance(spell, caster, target), 100);
+  assert.equal(ctx.shotHits(spell, caster, target), true);
+});

@@ -406,7 +406,13 @@ window.getRawHitChance = function(spell, caster, target) {
     + getEffectiveStat(caster, 'accuracyBonus') - getEffectiveStat(target, 'eva') - 5 * negativeLuck;
 };
 
+window.isAlliedTonguePull = function(spell, caster, target) {
+  return !!spell.isTonguePull && !!caster && !!target && typeof window.gameState.isAlly === 'function'
+    && window.gameState.isAlly(caster) === window.gameState.isAlly(target);
+};
+
 window.getHitChance = function(spell, caster, target) {
+  if (window.isAlliedTonguePull(spell, caster, target)) return 100;
   return Math.max(0, Math.min(100, window.getRawHitChance(spell, caster, target)));
 };
 
@@ -419,6 +425,7 @@ window.getCritChance = function(spell, caster, target) {
 };
 
 window.shotHits = function(spell, caster, target) {
+  if (window.isAlliedTonguePull(spell, caster, target)) return true;
   return Math.random() * 100 < window.getHitChance(spell, caster, target);
 };
 

@@ -24,7 +24,7 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
   spells: [{
     id: 'tongue-pull', name: 'Захват языком', abilityType: 'weapon-strike', magicSchool: null,
     description: 'Притягивает языком цель на 2 клетки к себе. Вражеская цель при этом получает физический урон.',
-    damageBase: 4, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95,
+    damageBase: 4, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 0,
     stackable: false,
     apCost: 3, maxUsesPerTurn: 1, maxCooldown: 1,
     range: 6, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,

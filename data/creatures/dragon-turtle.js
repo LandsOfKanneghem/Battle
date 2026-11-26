@@ -23,7 +23,7 @@ window.CREATURE_TEMPLATES['dragon-turtle'] = {
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
     id: 'bite', name: 'Укус черепахи', abilityType: 'weapon-strike', magicSchool: null, isShot: false,
-    damageBase: 4, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95,
+    damageBase: 4, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 0,
     stackable: false,
     apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
     range: 1, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,

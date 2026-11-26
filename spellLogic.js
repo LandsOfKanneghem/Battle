@@ -318,6 +318,13 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
           casterId: caster.id, casterName: caster.name });
       }
     }
+  } else if (spell.isMaimingStrike) {
+    if (directTarget) {
+      applyDamage(adjustedSpell, directTarget, caster);
+      if (directTarget.hp > 0 && isAlly(directTarget) !== isAlly(caster)) applyState(directTarget, {
+        id: spell.stateId, duration, casterId: caster.id, casterName: caster.name
+      });
+    }
   } else if (spell.id === 'poison-bite') {
     if (directTarget) {
       applyDamage(adjustedSpell, directTarget, caster);
@@ -413,6 +420,10 @@ const spellAnimationHandlers = {
   },
   'water-shot': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'water', () => ctx.setTimeout(ctx.finishCast, 0), ctx.spell);
+  },
+  'maiming-strike': ctx => {
+    ctx.deps.playBiteAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
   },
   'poison-bite': ctx => {
     ctx.deps.playBiteAnimation(ctx.targetCell);

@@ -362,3 +362,46 @@ test('healing cures weak poison even at full HP and preserves existing bleeding 
     assert.equal(wizard.hp, Math.min(wizard.maxHP, before + heal.healAmount));
   }
 });
+
+test('Maiming Strike inherits sword parameters and deals only STR damage; maims enemies but not allies', () => {
+  for (const kind of ['enemy', 'ally', 'miss']) {
+    const { ctx, state, deps } = setup();
+    const warrior = ctx.createCreature('warrior', { x: 1, y: 1 });
+    const target = ctx.createCreature(kind === 'ally' ? 'wizard' : 'wolf', { x: 2, y: 1 });
+    state.entities = [warrior, target];state.activeEntityId = warrior.id;
+    const [sword, maim] = warrior.availableSpells;
+    for (const key of ['baseAccuracy', 'baseCritChance', 'apCost', 'range', 'minRange', 'modifiable', 'damageType', 'damagePerStr']) {
+      assert.equal(maim[key], sword[key], key);
+    }
+    assert.equal(maim.magicSchool, 'war'); assert.equal(maim.maxCooldown, 3);
+    assert.equal(maim.durationBase, 2); assert.equal(maim.damageBase, 0);
+    assert.equal(ctx.getSpellDamage(maim, warrior), 2);
+    const hp = target.hp, maxMP = target.maxMP;
+    ctx.applySpellEffect(maim, target.position, warrior, deps(), null, kind !== 'miss');
+    assert.equal(target.hp, hp - (kind === 'miss' ? 0 : 2));
+    assert.equal(ctx.hasActiveState(target, 'maimed'), kind === 'enemy');
+    if (kind === 'enemy') {
+      assert.equal(target.maxMP, Math.max(1, maxMP - 2));
+      ctx.applySpellEffect(maim, target.position, warrior, deps(), null, true);
+      assert.equal(target.states.filter(s => s.id === 'maimed').length, 1);
+      assert.equal(target.maxMP, Math.max(1, maxMP - 2));
+      ctx.tickCasterEffects(warrior.id);ctx.tickCasterEffects(warrior.id);
+      assert.equal(ctx.hasActiveState(target, 'maimed'), false);
+      assert.equal(target.maxMP, maxMP);
+    }
+  }
+});
+
+test('Maiming Strike pays weapon AP, starts its own cooldown and preserves the ordinary sword counter', () => {
+  const { ctx, state, deps } = setup();
+  const warrior = ctx.createCreature('warrior', { x: 1, y: 1 });
+  const wolf = ctx.createCreature('wolf', { x: 2, y: 1 });
+  state.entities = [warrior, wolf];state.activeEntityId = warrior.id;
+  const [sword, maim] = warrior.availableSpells;
+  state.preparedSpellId = maim.id;
+  const ap = warrior.ap;
+  assert(ctx.castSpell(state.cells[14], { ...deps(), playBiteAnimation() {} }));
+  assert.equal(warrior.ap, ap - sword.apCost);
+  assert.equal(maim.cooldown, 3);assert.equal(maim.usesThisTurn, 1);
+  assert.equal(sword.cooldown, 0);assert.equal(sword.usesThisTurn, 0);
+});

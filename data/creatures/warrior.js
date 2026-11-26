@@ -1,3 +1,15 @@
+// Текущее оружие воина; приёмы берут его параметры из этого определения.
+const WARRIOR_SWORD_STRIKE = {
+  id: 'sword-strike', name: 'Удар мечом', abilityType: 'weapon-strike', isShot: false,
+  damageBase: 2, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 5,
+  stackable: false,
+  apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
+  range: 1, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+  target: 'any',
+  iconPath: 'assets/homm2/spell-sword-strike.png',
+  svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-sword-strike.png" width="64" height="64"/></svg>'
+};
+
 // Воин: союзный герой с собственным оружейным умением.
 window.CREATURE_TEMPLATES.warrior = {
   name: 'Воин', type: 'warrior', partyOrder: 3,
@@ -16,18 +28,20 @@ window.CREATURE_TEMPLATES.warrior = {
     displaySize: { width: 72, height: 86 }, padding: { top: 4, right: 13, bottom: 4, left: 12 },
     svg: '<image href="assets/map-editor/mobs/warrior.png" width="40" height="40"/>'
   },
-  spells: [{
-    id: 'sword-strike', name: 'Удар мечом', abilityType: 'weapon-strike', isShot: false,
-    damageBase: 2, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 5,
-    stackable: false,
-    apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
-    range: 1, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
-    target: 'any',
-    iconPath: 'assets/homm2/spell-sword-strike.png',
-    svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-sword-strike.png" width="64" height="64"/></svg>'
+  spells: [WARRIOR_SWORD_STRIKE, {
+    id: 'maiming-strike', name: 'Калечащий удар', abilityType: 'weapon-strike', magicSchool: 'war', isShot: WARRIOR_SWORD_STRIKE.isShot,
+    description: 'Атака наносит урон оружием только от бонуса Силы, накладывает Увечье на вражескую цель.',
+    damageBase: 0, damagePerStr: WARRIOR_SWORD_STRIKE.damagePerStr, damageType: WARRIOR_SWORD_STRIKE.damageType, baseAccuracy: WARRIOR_SWORD_STRIKE.baseAccuracy, baseCritChance: WARRIOR_SWORD_STRIKE.baseCritChance,
+    stateId: 'maimed', durationBase: 2, durationPerInt: 0, stackable: false,
+    apCost: WARRIOR_SWORD_STRIKE.apCost, maxUsesPerTurn: WARRIOR_SWORD_STRIKE.maxUsesPerTurn, maxCooldown: 3,
+    range: WARRIOR_SWORD_STRIKE.range, minRange: WARRIOR_SWORD_STRIKE.minRange, modifiable: WARRIOR_SWORD_STRIKE.modifiable, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'any', isMaimingStrike: true, canCastOnAnyCell: true,
+    effectDescription: 'Увечье [враг]',
+    iconPath: 'assets/homm2/spell-maiming-strike.png',
+    svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-maiming-strike.png" width="64" height="64"/></svg>'
   }],
   spellPages: [
-    ['sword-strike', null, null, null, null,
+    ['sword-strike', 'maiming-strike', null, null, null,
       null, null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null]

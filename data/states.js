@@ -128,4 +128,10 @@ const WEAK_POISON = {
   casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/state-weak-poison.png" width="64" height="64"/></svg>'
 };
-const stateTypes = new Map([[WEAK_POISON.id, WEAK_POISON], [INVISIBILITY.id, INVISIBILITY], [SHARP_SHELL.id, SHARP_SHELL], [OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+const MAIMED = {
+  id: 'maimed', name: 'Увечье', duration: 2, stackable: false, mpBonus: -2, initiativeBonus: 0,
+  description: '-2 MP', casterName: '', suppressed: false,
+  overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  icon: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/state-maimed.png" width="64" height="64"/></svg>'
+};
+const stateTypes = new Map([[MAIMED.id, MAIMED], [WEAK_POISON.id, WEAK_POISON], [INVISIBILITY.id, INVISIBILITY], [SHARP_SHELL.id, SHARP_SHELL], [OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

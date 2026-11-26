@@ -28,7 +28,7 @@ function setup() {
   };
   const attacker = make('wolf', 1);
   const turtle = make('dragon-turtle', 2);
-  const hit = { damage: 4, damageType: 'physical', abilityType: 'weapon-strike', isHit: true };
+  const hit = { damage: 4, damageType: 'physical', abilityType: 'weapon-strike' };
   const deps = { ...ctx, stateTypes: vm.runInContext('stateTypes', ctx) };
   return { ctx, make, attacker, turtle, hit, damage, labels, deps };
 }
@@ -61,8 +61,8 @@ test('real bite effect reflects once and produces damage logs and floating label
 test('spells, abilities, ranged weapons and periodic damage do not reflect', () => {
   for (const patch of [
     { abilityType: 'spell' }, { abilityType: 'ability' },
-    { isHit: false, isShot: true }, { isShot: true }, { isHit: false },
-    { abilityType: undefined, isHit: undefined, damageType: 'fire' }
+    { isShot: true },
+    { abilityType: undefined, damageType: 'fire' }
   ]) {
     const { ctx, attacker, turtle, hit } = setup();
     const hp = attacker.hp;

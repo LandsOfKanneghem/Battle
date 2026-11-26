@@ -18,7 +18,7 @@ function setup() {
 
 test('physical weapon damage combines AC and physical resistance in preview and actual damage', () => {
   const { ctx, target } = setup();
-  for (const flags of [{ isHit: true }, { isShot: true }, {}]) {
+  for (const flags of [{ isShot: false }, { isShot: true }, {}]) {
     const attack = { damage: 10, damageType: 'physical', abilityType: 'weapon-strike', ...flags };
     const hp = target.hp;
     assert.equal(ctx.spellDamage(attack, target), 5);
@@ -31,7 +31,7 @@ test('physical weapon damage combines AC and physical resistance in preview and 
 
 test('non-weapon physical damage ignores AC but keeps physical resistance', () => {
   const { ctx, target } = setup();
-  for (const flags of [{ abilityType: 'spell' }, { abilityType: 'ability', isHit: true }, {}]) {
+  for (const flags of [{ abilityType: 'spell' }, { abilityType: 'ability' }, {}]) {
     const attack = { damage: 10, damageType: 'physical', ...flags };
     assert.equal(ctx.spellDamage(attack, target), 8);
   }
@@ -115,7 +115,7 @@ test('broken sources keep floor(25% AC), indestructible sources never wear', () 
 test('spells, reflection and immunity do not spend armor durability', () => {
   const { ctx } = setup();
   const target = ctx.createCreature('dragon-turtle', { x: 1, y: 1 });
-  for (const flags of [{ abilityType: 'spell' }, { abilityType: 'ability', isHit: true }, {}]) {
+  for (const flags of [{ abilityType: 'spell' }, { abilityType: 'ability' }, {}]) {
     ctx.applyDamage({ damage: 1, damageType: 'physical', ...flags }, target);
   }
   assert.equal(target.armorSources[0].durability, 10);

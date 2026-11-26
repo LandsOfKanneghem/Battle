@@ -378,7 +378,7 @@ window.applyDamage = function(spell, entity, attacker = null) {
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) return;
   const wearsArmor = entity.hp > 0 && spell.abilityType === 'weapon-strike';
   const reflectsMelee = entity.hp > 0 && attacker && attacker !== entity && attacker.hp > 0
-    && spell.abilityType === 'weapon-strike' && spell.isHit && !spell.isShot
+    && spell.abilityType === 'weapon-strike' && !spell.isShot
     && hasActiveState(entity, 'sharp-shell');
   const { absorbed, hpDamage } = damageBreakdown(spell, entity);
   const critChance = window.getCritChance(spell, attacker, entity);

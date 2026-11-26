@@ -42,7 +42,7 @@
       for (const target of enemies()) {
         if (!canAttackFrom(entity, spell, target, entity.position)) continue;
         const factDamage = window.spellDamage({ ...spell, damage: window.getSpellDamage(spell, entity) }, target);
-        const hitChance = (spell.isShot || spell.isHit) ? window.getHitChance(entity, target) / 100 : 1;
+        const hitChance = (spell.isShot || spell.abilityType === 'weapon-strike') ? window.getHitChance(entity, target) / 100 : 1;
         pairs.push({ spell, target, factDamage,
           pKill: factDamage >= target.hp ? (1 - sfc) * hitChance : 0 });
       }

@@ -43,7 +43,7 @@ test('warrior is the third allied hero with separate body armor and shield and a
   for (const [key, value] of Object.entries({ id: 'sword-strike', name: 'Удар мечом', description: undefined,
     abilityType: 'weapon-strike', apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2,
     damageType: 'physical', damageBase: 2, damagePerStr: 1, minRange: 1, range: 1,
-    modifiable: false, noLOS: false, aoeSize: 1, target: 'any', isHit: true, isShot: false })) assert.equal(strike[key], value, key);
+    modifiable: false, noLOS: false, aoeSize: 1, target: 'any', isShot: false })) assert.equal(strike[key], value, key);
   assert.equal(ctx.getSpellDamage(strike, warrior), 4);
   const mage = ctx.createCreature('wizard', { x: 2, y: 1 }), monk = ctx.createCreature('monk', { x: 3, y: 1 });
   ctx.preparePartyOrder([warrior, monk, mage]);

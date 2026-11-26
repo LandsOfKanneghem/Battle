@@ -18,7 +18,7 @@ window.CREATURE_TEMPLATES.warrior = {
   },
   spells: [{
     id: 'sword-strike', name: 'Удар мечом', abilityType: 'weapon-strike',
-    isHit: true, isShot: false, baseCritChance: 5, stackable: false, target: 'any',
+    isShot: false, baseCritChance: 5, stackable: false, target: 'any',
     apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2,
     damageType: 'physical', damageBase: 2, damagePerStr: 1,
     minRange: 1, range: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,

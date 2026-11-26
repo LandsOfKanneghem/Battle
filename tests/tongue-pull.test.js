@@ -32,11 +32,11 @@ function setup(targetType = 'wizard') {
   const spell = caster.availableSpells[0];
   const deps = { ...ctx, stateTypes: vm.runInContext('stateTypes', ctx) };
   const point = () => JSON.parse(JSON.stringify(ctx.getTonguePullDestination(caster, target)));
-  const apply = () => ctx.applySpellEffect(spell, target.position, caster, deps);
+  const apply = () => ctx.applySpellEffect(spell, target.position, caster, deps, null, true);
   return { ctx, state, caster, target, spell, deps, point, apply };
 }
 
-test('tongue has the requested costs, STR damage, fixed range and no weapon hit or spell failure flags', () => {
+test('tongue has the requested costs, STR damage, fixed range and weapon attack type', () => {
   const { ctx, caster, spell } = setup();
   assert.equal(spell.abilityType, 'weapon-strike');
   assert.equal(spell.target, 'any');
@@ -46,7 +46,7 @@ test('tongue has the requested costs, STR damage, fixed range and no weapon hit 
   assert.equal(spell.minRange, 1);
   assert.equal(spell.noLOS, false);
   assert.equal(spell.modifiable, false);
-  assert.ok(!spell.isShot && !spell.isHit);
+  assert.ok(!spell.isShot);
   caster.ra = 100;
   assert.equal(ctx.effectiveSpellRange(spell, caster), 6);
   assert.equal(ctx.getSpellDamage(spell, caster), 9);
@@ -102,7 +102,7 @@ test('enemies take STR physical damage after moving; allied targets only move, f
   const player = ctx.createCreature('wizard', { x: 5, y: 5 });
   state.entities[0] = player;
   const hp = target.hp;
-  ctx.applySpellEffect(spell, target.position, player, deps);
+  ctx.applySpellEffect(spell, target.position, player, deps, null, true);
   assert.equal(target.hp, hp);
   assert.equal(target.position.x, 7);
 });
@@ -147,12 +147,32 @@ test('preview shows enemy damage and no damage badge on allied targets', () => {
   }
 });
 
-test('tongue has no melee hit flag and does not trigger Sharp Shell retaliation', () => {
+test('non-shot tongue weapon damage triggers Sharp Shell retaliation', () => {
   const { ctx, state, target, spell, deps } = setup('dragon-turtle');
   const player = ctx.createCreature('wizard', { x: 5, y: 5 });
   state.entities[0] = player;
   const hp = player.hp, targetHP = target.hp;
-  ctx.applySpellEffect(spell, target.position, player, deps);
+  ctx.applySpellEffect(spell, target.position, player, deps, null, true);
   assert.equal(target.hp, targetHP - 2); // Weapon attack: the turtle's AC 2 applies.
-  assert.equal(player.hp, hp);
+  assert.equal(player.hp, hp - 3);
+});
+
+
+test('weapon attacks and magical shots check accuracy, while non-shot spells do not', () => {
+  for (const kind of ['tongue', 'weapon', 'shot', 'spell']) {
+    const { ctx, caster, target, spell, deps } = setup();
+    let rolls = 0, misses = 0;
+    deps.shotHits = () => { rolls++; return false; };
+    deps.playMissAnimation = () => { misses++; };
+    const attack = kind === 'tongue' ? spell : kind === 'weapon'
+      ? { ...caster.availableSpells[0], isTonguePull: false }
+      : { abilityType: 'spell', isShot: kind === 'shot', damageBase: 4, damageType: 'physical', target: 'any', isAOE: false, aoeSize: 1 };
+    const hp = target.hp;
+    ctx.applySpellEffect(attack, target.position, caster, deps);
+    const mustRoll = kind !== 'spell';
+    assert.equal(rolls, mustRoll ? 1 : 0, kind);
+    assert.equal(misses, mustRoll ? 1 : 0, kind);
+    assert.equal(target.hp, hp - (mustRoll ? 0 : 4), kind);
+    assert.equal(target.position.x, 9, kind);
+  }
 });

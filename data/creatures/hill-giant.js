@@ -18,7 +18,7 @@ window.CREATURE_TEMPLATES['hill-giant'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'boulder-smash', isHit: true, abilityType: 'weapon-strike', name: 'Удар булыжником', stackable: false,
+    id: 'boulder-smash', abilityType: 'weapon-strike', name: 'Удар булыжником', stackable: false,
     damageBase: 18, damagePerStr: 2, damageType: 'physical', target: 'any',
     range: 1, minRange: 1, modifiable: false, noLOS: false,
     apCost: 4, maxUsesPerTurn: 1, maxCooldown: 1,

@@ -4,7 +4,7 @@
   const manhattan = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   const current = (entity, version) => state().turnVersion === version
     && state().activeEntityId === entity.id && entity.hp > 0 && state().entities.includes(entity);
-  const enemies = () => state().entities.filter(target => target.hp > 0 && state().isAlly(target)
+  const enemies = () => state().entities.filter(target => target.hp > 0 && state().isAlly(target) !== state().isAlly(state().activeEntity())
     && !state().isHiddenFrom(target, state().activeEntity()));
   const failureChance = entity => Math.max(0, Math.min(100, window.getEffectiveStat(entity, 'sfc'))) / 100;
 
@@ -60,19 +60,15 @@
       aiCast(entity, invisibility, entity, version, () => runCombatAI(entity, version, turn));
       return;
     }
-    const pairs = availablePairs(entity);
-    const isCharacter = target => ['wizard', 'monk', 'warrior'].includes(target.type);
-    pairs.sort((a, b) => {
-      const aKill = Number(a.pKill >= 0.5), bKill = Number(b.pKill >= 0.5);
-      if (aKill !== bKill) return bKill - aKill;
-      const characterPriority = Number(isCharacter(b.target)) - Number(isCharacter(a.target));
-      if (characterPriority) return characterPriority;
-      if (aKill && a.pKill !== b.pKill) return b.pKill - a.pKill;
-      if (!aKill && a.factDamage !== b.factDamage) return b.factDamage - a.factDamage;
-      return a.target.hp - b.target.hp;
-    });
-    if (pairs.length) {
-      const { spell, target } = pairs[0];
+    const action = window.planAIAction(entity);
+    if (action?.kind === 'move') {
+      aiMove(entity, action.path, version, () => runCombatAI(entity, version, turn), false);
+      return;
+    }
+    if (action) {
+      const spell = entity.availableSpells.find(s => s.id === action.spellId);
+      const target = action.kind === 'jump' ? { position: action.point }
+        : state().entities.find(unit => unit.id === action.targetId);
       aiCast(entity, spell, target, version, () => runCombatAI(entity, version, turn));
       return;
     }
@@ -163,7 +159,7 @@
       if (nodes.get(keyOfNode(node)) !== node) continue;
       for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
         const point = { x: node.point.x + dx, y: node.point.y + dy };
-        if (!state().isFree(point, entity)) continue;
+        if (!state().isFree(point, entity, true)) continue;
         const stepCost = state().entryCost(point, entity);
         const cost = node.cost + stepCost;
         const water = state().isWater(state().terrain.get(state().keyOf(point)));
@@ -196,7 +192,7 @@
     else finishAITurn(entity, version);
   }
 
-  function aiMove(entity, path, version, onDone) {
+  function aiMove(entity, path, version, onDone, stopForAttack = true) {
     let index = 0;
     function step() {
       if (!current(entity, version)) return;
@@ -211,7 +207,7 @@
       window.updatePanel();
       // Дальнобойное существо останавливается, как только появляется доступная атака.
       const onLand = !state().isWater(state().terrain.get(state().keyOf(next)));
-      if (index >= path.length || (onLand && availablePairs(entity).length)) onDone();
+      if (index >= path.length || (stopForAttack && onLand && availablePairs(entity).length)) onDone();
       else setTimeout(step, state().STEP_MS);
     }
     setTimeout(step, state().STEP_MS);
@@ -226,10 +222,12 @@
     window.recordSpellAttempt?.(spell, caster, window.spellDeps);
     window.recordHitAttempt(spell, caster, window.spellDeps);
     const cell = state().cells[target.position.y * state().SIZE + target.position.x];
+    const blockedLanding = spell.requiresEmptyCell && !state().isFree(target.position, caster);
     window.updatePanel();
     function finish() {
       if (!current(caster, version)) return;
-      if (state().entities.includes(target) && target.hp > 0) {
+      if ((!spell.requiresEmptyCell && state().entities.includes(target) && target.hp > 0)
+        || (spell.requiresEmptyCell && !blockedLanding)) {
         window.applySpellEffect(spell, target.position, caster, window.spellDeps);
         window.removeDefeatedEntities();
       }
@@ -238,10 +236,14 @@
       onDone();
     }
     const sfc = spell.abilityType === 'spell' ? failureChance(caster) : 0;
-    if (sfc > 0 && Math.random() < sfc) {
+    if (blockedLanding || (sfc > 0 && Math.random() < sfc)) {
       window.battleLog?.failure(caster, spell);
       window.playFailureAnimation(cell);
       setTimeout(() => { if (current(caster, version)) onDone(); }, 0);
+    } else if (spell.id === 'jump') {
+      window.playJumpAnimation?.(caster,
+        state().cells[caster.position.y * state().SIZE + caster.position.x], cell);
+      setTimeout(finish, 350);
     } else if (spell.id === 'turn-invisible') {
       window.playStateAnimation(cell, spell.stateId);
       setTimeout(finish, 500);

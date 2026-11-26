@@ -99,7 +99,7 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
 };
 
 // Ось фиксируется по исходному положению; диагональ сдвигается на одну клетку.
-window.getTonguePullDestination = function(caster, target) {
+window.getTonguePullDestination = function(caster, target, entities = window.gameState.entities) {
   const state = window.gameState;
   const dx = caster.position.x - target.position.x;
   const dy = caster.position.y - target.position.y;
@@ -113,7 +113,7 @@ window.getTonguePullDestination = function(caster, target) {
     // Не перепрыгиваем через препятствия и существ, не занимаем клетку самого кастера.
     if (next.x < 0 || next.x >= state.SIZE || next.y < 0 || next.y >= state.HEIGHT
       || state.obstacles.has(key) || state.terrain.get(key) === 'void' || state.isWater(state.terrain.get(key))
-      || state.entities.some(entity => entity !== target && entity.hp > 0 && state.keyOf(entity.position) === key)) break;
+      || entities.some(entity => entity !== target && entity.hp > 0 && state.keyOf(entity.position) === key)) break;
     point = next;
   }
   return point;
@@ -391,13 +391,7 @@ const spellAnimationHandlers = {
     ctx.setTimeout(ctx.finishCast, 500);
   },
   'jump': ctx => {
-    const from = ctx.fromCell.getBoundingClientRect(), to = ctx.targetCell.getBoundingClientRect();
-    const dx = to.left - from.left, dy = to.top - from.top;
-    ctx.caster.svg.animate?.([
-      { transform: 'translateX(-50%)' },
-      { transform: `translate(calc(-50% + ${dx / 2}px), ${dy / 2 - 32}px)` },
-      { transform: `translate(calc(-50% + ${dx}px), ${dy}px)` }
-    ], { duration: 350, easing: 'ease-in-out' });
+    ctx.deps.playJumpAnimation?.(ctx.caster, ctx.fromCell, ctx.targetCell);
     ctx.setTimeout(ctx.finishCast, 350);
   },
   'teleport': ctx => {

@@ -399,3 +399,14 @@ window.playCritAnimation = function(cell) {
   label.setAttribute('aria-hidden', 'true');
   appendCombatPopup(cell, label, 1200);
 };
+
+
+window.playJumpAnimation = function(caster, fromCell, targetCell) {
+  const from = fromCell.getBoundingClientRect(), to = targetCell.getBoundingClientRect();
+  const dx = to.left - from.left, dy = to.top - from.top;
+  caster.svg.animate?.([
+    { transform: 'translateX(-50%)' },
+    { transform: `translate(calc(-50% + ${dx / 2}px), ${dy / 2 - 32}px)` },
+    { transform: `translate(calc(-50% + ${dx}px), ${dy}px)` }
+  ], { duration: 350, easing: 'ease-in-out' });
+};

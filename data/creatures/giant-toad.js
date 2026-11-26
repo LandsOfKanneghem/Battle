@@ -2,7 +2,7 @@
 window.CREATURE_TEMPLATES['giant-toad'] = {
   name: 'Гигантская жаба', type: 'giant-toad', ai: 'giant-toad',
   level: 6, baseHP: 25, hpPerLevel: 10, baseWP: 32, wpPerLevel: 8, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-  baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+  baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
@@ -22,7 +22,7 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
   },
   // Собственное умение жабы, независимо от общих школ магии.
   spells: [{
-    id: 'tongue-pull', abilityType: 'weapon-strike', magicSchool: null, name: 'Захват языком',
+    id: 'tongue-pull', abilityType: 'weapon-strike', baseAccuracy: 100, magicSchool: null, name: 'Захват языком',
     isTonguePull: true, stackable: false, target: 'any',
     description: 'Притягивает языком цель на 2 клетки к себе. Вражеская цель при этом получает физический урон.',
     effectDescription: 'Притягивает цель на 2 клетки к заклинателю.',

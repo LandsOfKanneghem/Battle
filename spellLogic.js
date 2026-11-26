@@ -145,7 +145,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     return;
   }
   // Один бросок по основной цели; Искры передают уже полученный в анимации результат.
-  if ((spell.isShot || spell.abilityType === 'weapon-strike') && directTarget && !(shotHit ?? shotHits(caster, directTarget))) {
+  if ((spell.isShot || spell.abilityType === 'weapon-strike') && directTarget && !(shotHit ?? shotHits(spell, caster, directTarget))) {
     // Общая точка промаха, включая готовый результат Искр: надпись появляется один раз.
     window.battleLog?.miss(caster, directTarget);
     playMissAnimation(cells[target.y * SIZE + target.x]);
@@ -413,7 +413,7 @@ const spellAnimationHandlers = {
     playSparksAnimation(ctx.fromCell, ctx.targetCell, sparkCells, () => ctx.setTimeout(ctx.finishCast, 0), () => {
       if (!ctx.primaryTarget) return false;
       // Один результат живёт в контексте и затем читается finishCast, без повторного броска.
-      ctx.shotHit = shotHits(ctx.caster, ctx.primaryTarget);
+      ctx.shotHit = shotHits(ctx.spell, ctx.caster, ctx.primaryTarget);
       return ctx.shotHit;
     });
   },

@@ -276,3 +276,22 @@ test('invisibility spells are local, self-range dark spells with fixed two-turn 
   assert.equal(state.permanent, false);
   assert.equal(state.modifiers, undefined);
 });
+
+
+test('accuracy belongs to every weapon attack and shot, never to a creature', () => {
+  const ctx = setup();
+  vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
+  const common = vm.runInContext('SPELL_DEFINITIONS', ctx);
+  const check = spell => {
+    if (spell.abilityType === 'weapon-strike' || spell.isShot) assert.equal(spell.baseAccuracy, 100, spell.id);
+    else assert.equal(spell.baseAccuracy, undefined, spell.id);
+  };
+  for (const spell of Object.values(common)) check(spell);
+  for (const type of Object.keys(ctx.CREATURE_TEMPLATES)) {
+    const entity = ctx.createCreature(type, { x: 0, y: 0 });
+    assert.equal(entity.acc, undefined, type);
+    assert.equal(entity.baseACC, undefined, type);
+    assert.equal(entity.initialStats.acc, undefined, type);
+    for (const spell of entity.availableSpells.filter(Boolean)) check(spell);
+  }
+});

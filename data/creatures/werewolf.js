@@ -2,7 +2,7 @@
 window.CREATURE_TEMPLATES['werewolf'] = {
   name: 'Оборотень', type: 'werewolf', ai: 'werewolf',
   level: 6, baseHP: 25, hpPerLevel: 10, baseWP: 32, wpPerLevel: 8, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-  baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+  baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
@@ -20,7 +20,7 @@ window.CREATURE_TEMPLATES['werewolf'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'bite', baseCritChance: 5, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', magicSchool: null, name: 'Укус волка', stackable: false,
+    id: 'bite', baseCritChance: 5, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', baseAccuracy: 100, magicSchool: null, name: 'Укус волка', stackable: false,
     damageBase: 2, damagePerStr: 1, damageType: 'physical', target: 'any',
     description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
     stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,

@@ -224,7 +224,7 @@ for (const buffId of ['vigor', 'adrenaline']) {
     test(`HC weakness survives ${buffId}: ${buffFirst ? 'limit during buff' : 'buff after limit'}`, () => {
       const { ctx, state, wizard, deps } = setup();
       const warrior = ctx.createCreature('warrior', { x: 2, y: 1 }); state.entities.push(warrior);
-      const initialACC = ctx.getEffectiveStat(warrior, 'acc');
+      const initialACC = ctx.getRawHitChance(warrior.availableSpells[0], warrior, null);
       const buff = () => ctx.applyState(warrior, { id: buffId, duration: 2, casterId: wizard.id });
       if (buffFirst) buff();
       warrior.hitCount = warrior.maxHitCount - 1;
@@ -232,14 +232,14 @@ for (const buffId of ['vigor', 'adrenaline']) {
       if (!buffFirst) buff();
       const weakness = warrior.states.find(s => s.id === 'weakness');
       assert(weakness && weakness.permanent && weakness.suppressed);
-      assert.equal(ctx.getEffectiveStat(warrior, 'acc'), initialACC);
+      assert.equal(ctx.getRawHitChance(warrior.availableSpells[0], warrior, null), initialACC);
       ctx.recordHitAttempt(warrior.availableSpells[0], warrior, deps());
       assert.equal(warrior.hitCount, warrior.maxHitCount);
       ctx.tickCasterEffects(wizard.id); ctx.tickCasterEffects(wizard.id);
       assert(ctx.hasActiveState(warrior, 'weakness'));
-      assert.equal(ctx.getEffectiveStat(warrior, 'acc'), initialACC - 30 - (buffId === 'adrenaline' ? 10 : 0));
+      assert.equal(ctx.getRawHitChance(warrior.availableSpells[0], warrior, null), initialACC - 30 - (buffId === 'adrenaline' ? 10 : 0));
       ctx.tickCasterEffects(wizard.id);
-      assert.equal(ctx.getEffectiveStat(warrior, 'acc'), initialACC - 30);
+      assert.equal(ctx.getRawHitChance(warrior.availableSpells[0], warrior, null), initialACC - 30);
       assert.equal(warrior.states.find(s => s.id === 'weakness'), weakness);
       assert.equal(warrior.states.filter(s => s.id === 'weakness').length, 1);
     });

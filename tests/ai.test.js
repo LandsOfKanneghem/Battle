@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 const distance = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 const spell = (id, range, extra = {}) => ({ id, range, minRange: 1, modifiable: false,
   noLOS: false, apCost: 4, cooldown: 0, maxCooldown: 0, usesThisTurn: 0,
-  maxUsesPerTurn: 1, abilityType: 'weapon-strike', damage: 4, ...extra });
+  maxUsesPerTurn: 1, abilityType: 'weapon-strike', baseAccuracy: 100, damage: 4, ...extra });
 
 function setup({ position, target, mp = 3, ap = 5, type = 'hill-giant', spells = [spell('bite', 1)], tiles, crates = [], levitation = false }) {
   const timers = [], moves = [], attacks = [];
@@ -22,7 +22,7 @@ function setup({ position, target, mp = 3, ap = 5, type = 'hill-giant', spells =
   const state = ctx.gameState;
   const caster = { id: 'mob', type, ai: 'mob', hp: 1000, ap,
     mp, maxMP: mp, position: { ...position }, availableSpells: spells,
-    states: levitation ? [{ id: 'levitation', duration: 10 }] : [], acc: 100, sfc: 0 };
+    states: levitation ? [{ id: 'levitation', duration: 10 }] : [], sfc: 0 };
   const victim = { id: 'wizard', type: 'wizard', hp: 1000, eva: 0, position: { ...target } };
   state.entities = [caster, victim];
   state.turnOrderIds = [caster.id, victim.id];

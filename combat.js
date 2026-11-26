@@ -399,26 +399,27 @@ window.applyDamage = function(spell, entity, attacker = null) {
   }
 };
 
-window.getRawHitChance = function(caster, target) {
-  // ACC уже включает базовую точность, ATT и эффекты. Штраф только за LUC ниже нуля.
+window.getRawHitChance = function(spell, caster, target) {
+  // База принадлежит атаке; ATT и бонусы действуют на оружие и выстрелы.
   const negativeLuck = Math.max(0, -getEffectiveStat(caster, 'luc'));
-  return getEffectiveStat(caster, 'acc') - getEffectiveStat(target, 'eva') - 5 * negativeLuck;
+  return (spell.baseAccuracy ?? 0) + getEffectiveStat(caster, 'att')
+    + getEffectiveStat(caster, 'accuracyBonus') - getEffectiveStat(target, 'eva') - 5 * negativeLuck;
 };
 
-window.getHitChance = function(caster, target) {
-  return Math.max(0, Math.min(100, window.getRawHitChance(caster, target)));
+window.getHitChance = function(spell, caster, target) {
+  return Math.max(0, Math.min(100, window.getRawHitChance(spell, caster, target)));
 };
 
 window.getCritChance = function(spell, caster, target) {
   if (!caster || !['spell', 'ability', 'weapon-strike'].includes(spell.abilityType)) return 0;
   const base = spell.abilityType === 'weapon-strike' ? (spell.baseCritChance ?? 0) : 0;
   const overflow = spell.abilityType !== 'spell' || spell.isShot
-    ? Math.max(0, window.getRawHitChance(caster, target) - 100) : 0;
+    ? Math.max(0, window.getRawHitChance(spell, caster, target) - 100) : 0;
   return Math.max(0, Math.min(100, base + getEffectiveStat(caster, 'cri') + overflow));
 };
 
-window.shotHits = function(caster, target) {
-  return Math.random() * 100 < window.getHitChance(caster, target);
+window.shotHits = function(spell, caster, target) {
+  return Math.random() * 100 < window.getHitChance(spell, caster, target);
 };
 
 window.isFrozen = function(entity) {
@@ -449,10 +450,9 @@ window.getEffectiveStat = function(entity, statName) {
     ?? (protectionStats.includes(statName) ? effect.modifiers?.resistances?.[statName] : undefined)
     // ini уже включает initiativeBonus состояний после recalculateStateStats.
     ?? (statName === 'ini' ? (entity.states.includes(effect) ? 0 : effect.initiativeBonus ?? 0) : statName === 'eva' ? effect.evaBonus ?? 0
-      : statName === 'acc' ? effect.accuracyBonus ?? 0 : statName === 'sfc' ? effect.sfcBonus ?? 0 : 0)), 0);
-  // Бонусы ATT дополняют итог со всеми эффектами; точность может превышать 100%.
+      : statName === 'accuracyBonus' ? effect.accuracyBonus ?? 0 : statName === 'sfc' ? effect.sfcBonus ?? 0 : 0)), 0);
+  // Каждые 10 эффективных ATT дают единицу дальности.
   if (statName === 'ra') return total + Math.floor(getEffectiveStat(entity, 'att') / 10);
-  if (statName === 'acc') return total + getEffectiveStat(entity, 'att');
   // Инициатива зависит от максимума ОП, а не остатка или случайного +1 ОП на ход.
   if (statName === 'ini') return total + (entity.maxMP ?? 0) + getEffectiveStat(entity, 'cha');
   // Удача дополняет существующие модификаторы CRI и все бонусы уклонения.

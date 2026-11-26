@@ -2,7 +2,7 @@
 window.CREATURE_TEMPLATES['hill-giant'] = {
   name: 'Холмовой Великан', type: 'hill-giant', ai: 'hill-giant',
   level: 6, baseHP: 25, hpPerLevel: 10, baseWP: 32, wpPerLevel: 8, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-  baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+  baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
@@ -18,7 +18,7 @@ window.CREATURE_TEMPLATES['hill-giant'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'boulder-smash', abilityType: 'weapon-strike', name: 'Удар булыжником', stackable: false,
+    id: 'boulder-smash', abilityType: 'weapon-strike', baseAccuracy: 100, name: 'Удар булыжником', stackable: false,
     damageBase: 18, damagePerStr: 2, damageType: 'physical', target: 'any',
     range: 1, minRange: 1, modifiable: false, noLOS: false,
     apCost: 4, maxUsesPerTurn: 1, maxCooldown: 1,
@@ -26,7 +26,7 @@ window.CREATURE_TEMPLATES['hill-giant'] = {
     iconPath: 'assets/homm2/spell-boulder-smash.png',
     svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 12 L22 5 L34 13 L36 28 L24 36 L7 30 L3 20 Z" fill="#8b8f96" stroke="#d1d5dc" stroke-width="2"/><path d="M9 12 L17 22 L7 30 M17 22 L31 18 L34 13 M17 22 L24 36" fill="none" stroke="#565d68" stroke-width="2"/></svg>`
   }, {
-    id: 'boulder-throw', abilityType: 'weapon-strike', name: 'Бросок булыжника', stackable: false,
+    id: 'boulder-throw', abilityType: 'weapon-strike', baseAccuracy: 100, name: 'Бросок булыжника', stackable: false,
     damageBase: 10, damagePerStr: 1.5, damageType: 'physical', target: 'any',
     range: 4, minRange: 1, modifiable: false, noLOS: false,
     apCost: 4, maxUsesPerTurn: 1, maxCooldown: 3,

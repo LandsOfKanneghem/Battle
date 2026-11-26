@@ -2,7 +2,7 @@
 window.CREATURE_TEMPLATES['dragon-turtle'] = {
   name: 'Драконовая черепаха', type: 'dragon-turtle', ai: 'dragon-turtle',
   level: 3, baseHP: 14, hpPerLevel: 6, baseWP: 10, wpPerLevel: 4, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
-  baseACC: 100, baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
+  baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 2, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   armorSources: [{ id: 'shell', name: 'Панцирь', ac: 2, maxDurability: 10 }],
   baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -22,7 +22,7 @@ window.CREATURE_TEMPLATES['dragon-turtle'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'bite', isShot: false, abilityType: 'weapon-strike', magicSchool: null, name: 'Укус черепахи', stackable: false,
+    id: 'bite', isShot: false, abilityType: 'weapon-strike', baseAccuracy: 100, magicSchool: null, name: 'Укус черепахи', stackable: false,
     damageBase: 4, damagePerStr: 1, damageType: 'physical', target: 'any',
     range: 1, minRange: 1, modifiable: false, noLOS: false,
     apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0, isAOE: false, aoeSize: 1,

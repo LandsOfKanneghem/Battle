@@ -139,6 +139,12 @@ window.showSpellTooltip = function(icon, spell) {
       addLine('Урон', damageText, damageColor);
     }
   }
+  if (spell.baseAccuracy !== undefined && (spell.abilityType === 'weapon-strike' || spell.isShot)) {
+    const accuracy = window.shiftHeld ? spell.baseAccuracy : Math.max(0, window.getRawHitChance(spell, caster, null));
+    const color = window.shiftHeld || accuracy === spell.baseAccuracy ? ''
+      : accuracy > spell.baseAccuracy ? '#4ade80' : '#ff4d4d';
+    addLine('Точность', `${accuracy}%`, color);
+  }
   if (spell.abilityType === 'weapon-strike' && (spell.baseCritChance ?? 0) > 0) {
     addLine('Базовый крит шанс', `${spell.baseCritChance}%`);
   }
@@ -476,7 +482,7 @@ window.updatePanel = function() {
     const value = window.getEffectiveStat(displayed, key);
     writeAttribute(key, `${key.toUpperCase()}: ${value}`, statColor(value, key));
   }
-  for (const key of ['acc', 'cri', 'sfc', 'eva', 'blo']) {
+  for (const key of ['cri', 'sfc', 'eva', 'blo']) {
     const value = window.getEffectiveStat(displayed, key);
     const base = key === 'eva' || key === 'blo' ? ` / ${displayed?.[`base${key.toUpperCase()}`]}` : '';
     writeAttribute(key, `${key.toUpperCase()}: ${value}%${base}`, statColor(value, key));

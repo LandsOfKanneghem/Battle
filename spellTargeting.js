@@ -162,7 +162,7 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
       const previewSpell = spell.isSparks && entity !== primary ? { ...dmgSpell, damage: Math.floor(dmgSpell.damage / 2) } : dmgSpell;
       const damage = window.spellDamage(previewSpell, entity);
       if (window.altHeld) {
-        const hitChance = spell.isShot || spell.abilityType === 'weapon-strike' ? window.getHitChance(caster, entity) : 100;
+        const hitChance = spell.isShot || spell.abilityType === 'weapon-strike' ? window.getHitChance(spell, caster, entity) : 100;
         const critChance = window.getCritChance(spell, caster, entity);
         badge.classList.add('detailed-preview');
         // Крит пока не меняет урон: показываем то же итоговое значение после защит и ES.

@@ -19,7 +19,7 @@ window.preparePartyOrder = function(entities) {
 // Снимок фиксируется один раз и учитывает врождённые состояния и производные статы.
 window.captureInitialStats = function(creature) {
   if (creature.initialStats || !window.getEffectiveStat || !window.getCurrentES) return;
-  const keys = ['ra', 'acc', 'cri', 'sfc', 'eva', 'blo', 'vs', 'es', 'ini',
+  const keys = ['ra', 'cri', 'sfc', 'eva', 'blo', 'vs', 'es', 'ini',
     'str', 'vit', 'att', 'int', 'wis', 'cha', 'luc',
     'ac', 'physical', 'fire', 'water', 'air', 'earth', 'mind', 'poison'];
   creature.initialStats = {
@@ -85,7 +85,6 @@ window.captureInitialStats = function(creature) {
       baseES: template.baseES, esBonuses: [], evaBonuses: [],
       baseVS: template.baseVS, vs: template.baseVS, maxVS: template.baseVS,
       baseINI: template.baseINI, ini: template.baseINI,
-      baseACC: template.baseACC, acc: template.baseACC,
       baseCRI: template.baseCRI ?? 0, cri: template.baseCRI ?? 0,
       baseEVA: template.baseEVA, eva: template.baseEVA,
       baseSFC: template.baseSFC, sfc: template.baseSFC,

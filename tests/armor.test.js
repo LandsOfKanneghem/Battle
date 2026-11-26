@@ -59,7 +59,7 @@ test('every current creature weapon attack receives AC mitigation, including ran
       names.add(attack.id);
     }
   }
-  assert.deepEqual([...names].sort(), ['bite', 'boulder-smash', 'boulder-throw', 'maiming-strike', 'poison-bite', 'sword-strike', 'tongue-pull']);
+  assert.deepEqual([...names].sort(), ['bite', 'boulder-smash', 'boulder-throw', 'charge', 'maiming-strike', 'poison-bite', 'sword-strike', 'tongue-pull']);
 });
 
 test('armor sources are independent per creature and reset to full durability at creation', () => {

@@ -135,7 +135,20 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     resolveStateSuppression, recalculateStateStats
   } = deps;
   const directTarget = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target));
-  const baseDamage = window.getSpellDamage(spell, caster);
+  const chargeRoute = spell.isCharge && caster ? window.getChargeRoute(caster, target) : null;
+  if (spell.isCharge) {
+    if (!chargeRoute || !directTarget) return;
+    if (chargeRoute.path.length) {
+      caster.position = { ...chargeRoute.path.at(-1) };
+      renderPosition();
+    }
+    if (chargeRoute.blocked) {
+      window.battleLog?.blocked();
+      window.playBarrierAnimation?.(cells[caster.position.y * SIZE + caster.position.x]);
+      return;
+    }
+  }
+  const baseDamage = window.getSpellDamage(spell, caster, chargeRoute?.path.length ?? 0);
   // Округляем штраф до защиты/ES, сохраняя исходные данные заклинания или атаки.
   const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
   const damageMultiplier = caster && ((spell.abilityType === 'spell' && hasActiveState(caster, 'exhaustion'))
@@ -401,6 +414,16 @@ const spellAnimationHandlers = {
   'apply-old-age': ctx => {
     ctx.deps.playOldAgeAnimation(ctx.targetCell);
     ctx.setTimeout(ctx.finishCast, 500);
+  },
+  'charge': ctx => {
+    const route = window.getChargeRoute(ctx.caster, ctx.target);
+    const point = route?.path.at(-1) ?? ctx.caster.position;
+    ctx.deps.playChargeAnimation?.(ctx.caster, ctx.fromCell,
+      window.gameState.cells[point.y * window.gameState.SIZE + point.x]);
+    ctx.setTimeout(() => {
+      if (route && !route.blocked) ctx.deps.playBiteAnimation(ctx.targetCell);
+      ctx.finishCast();
+    }, 300);
   },
   'jump': ctx => {
     ctx.deps.playJumpAnimation?.(ctx.caster, ctx.fromCell, ctx.targetCell);

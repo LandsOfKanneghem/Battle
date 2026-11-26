@@ -209,7 +209,7 @@ window.showSpellTooltip = function(icon, spell) {
     : spell.minRange === undefined || spell.minRange === finalRange ? finalRange : `${spell.minRange}–${finalRange}`;
   const rangeColor = window.shiftHeld || !spell.modifiable ? ''
     : finalRange > spell.range ? '#4ade80' : finalRange < spell.range ? '#ff4d4d' : '';
-  addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`, rangeColor);
+  addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]${spell.isCharge ? ' [прямая линия]' : ''}`, rangeColor);
   const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.isDiamond ? `ромб D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
   addLine('АОЕ', areaLabel);
   addLine('Цель', spell.id === 'lake-spirit' ? 'незанятая клетка суши'

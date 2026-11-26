@@ -405,3 +405,75 @@ test('Maiming Strike pays weapon AP, starts its own cooldown and preserves the o
   assert.equal(maim.cooldown, 3);assert.equal(maim.usesThisTurn, 1);
   assert.equal(sword.cooldown, 0);assert.equal(sword.usesThisTurn, 0);
 });
+
+test('Charge moves only along cardinal lines and adds weapon STR damage per actual movement cell', () => {
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (const range of [1, 2, 3]) {
+    const { ctx, state, deps } = setup();
+    const warrior = ctx.createCreature('warrior', { x: 5, y: 5 });
+    const target = ctx.createCreature('wolf', { x: 5 + dx * range, y: 5 + dy * range });
+    state.entities = [warrior, target];state.activeEntityId = warrior.id;
+    const charge = warrior.availableSpells.find(s => s.id === 'charge');
+    state.preparedSpellId = charge.id;
+    const hp = target.hp, mp = warrior.mp, ap = warrior.ap;
+    assert(ctx.canTarget(target.position, charge));
+    assert(ctx.castSpell(state.cells[target.position.y * 12 + target.position.x], { ...deps(), playBiteAnimation() {} }));
+    assert.equal(warrior.position.x, 5 + dx * (range - 1));
+    assert.equal(warrior.position.y, 5 + dy * (range - 1));
+    assert.equal(target.hp, hp - (2 + 2 * range));
+    assert.equal(warrior.ap, ap - 4);assert.equal(warrior.mp, mp);
+    assert.equal(charge.cooldown, 3);assert.equal(charge.maxUsesPerTurn, 1);
+  }
+});
+
+test('Charge rejects diagonal, empty, distant, obstructed and unwalkable routes before spending AP', () => {
+  for (const kind of ['diagonal', 'empty', 'distant', 'crate', 'water', 'void', 'creature']) {
+    const { ctx, state, deps } = setup();
+    const warrior = ctx.createCreature('warrior', { x: 1, y: 1 });
+    const target = ctx.createCreature('wolf', { x: 4, y: 1 });
+    state.entities = [warrior, target];state.activeEntityId = warrior.id;
+    const charge = warrior.availableSpells.find(s => s.id === 'charge');state.preparedSpellId = charge.id;
+    if (kind === 'diagonal') target.position = { x: 2, y: 2 };
+    if (kind === 'distant') target.position.x = 5;
+    if (kind === 'empty') state.entities.pop();
+    if (kind === 'crate') state.obstacles.set('2,1', 'crate');
+    if (kind === 'water') state.terrain.set('2,1', 'deep-water');
+    if (kind === 'void') state.terrain.set('2,1', 'void');
+    if (kind === 'creature') state.entities.push(ctx.createCreature('monk', { x: 2, y: 1 }));
+    const ap = warrior.ap;
+    assert.equal(ctx.canTarget(target.position, charge), false, kind);
+    assert.equal(ctx.castSpell(state.cells[target.position.y * 12 + target.position.x], deps()), false, kind);
+    assert.equal(warrior.ap, ap);assert.equal(charge.cooldown, 0);
+  }
+});
+
+test('Charge movement survives an attack miss and can damage an allied target', () => {
+  for (const ally of [false, true]) {
+    const { ctx, state, deps } = setup();
+    const warrior = ctx.createCreature('warrior', { x: 1, y: 1 });
+    const target = ctx.createCreature(ally ? 'wizard' : 'wolf', { x: 4, y: 1 });
+    state.entities = [warrior, target];state.activeEntityId = warrior.id;
+    const charge = warrior.availableSpells.find(s => s.id === 'charge');state.preparedSpellId = charge.id;
+    const hp = target.hp;
+    assert(ctx.castSpell(state.cells[16], { ...deps(), playBiteAnimation() {}, shotHits: () => ally }));
+    assert.equal(warrior.position.x, 3);
+    assert.equal(target.hp, hp - (ally ? 8 : 0));
+  }
+});
+
+test('Charge preview includes travel damage but an unseen blocker stops the actual movement and attack', () => {
+  const { ctx, state, deps } = setup();
+  const warrior = ctx.createCreature('warrior', { x: 1, y: 1 });
+  const target = ctx.createCreature('wolf', { x: 4, y: 1 });
+  const hidden = ctx.createCreature('monk', { x: 3, y: 1 });hidden.team = 'enemy';
+  state.entities = [warrior, target, hidden];state.activeEntityId = warrior.id;
+  ctx.applyState(hidden, { id: 'invisibility', duration: 2, casterId: hidden.id });
+  const charge = warrior.availableSpells.find(s => s.id === 'charge');state.preparedSpellId = charge.id;
+  assert(ctx.canTarget(target.position, charge));
+  ctx.altHeld = true;ctx.showEffectPreview([target.position], charge, target.position);
+  assert(state.effectBadges[0].textContent.startsWith('Урон: 8 [Крит: 8]'));
+  const hp = target.hp;let blocked = false;
+  ctx.battleLog = { cast() {}, blocked() { blocked = true; } };
+  assert(ctx.castSpell(state.cells[16], { ...deps(), playBiteAnimation() {} }));
+  assert.equal(warrior.position.x, 2);
+  assert.equal(target.hp, hp);assert.equal(blocked, true);
+});

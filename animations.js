@@ -410,3 +410,12 @@ window.playJumpAnimation = function(caster, fromCell, targetCell) {
     { transform: `translate(calc(-50% + ${dx}px), ${dy}px)` }
   ], { duration: 350, easing: 'ease-in-out' });
 };
+
+
+window.playChargeAnimation = function(caster, fromCell, targetCell) {
+  const from = fromCell.getBoundingClientRect(), to = targetCell.getBoundingClientRect();
+  caster.svg.animate?.([
+    { transform: 'translateX(-50%)' },
+    { transform: `translate(calc(-50% + ${to.left - from.left}px), ${to.top - from.top}px)` }
+  ], { duration: 300, easing: 'ease-in' });
+};

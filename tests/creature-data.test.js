@@ -38,7 +38,7 @@ test('warrior is the third allied hero with separate body armor and shield and a
   assert.equal(JSON.stringify(warrior.attributes), JSON.stringify({vit:2,str:2,att:2,int:0,wis:1,cha:0,luc:1}));
   assert.equal(ctx.getEffectiveStat(warrior, 'ac'), 5);
   assert.deepEqual(Array.from(warrior.armorSources, source => [source.ac, source.maxDurability, source.durability]), [[4,10,10],[1,5,5]]);
-  assert.equal(warrior.availableSpells.length, 2);
+  assert.equal(warrior.availableSpells.length, 3);
   const strike = warrior.availableSpells[0];
   for (const [key, value] of Object.entries({ id: 'sword-strike', name: 'Удар мечом', description: undefined,
     abilityType: 'weapon-strike', apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2,

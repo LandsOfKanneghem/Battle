@@ -337,12 +337,12 @@ window.isMagicalDamage = function(damageType) {
 };
 
 // Базовый урон: INT для заклинаний, STR для атак/умений — до штрафов, сопротивлений и ES.
-window.getSpellDamage = function(spell, caster) {
+window.getSpellDamage = function(spell, caster, movementCells = 0) {
   if (spell.damageBase === undefined) return 0;
   const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
   const stat = window.getEffectiveStat(caster, isNonSpell ? 'str' : 'int');
   const per = isNonSpell ? (spell.damagePerStr ?? 0) : (spell.damagePerInt ?? 0);
-  return Math.floor(spell.damageBase + per * stat);
+  return Math.floor(spell.damageBase + per * stat * (spell.isCharge ? 1 + movementCells : 1));
 };
 
 window.getSpellDuration = function(spell, caster) {

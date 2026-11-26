@@ -39,9 +39,20 @@ window.CREATURE_TEMPLATES.warrior = {
     effectDescription: 'Увечье [враг]',
     iconPath: 'assets/homm2/spell-maiming-strike.png',
     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-maiming-strike.png" width="64" height="64"/></svg>'
+  }, {
+    id: 'charge', name: 'Рывок', abilityType: 'weapon-strike', magicSchool: 'war', isShot: false,
+    description: 'Заклинатель перемещается по прямой линии на несколько клеток к выбранной цели и наносит бонусный урон от силы за каждую клетку движения.',
+    damageBase: WARRIOR_SWORD_STRIKE.damageBase, damagePerStr: WARRIOR_SWORD_STRIKE.damagePerStr, damageType: WARRIOR_SWORD_STRIKE.damageType, baseAccuracy: WARRIOR_SWORD_STRIKE.baseAccuracy, baseCritChance: WARRIOR_SWORD_STRIKE.baseCritChance,
+    stackable: false,
+    apCost: WARRIOR_SWORD_STRIKE.apCost + 1, maxUsesPerTurn: 1, maxCooldown: 3,
+    range: 3, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'any', isCharge: true,
+    effectDescription: `За каждую пройденную клетку: +${WARRIOR_SWORD_STRIKE.damagePerStr}*STR к урону`,
+    iconPath: 'assets/homm2/spell-charge.png',
+    svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-charge.png" width="64" height="64"/></svg>'
   }],
   spellPages: [
-    ['sword-strike', 'maiming-strike', null, null, null,
+    ['sword-strike', 'maiming-strike', 'charge', null, null,
       null, null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null]

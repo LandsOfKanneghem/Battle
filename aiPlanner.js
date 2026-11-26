@@ -20,6 +20,8 @@
   function canAttack(world, spell) {
     const range = window.effectiveSpellRange(spell, world.actor);
     const d = distance(world.actor.position, world.target.position);
+    const charge = spell.isCharge ? window.getChargeRoute(world.actor, world.target.position, occupants(world)) : null;
+    if (spell.isCharge && (!charge || charge.blocked)) return false;
     return world.actor.hp > 0 && world.target.hp > 0 && usable(world.actor, spell)
       && spell.target !== 'none' && spell.target !== 'ally' && window.getSpellDamage(spell, world.actor) > 0
       && d >= (spell.minRange ?? 1) && d <= range && land(world.actor.position, world)
@@ -109,6 +111,8 @@
   function attack(world, spellId) {
     const spell = world.actor.availableSpells.find(s => s.id === spellId);
     if (!canAttack(world, spell)) return [world];
+    const charge = spell.isCharge ? window.getChargeRoute(world.actor, world.target.position, occupants(world)) : null;
+    if (charge?.path.length) world.actor.position = { ...charge.path.at(-1) };
     spend(world.actor, spell);
     const probability = (spell.abilityType === 'spell' ? 1 - Math.max(0, Math.min(100,
       window.getEffectiveStat(world.actor, 'sfc'))) / 100 : 1)
@@ -119,7 +123,7 @@
       const hit = copy(world), actor = hit.actor, target = hit.target;
       if (spell.isTonguePull) target.position = window.getTonguePullDestination(actor, target, occupants(hit));
       const debuffed = active(actor, spell.abilityType === 'spell' ? 'exhaustion' : 'weakness');
-      const amount = Math.floor(window.getSpellDamage(spell, actor) * (debuffed ? 0.8 : 1));
+      const amount = Math.floor(window.getSpellDamage(spell, actor, charge?.path.length ?? 0) * (debuffed ? 0.8 : 1));
       const damage = hurt({ ...spell, damage: amount }, target);
       if (damage > 0 && spell.abilityType === 'weapon-strike' && !spell.isShot && active(target, 'sharp-shell')) {
         hurt({ damage: 3, damageType: 'physical' }, actor);

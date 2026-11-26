@@ -30,6 +30,11 @@
 
   function canAttackFrom(entity, spell, target, from) {
     if (spell.target === 'none') return false;
+    if (spell.isCharge) {
+      const route = window.getChargeRoute({ ...entity, position: from }, target.position,
+        state().entities.filter(unit => !state().isHiddenFrom(unit, entity)));
+      if (!route || route.blocked) return false;
+    }
     const distance = manhattan(from, target.position);
     const range = spell.modifiable ? window.effectiveSpellRange(spell, entity) : spell.range;
     return distance >= (spell.minRange ?? 1) && distance <= range
@@ -240,6 +245,12 @@
       window.battleLog?.failure(caster, spell);
       window.playFailureAnimation(cell);
       setTimeout(() => { if (current(caster, version)) onDone(); }, 0);
+    } else if (spell.isCharge) {
+      const route = window.getChargeRoute(caster, target.position);
+      const point = route?.path.at(-1) ?? caster.position;
+      window.playChargeAnimation?.(caster,
+        state().cells[caster.position.y * state().SIZE + caster.position.x], state().cells[point.y * state().SIZE + point.x]);
+      setTimeout(() => { if (route && !route.blocked) window.playBiteAnimation(cell); finish(); }, 300);
     } else if (spell.id === 'jump') {
       window.playJumpAnimation?.(caster,
         state().cells[caster.position.y * state().SIZE + caster.position.x], cell);

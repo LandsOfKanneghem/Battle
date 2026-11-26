@@ -76,7 +76,37 @@ window.inSpellReach = function(target, spell) {
     && (distance === 0 || spell.noLOS === true || (spell.isShot && window.hasSkyShotBuff(caster)) || window.checkLOS(caster.position, target));
 };
 
+// Рывок направлен на существо; промежуточные клетки проверяются отдельно от LOS.
+// entities позволяет превью и ИИ работать без знания о невидимых противниках.
+window.getChargeRoute = function(caster, target, entities = window.gameState.entities) {
+  const state = window.gameState;
+  const dx = target.x - caster.position.x, dy = target.y - caster.position.y;
+  if ((!dx && !dy) || (dx && dy) || !entities.some(unit => unit.hp > 0
+    && state.keyOf(unit.position) === state.keyOf(target))) return null;
+  const sx = Math.sign(dx), sy = Math.sign(dy), path = [];
+  for (let step = 1; step < Math.abs(dx) + Math.abs(dy); step++) {
+    const point = { x: caster.position.x + sx * step, y: caster.position.y + sy * step };
+    const key = state.keyOf(point);
+    if (point.x < 0 || point.x >= state.SIZE || point.y < 0 || point.y >= state.HEIGHT
+      || state.terrain.get(key) === 'void' || state.obstacles.has(key)
+      || !Number.isFinite(state.entryCost(point, caster))
+      || entities.some(unit => unit.id !== caster.id && unit.hp > 0 && state.keyOf(unit.position) === key)) {
+      return { path, blocked: true };
+    }
+    path.push(point);
+  }
+  const end = path.at(-1) ?? caster.position;
+  return { path, blocked: state.isWater(state.terrain.get(state.keyOf(end))) };
+};
+
 window.canTarget = function(target, spell) {
+  if (spell?.isCharge) {
+    const caster = window.gameState.activeEntity();
+    if (!caster) return false;
+    const visible = window.gameState.entities.filter(unit => !window.gameState.isHiddenFrom(unit, caster));
+    const route = window.getChargeRoute(caster, target, visible);
+    return !!route && !route.blocked && window.inSpellReach(target, spell);
+  }
   if (spell?.isTonguePull && !window.gameState.entities.some(entity => entity.hp > 0
     && window.gameState.keyOf(entity.position) === window.gameState.keyOf(target))) return false;
   if (spell?.isGlobal) {
@@ -139,7 +169,9 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
   // Бейдж нужен только для урона; дальность и зона подсвечиваются отдельно.
   if (spell.damageBase === undefined && !(spell.damage > 0)) return;
   const caster = window.gameState.activeEntity();
-  const baseDamage = window.getSpellDamage(spell, caster);
+  const chargeRoute = spell.isCharge && caster ? window.getChargeRoute(caster, center,
+    window.gameState.entities.filter(unit => !window.gameState.isHiddenFrom(unit, caster))) : null;
+  const baseDamage = window.getSpellDamage(spell, caster, chargeRoute?.path.length ?? 0);
   const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
   const mult = caster && ((spell.abilityType === 'spell' && window.hasActiveState(caster, 'exhaustion'))
     || (isNonSpell && window.hasActiveState(caster, 'weakness'))) ? 0.8 : 1;

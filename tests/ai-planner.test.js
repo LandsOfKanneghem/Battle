@@ -126,3 +126,14 @@ test('a likely finishing blow wins over a larger percentage of damage without a 
   h.fighter.hp = 2;
   assert.equal(h.plan().targetId, h.fighter.id);
 });
+
+test('planner handles Charge movement and its path-dependent damage without changing live positions', () => {
+  const h = setup({ start: { x: 5, y: 2 }, mage: { x: 5, y: 5 }, warrior: { x: 4, y: 2 }, mp: 0, ap: 4 });
+  const attacker = h.ctx.createCreature('warrior', { x: 5, y: 2 });attacker.team = 'enemy';
+  attacker.mp = 0;attacker.ap = 4;
+  h.state.entities[0] = attacker;h.state.activeEntityId = attacker.id;
+  const before = JSON.stringify(h.state.entities);
+  const action = h.ctx.planAIAction(attacker);
+  assert.equal(action.spellId, 'charge');assert.equal(action.targetId, h.wizard.id);
+  assert.equal(JSON.stringify(h.state.entities), before);
+});

@@ -307,3 +307,58 @@ test('toad jump pays AP and cooldown, moves without MP and rejects walls, water,
     assert.equal(jump.usesThisTurn, paid ? 1 : 0, kind);
   }
 });
+
+test('poison bite deals STR physical damage and applies one timed poison; misses and lethal hits do not poison', () => {
+  for (const kind of ['hit', 'miss', 'lethal']) {
+    const { ctx, state, wizard, deps } = setup();
+    const toad = ctx.createCreature('giant-toad', { x: 2, y: 1 }); state.entities.push(toad);
+    const bite = toad.availableSpells.find(s => s.id === 'poison-bite');
+    const hp = wizard.hp = kind === 'lethal' ? 1 : wizard.maxHP;
+    ctx.applySpellEffect(bite, wizard.position, toad, deps(), null, kind !== 'miss');
+    assert.equal(wizard.hp, kind === 'miss' ? hp : Math.max(0, hp - 13));
+    assert.equal(wizard.states.filter(s => s.id === 'weak-poison').length, kind === 'hit' ? 1 : 0);
+    if (kind === 'hit') {
+      wizard.hp = 100;
+      ctx.applySpellEffect(bite, wizard.position, toad, deps(), null, true);
+      assert.equal(wizard.states.filter(s => s.id === 'weak-poison').length, 1);
+      assert.equal(wizard.states.find(s => s.id === 'weak-poison').duration, 3);
+      ctx.tickCasterEffects(toad.id); ctx.tickCasterEffects(toad.id); ctx.tickCasterEffects(toad.id);
+      assert(!ctx.hasActiveState(wizard, 'weak-poison'));
+    }
+  }
+});
+
+test('weak poison ticks once at turn start, respects poison resistance and freeze, and handles death', () => {
+  for (const kind of ['normal', 'resistant', 'immune', 'frozen', 'lethal']) {
+    const { ctx, state, wizard } = setup();
+    ctx.applyState(wizard, { id: 'weak-poison', duration: 3, casterId: 'toad-source' });
+    if (kind === 'resistant') wizard.poison = 1;
+    if (kind === 'immune') wizard.poison = 2;
+    if (kind === 'frozen') ctx.applyState(wizard, { id: 'freeze', duration: 2, casterId: 'toad-source' });
+    const hp = wizard.hp = kind === 'lethal' ? 1 : wizard.maxHP;
+    let removed = false;
+    ctx.turnQueue = { activate: () => wizard };
+    ctx.endTurn = () => {};
+    ctx.renderSpellPanel = () => {}; ctx.clearHighlight = () => {};
+    ctx.removeDefeatedEntities = () => { removed = true; };
+    ctx.beginTurn();
+    const damage = ['immune', 'frozen'].includes(kind) ? 0 : kind === 'resistant' ? 1 : 2;
+    assert.equal(wizard.hp, Math.max(0, hp - damage), kind);
+    assert.equal(removed, kind === 'lethal', kind);
+  }
+});
+
+test('healing cures weak poison even at full HP and preserves existing bleeding removal', () => {
+  for (const full of [true, false]) {
+    const { ctx, wizard, deps, spell } = setup();
+    wizard.hp = wizard.maxHP - (full ? 0 : 5);
+    ctx.applyState(wizard, { id: 'weak-poison', duration: 3, casterId: 'toad-source' });
+    ctx.applyState(wizard, { id: 'bleeding', duration: 2, casterId: 'toad-source' });
+    const heal = ctx.createCreature('monk', { x: 2, y: 1 }).availableSpells.find(s => s.id === 'heal-harm');
+    const before = wizard.hp;
+    ctx.applySpellEffect(heal, wizard.position, wizard, deps());
+    assert(!ctx.hasActiveState(wizard, 'weak-poison'));
+    assert(!ctx.hasActiveState(wizard, 'bleeding'));
+    assert.equal(wizard.hp, Math.min(wizard.maxHP, before + heal.healAmount));
+  }
+});

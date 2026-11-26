@@ -121,4 +121,11 @@ const INVISIBILITY = {
   permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#101020"/><path d="M16 6 H24 V14 H28 V23 H25 V34 H21 V26 H19 V34 H15 V23 H12 V14 H16 Z" fill="#343951" stroke="#9ba7d5" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M18 10 H20 M22 10 H24" stroke="#c8d9ff" stroke-width="2"/></svg>`
 };
-const stateTypes = new Map([[INVISIBILITY.id, INVISIBILITY], [SHARP_SHELL.id, SHARP_SHELL], [OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+const WEAK_POISON = {
+  id: 'weak-poison', name: 'Слабый яд', duration: 3, stackable: false,
+  tickDamage: 2, damageType: 'poison', mpBonus: 0, initiativeBonus: 0,
+  description: '2 урона ядом в начале хода. Любое лечение снимает яд.',
+  casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [], permanent: false, innate: false,
+  icon: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/state-weak-poison.png" width="64" height="64"/></svg>'
+};
+const stateTypes = new Map([[WEAK_POISON.id, WEAK_POISON], [INVISIBILITY.id, INVISIBILITY], [SHARP_SHELL.id, SHARP_SHELL], [OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);

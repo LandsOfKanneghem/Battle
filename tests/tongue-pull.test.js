@@ -49,7 +49,7 @@ test('tongue has the requested costs, STR damage, fixed range and weapon attack 
   assert.ok(!spell.isShot);
   caster.ra = 100;
   assert.equal(ctx.effectiveSpellRange(spell, caster), 6);
-  assert.equal(ctx.getSpellDamage(spell, caster), 9);
+  assert.equal(ctx.getSpellDamage(spell, caster), 11);
 });
 
 test('exact diagonals move one diagonal cell; dominant axes stay fixed for both steps', () => {
@@ -93,7 +93,7 @@ test('enemies take STR physical damage after moving; allied targets only move, f
     const hp = target.hp, mp = target.mp, ap = target.ap;
     apply();
     assert.deepEqual(JSON.parse(JSON.stringify(target.position)), { x: 7, y: 5 });
-    assert.equal(target.hp, hp - (['wizard', 'monk'].includes(targetType) ? 9 : 0));
+    assert.equal(target.hp, hp - (['wizard', 'monk'].includes(targetType) ? 11 : 0));
     assert.equal(target.mp, mp);
     assert.equal(target.ap, ap);
     assert.equal(caster.hp, caster.maxHP);
@@ -115,7 +115,7 @@ test('damage still applies when movement is blocked, with Weakness and physical 
   const hp = target.hp;
   apply();
   assert.equal(target.position.x, 9);
-  assert.equal(target.hp, hp - 6); // floor((4 + 5 STR) * .8) - 1 physical
+  assert.equal(target.hp, hp - 7); // floor((6 + 5 STR) * .8) - 1 physical
 });
 
 test('range 1 through 6 requires a living target and LOS before any cast payment', () => {
@@ -143,7 +143,7 @@ test('preview shows enemy damage and no damage badge on allied targets', () => {
     ctx.altHeld = true;
     ctx.showEffectPreview([target.position], spell);
     assert.equal(state.effectBadges.length, type === 'wizard' ? 1 : 0);
-    if (type === 'wizard') assert.ok(state.effectBadges[0].textContent.startsWith('Урон: 9 [Крит: 9]'));
+    if (type === 'wizard') assert.ok(state.effectBadges[0].textContent.startsWith('Урон: 11 [Крит: 11]'));
   }
 });
 
@@ -153,7 +153,7 @@ test('non-shot tongue weapon damage triggers Sharp Shell retaliation', () => {
   state.entities[0] = player;
   const hp = player.hp, targetHP = target.hp;
   ctx.applySpellEffect(spell, target.position, player, deps, null, true);
-  assert.equal(target.hp, targetHP - 2); // Weapon attack: the turtle's AC 2 applies.
+  assert.equal(target.hp, targetHP - 4); // Weapon attack: the turtle's AC 2 applies.
   assert.equal(player.hp, hp - 3);
 });
 

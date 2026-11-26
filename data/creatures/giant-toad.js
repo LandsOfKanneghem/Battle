@@ -40,9 +40,20 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
     target: 'none', isTeleport: true, requiresEmptyCell: true,
     iconPath: 'assets/homm2/spell-jump.png',
     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-jump.png" width="64" height="64"/></svg>'
+  }, {
+    id: 'poison-bite', name: 'Ядовитый укус', abilityType: 'weapon-strike', magicSchool: null,
+    description: 'Наносит физический урон и накладывает слабый яд.',
+    damageBase: 8, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 5,
+    stateId: 'weak-poison', durationBase: 3, durationPerInt: 0, stackable: false,
+    apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
+    range: 1, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'any',
+    effectDescription: 'Слабый яд',
+    iconPath: 'assets/homm2/spell-poison-bite.png',
+    svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-poison-bite.png" width="64" height="64"/></svg>'
   }],
   spellPages: [
-    ['tongue-pull', 'jump', null, null, null,
+    ['tongue-pull', 'jump', 'poison-bite', null, null,
       null, null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null]

@@ -154,28 +154,26 @@ test('sprite, portrait and local ability icon paths live with each creature and 
   }
 });
 
-test('giant toad has giant stats, independent attributes and its own tongue ability', () => {
+test('giant toad has its own tuned stats, independent attributes and three abilities', () => {
   const ctx = setup();
   const giant = ctx.CREATURE_TEMPLATES['hill-giant'];
   const toad = ctx.CREATURE_TEMPLATES['giant-toad'];
-  const statKeys = Object.keys(giant).filter(key => typeof giant[key] === 'number');
-  for (const key of statKeys) assert.equal(toad[key], giant[key], key);
+  assert.equal(toad.baseHP, 24); assert.equal(toad.hpPerLevel, 8);
+  assert.equal(toad.baseAP, 7); assert.equal(toad.basePoison, 4);
   assert.deepEqual(toad.attributes, giant.attributes);
   assert.notEqual(toad.attributes, giant.attributes);
   const entity = ctx.createCreature('giant-toad', { x: 2, y: 1 });
   assert.equal(entity.type, 'giant-toad');
   assert.equal(entity.ai, 'giant-toad');
-  assert.equal(entity.availableSpells.length, 2);
+  assert.equal(entity.availableSpells.length, 3);
   assert.equal(entity.availableSpells[0].id, 'tongue-pull');
   assert.equal(entity.spellPages.length, 1);
   assert.equal(entity.spellPages[0][0], entity.availableSpells[0]);
   assert.equal(entity.spellPages[0][1].id, 'jump');
-  assert.ok(entity.spellPages[0].slice(2).every(slot => slot === null));
+  assert.equal(entity.spellPages[0][2].id, 'poison-bite');
+  assert.ok(entity.spellPages[0].slice(3).every(slot => slot === null));
   assert.equal(entity.hitCount, 0);
-  const creature = ctx.createCreature('hill-giant', { x: 3, y: 1 });
-  for (const key of ['level', 'hp', 'maxHP', 'wp', 'maxWP', 'ap', 'maxAP', 'mp', 'maxMP', 'maxHitCount']) {
-    assert.equal(entity[key], creature[key], key);
-  }
+  for (const key of ['level', 'baseHP', 'hpPerLevel', 'baseWP', 'wpPerLevel']) assert.equal(entity[key], toad[key], key);
 });
 
 test('player party order is copied from templates and fixed for the battle', () => {

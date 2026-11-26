@@ -152,6 +152,15 @@ window.removeState = function(entity, stateId) {
   window.updatePanel?.();
 };
 
+// Общая точка лечения: даже лечение при полном HP снимает слабый яд.
+window.healEntity = function(entity, amount, caster = null) {
+  const before = entity.hp;
+  entity.hp = Math.min(entity.maxHP ?? entity.hp, entity.hp + Math.max(0, amount));
+  window.removeState(entity, 'weak-poison');
+  window.battleLog?.heal(entity, entity.hp - before, caster);
+  return entity.hp - before;
+};
+
 window.getCurrentES = function(entity) {
   // baseES — оставшаяся базовая часть: тратится последней и не восполняется.
   return entity.baseES + entity.esBonuses.reduce((sum, bonus) => sum + bonus.remaining, 0);

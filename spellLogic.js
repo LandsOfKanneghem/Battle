@@ -293,9 +293,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     }
   } else if (spell.isHealHarm) {
     if (directTarget && isAlly(directTarget)) {
-      const hpBefore = directTarget.hp;
-      directTarget.hp = Math.min(directTarget.maxHP ?? directTarget.hp, directTarget.hp + spell.healAmount);
-      window.battleLog?.heal(directTarget, directTarget.hp - hpBefore, caster);
+      window.healEntity(directTarget, spell.healAmount, caster);
       const last = directTarget.states.filter(state => state.id === 'bleeding' && !state.suppressed)
         .reduce((latest, state) => !latest || state.appliedOrder > latest.appliedOrder ? state : latest, null);
       directTarget.states = directTarget.states.filter(state => state !== last);
@@ -314,6 +312,13 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
         applyState(directTarget, { id: spell.stateId, duration: spell.bleedDuration,
           casterId: caster.id, casterName: caster.name });
       }
+    }
+  } else if (spell.id === 'poison-bite') {
+    if (directTarget) {
+      applyDamage(adjustedSpell, directTarget, caster);
+      if (directTarget.hp > 0) applyState(directTarget, {
+        id: spell.stateId, duration, casterId: caster.id, casterName: caster.name
+      });
     }
   } else if (spell.stateId) {
     const recipient = entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)
@@ -409,6 +414,10 @@ const spellAnimationHandlers = {
   },
   'water-shot': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'water', () => ctx.setTimeout(ctx.finishCast, 0), ctx.spell);
+  },
+  'poison-bite': ctx => {
+    ctx.deps.playBiteAnimation(ctx.targetCell);
+    ctx.setTimeout(ctx.finishCast, 500);
   },
   'bite': ctx => {
     ctx.deps.playBiteAnimation(ctx.targetCell);

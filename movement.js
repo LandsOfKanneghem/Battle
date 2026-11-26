@@ -113,15 +113,16 @@ window.beginTurn = function() {
     window.updatePanel();
     return;
   }
-  // Урон Горения срабатывает только у цели, без отсчёта длительности.
+  // Периодический урон Горения и Слабого яда срабатывает у цели, без отсчёта длительности.
   // При самоналожении сохраняем урон до истечения защит/ES и самого Горения.
   // Активируем получателя хода заранее, чтобы его смерть сразу передала ход после него.
   window.gameState.activeEntityId = entity.id;
   window.battleLog?.beginTurn(entity);
-  const burning = entity.states.find(state => state.id === 'burning' && !state.suppressed
-    && (state.duration > 0 || state.permanent || state.innate));
-  if (burning) {
-    window.applyDamage({ damage: burning.tickDamage, damageType: burning.damageType }, entity);
+  for (const id of ['burning', 'weak-poison']) {
+    const damageState = entity.states.find(state => state.id === id && !state.suppressed
+      && (state.duration > 0 || state.permanent || state.innate));
+    if (!damageState) continue;
+    window.applyDamage({ damage: damageState.tickDamage, damageType: damageState.damageType }, entity);
     if (entity.hp <= 0) {
       window.removeDefeatedEntities();
       return;

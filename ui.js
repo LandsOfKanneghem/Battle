@@ -146,7 +146,11 @@ window.showSpellTooltip = function(icon, spell) {
     addLine('Точность', `${accuracy}%`, color);
   }
   if (spell.abilityType === 'weapon-strike' && (spell.baseCritChance ?? 0) > 0) {
-    addLine('Базовый крит шанс', `${spell.baseCritChance}%`);
+    const baseCritChance = spell.baseCritChance;
+    const critChance = window.shiftHeld || !caster ? baseCritChance : window.getCritChance(spell, caster, null);
+    const color = window.shiftHeld || critChance === baseCritChance ? ''
+      : critChance > baseCritChance ? '#4ade80' : '#ff4d4d';
+    addLine('Крит шанс', `${critChance}%`, color);
   }
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
   if (spell.isSummon) {

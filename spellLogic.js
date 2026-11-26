@@ -385,6 +385,16 @@ const spellAnimationHandlers = {
     ctx.deps.playOldAgeAnimation(ctx.targetCell);
     ctx.setTimeout(ctx.finishCast, 500);
   },
+  'jump': ctx => {
+    const from = ctx.fromCell.getBoundingClientRect(), to = ctx.targetCell.getBoundingClientRect();
+    const dx = to.left - from.left, dy = to.top - from.top;
+    ctx.caster.svg.animate?.([
+      { transform: 'translateX(-50%)' },
+      { transform: `translate(calc(-50% + ${dx / 2}px), ${dy / 2 - 32}px)` },
+      { transform: `translate(calc(-50% + ${dx}px), ${dy}px)` }
+    ], { duration: 350, easing: 'ease-in-out' });
+    ctx.setTimeout(ctx.finishCast, 350);
+  },
   'teleport': ctx => {
     ctx.deps.playTeleportAnimation(ctx.fromCell);
     ctx.deps.playTeleportAnimation(ctx.targetCell);

@@ -29,6 +29,7 @@
   }
 
   function canAttackFrom(entity, spell, target, from) {
+    if (spell.target === 'none') return false;
     const distance = manhattan(from, target.position);
     const range = spell.modifiable ? window.effectiveSpellRange(spell, entity) : spell.range;
     return distance >= (spell.minRange ?? 1) && distance <= range

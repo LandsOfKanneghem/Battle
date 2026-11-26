@@ -201,14 +201,14 @@ for (const adrenalineFirst of [true, false]) {
     state.entities.push(monk);
     const buff = () => ctx.applyState(monk, { id: 'adrenaline', duration: 2, casterId: wizard.id, casterName: wizard.name });
     if (adrenalineFirst) buff();
-    monk.spellCastCount = 6;
+    monk.spellCastCount = monk.maxSpellCasts - 1;
     ctx.recordSpellAttempt(monk.availableSpells[0], monk, deps());
     if (!adrenalineFirst) buff();
     const exhaustion = monk.states.find(s => s.id === 'exhaustion');
     assert(exhaustion && exhaustion.permanent && exhaustion.suppressed);
     assert.equal(ctx.getEffectiveStat(monk, 'sfc'), 0);
     ctx.recordSpellAttempt(monk.availableSpells[0], monk, deps());
-    assert.equal(monk.spellCastCount, 7);
+    assert.equal(monk.spellCastCount, monk.maxSpellCasts);
     assert.equal(monk.states.filter(s => s.id === 'exhaustion').length, 1);
     ctx.tickCasterEffects(wizard.id); ctx.tickCasterEffects(wizard.id);
     assert(ctx.hasActiveState(monk, 'exhaustion'));
@@ -274,4 +274,36 @@ test('limit penalties upgrade existing temporary Weakness and Exhaustion to perm
   ctx.recordSpellAttempt(wizard.availableSpells[0], wizard, deps());
   // Already active temporary penalties must also be promoted by the counter handler.
   assert(wizard.states.find(s => s.id === 'exhaustion').permanent);
+});
+
+
+test('toad jump pays AP and cooldown, moves without MP and rejects walls, water, occupied and distant cells', () => {
+  for (const kind of ['clear', 'crate', 'void', 'water', 'occupied', 'distant', 'self', 'hidden']) {
+    const { ctx, state, deps } = setup();
+    const toad = ctx.createCreature('giant-toad', { x: 1, y: 1 });
+    state.entities = [toad]; state.activeEntityId = toad.id;
+    for (const cell of state.cells) cell.getBoundingClientRect = () => ({ left: cell.dataset.x * 48, top: cell.dataset.y * 48 });
+    const jump = toad.availableSpells.find(spell => spell.id === 'jump');
+    assert.equal(jump.abilityType, 'ability'); assert.equal(jump.noLOS, false);
+    assert.equal(jump.target, 'none'); assert.equal(jump.range, 2); assert.equal(jump.minRange, 1);
+    state.preparedSpellId = jump.id;
+    let target = { x: 3, y: 1 };
+    if (kind === 'crate') state.obstacles.set('2,1', 'crate');
+    if (kind === 'void') state.terrain.set('2,1', 'void');
+    if (kind === 'water') state.terrain.set('3,1', 'shallow-water');
+    if (kind === 'distant') target.x = 4;
+    if (kind === 'self') target.x = 1;
+    if (kind === 'occupied' || kind === 'hidden') {
+      const other = ctx.createCreature('wizard', target); state.entities.push(other);
+      if (kind === 'hidden') ctx.applyState(other, { id: 'invisibility', duration: 2, casterId: other.id });
+    }
+    const ap = toad.ap, mp = toad.mp;
+    const paid = kind === 'clear' || kind === 'hidden';
+    assert.equal(ctx.castSpell(state.cells[target.y * 12 + target.x], deps()), paid, kind);
+    assert.equal(toad.position.x, kind === 'clear' ? 3 : 1, kind);
+    assert.equal(toad.mp, mp, kind);
+    assert.equal(toad.ap, ap - (paid ? 2 : 0), kind);
+    assert.equal(jump.cooldown, paid ? 1 : 0, kind);
+    assert.equal(jump.usesThisTurn, paid ? 1 : 0, kind);
+  }
 });

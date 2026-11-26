@@ -32,9 +32,17 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
     effectDescription: 'Притягивает цель на 2 клетки к заклинателю.',
     iconPath: 'assets/homm2/spell-tongue-pull.png',
     svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 34 Q10 18 24 20 Q36 20 31 8 Q23 1 20 12" fill="none" stroke="#6e203d" stroke-width="9"/><path d="M5 34 Q10 18 24 20 Q36 20 31 8 Q23 1 20 12" fill="none" stroke="#e56991" stroke-width="5" stroke-linecap="round"/></svg>`
+  }, {
+    id: 'jump', name: 'Прыжок', abilityType: 'ability', magicSchool: null,
+    description: 'Совершает прыжок на несколько клеток.',
+    apCost: 2, maxUsesPerTurn: 1, maxCooldown: 1,
+    range: 2, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'none', isTeleport: true, requiresEmptyCell: true,
+    iconPath: 'assets/homm2/spell-jump.png',
+    svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-jump.png" width="64" height="64"/></svg>'
   }],
   spellPages: [
-    ['tongue-pull', null, null, null, null,
+    ['tongue-pull', 'jump', null, null, null,
       null, null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null]

@@ -165,11 +165,12 @@ test('giant toad has giant stats, independent attributes and its own tongue abil
   const entity = ctx.createCreature('giant-toad', { x: 2, y: 1 });
   assert.equal(entity.type, 'giant-toad');
   assert.equal(entity.ai, 'giant-toad');
-  assert.equal(entity.availableSpells.length, 1);
+  assert.equal(entity.availableSpells.length, 2);
   assert.equal(entity.availableSpells[0].id, 'tongue-pull');
   assert.equal(entity.spellPages.length, 1);
   assert.equal(entity.spellPages[0][0], entity.availableSpells[0]);
-  assert.ok(entity.spellPages[0].slice(1).every(slot => slot === null));
+  assert.equal(entity.spellPages[0][1].id, 'jump');
+  assert.ok(entity.spellPages[0].slice(2).every(slot => slot === null));
   assert.equal(entity.hitCount, 0);
   const creature = ctx.createCreature('hill-giant', { x: 3, y: 1 });
   for (const key of ['level', 'hp', 'maxHP', 'wp', 'maxWP', 'ap', 'maxAP', 'mp', 'maxMP', 'maxHitCount']) {

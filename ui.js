@@ -147,7 +147,9 @@ window.showSpellTooltip = function(icon, spell) {
   }
   if (spell.abilityType === 'weapon-strike' && (spell.baseCritChance ?? 0) > 0) {
     const baseCritChance = spell.baseCritChance;
-    const critChance = window.shiftHeld || !caster ? baseCritChance : window.getCritChance(spell, caster, null);
+    // В книге нет конкретной цели: избыток точности против её уклонения не учитываем.
+    const critChance = window.shiftHeld || !caster ? baseCritChance
+      : Math.max(0, Math.min(100, baseCritChance + window.getEffectiveStat(caster, 'cri')));
     const color = window.shiftHeld || critChance === baseCritChance ? ''
       : critChance > baseCritChance ? '#4ade80' : '#ff4d4d';
     addLine('Крит шанс', `${critChance}%`, color);

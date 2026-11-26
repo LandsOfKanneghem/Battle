@@ -104,7 +104,7 @@
       write(`${entity.name} +${amount} ОЗ (лечение${caster ? `: ${caster.name}` : ''}).`, 'benefit');
     },
     cast(caster, spell, target) {
-      write(`${caster.name} применяет «${spell.name}»${target ? ` — цель: ${target.name}` : ''}.`);
+      write(`${caster.name} применяет «${spell.name}»${spell.target !== 'none' && target?.name ? ` — цель: ${target.name}` : ''}.`);
     },
     blocked() { write('Что-то преграждает дорогу!'); },
     miss(caster, target) { write(`${caster.name}: промах по цели ${target.name}.`); },

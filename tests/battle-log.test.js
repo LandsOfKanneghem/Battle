@@ -114,3 +114,18 @@ test('critical damage uses the requested prefix and damage color', () => {
   assert.deepEqual(lines(), ['Критический удар! Волк -4 ОЗ.']);
   assert.equal(entries.children[0].className, 'battle-log-damage');
 });
+
+test('casts with no target omit target text, including AI destination objects', () => {
+  const { log, wizard, wolf, lines } = setup();
+  const toad = { name: 'Гигантская жаба' };
+  log.cast(toad, { name: 'Прыжок', target: 'none' }, { position: { x: 1, y: 2 } });
+  log.cast(wizard, { name: 'Призыв', target: 'none' }, wolf);
+  log.cast(wizard, { name: 'Огненный выстрел', target: 'any' }, wolf);
+  log.cast(wizard, { name: 'Телепорт', target: 'none' });
+  assert.deepEqual(lines(), [
+    'Гигантская жаба применяет «Прыжок».',
+    'Волшебник применяет «Призыв».',
+    'Волшебник применяет «Огненный выстрел» — цель: Волк.',
+    'Волшебник применяет «Телепорт».'
+  ]);
+});

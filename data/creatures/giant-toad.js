@@ -1,7 +1,7 @@
 // Данные существа и его собственных способностей.
 window.CREATURE_TEMPLATES['giant-toad'] = {
   name: 'Гигантская жаба', type: 'giant-toad', ai: 'giant-toad',
-  level: 6, baseHP: 25, hpPerLevel: 10, baseWP: 32, wpPerLevel: 8, baseAP: 5, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
+  level: 6, baseHP: 24, hpPerLevel: 8, baseWP: 12, wpPerLevel: 6, baseAP: 7, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
   baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
@@ -24,7 +24,7 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
   spells: [{
     id: 'tongue-pull', name: 'Захват языком', abilityType: 'weapon-strike', magicSchool: null,
     description: 'Притягивает языком цель на 2 клетки к себе. Вражеская цель при этом получает физический урон.',
-    damageBase: 4, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 0,
+    damageBase: 6, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 0,
     stackable: false,
     apCost: 3, maxUsesPerTurn: 1, maxCooldown: 1,
     range: 6, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,

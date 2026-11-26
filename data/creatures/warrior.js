@@ -17,7 +17,7 @@ window.CREATURE_TEMPLATES.warrior = {
     svg: '<image href="assets/map-editor/mobs/warrior.png" width="40" height="40"/>'
   },
   spells: [{
-    id: 'sword-strike', name: 'Удар мечом', abilityType: 'weapon-strike', baseAccuracy: 100,
+    id: 'sword-strike', name: 'Удар мечом', abilityType: 'weapon-strike', baseAccuracy: 95,
     isShot: false, baseCritChance: 5, stackable: false, target: 'any',
     apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2,
     damageType: 'physical', damageBase: 2, damagePerStr: 1,

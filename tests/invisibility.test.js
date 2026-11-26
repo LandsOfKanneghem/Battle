@@ -315,7 +315,7 @@ test('Alt preview reports capped hit chance, critical chance and current critica
   assert.ok(state.highlightedCells.length > 0, 'area highlighting remains');
   ctx.altHeld = true;
   ctx.highlightSpellRange(shadow.position);
-  assert.equal(state.effectBadges[0].textContent, 'Урон: 4 [Крит: 4]\nПопадание: 100%\nКрит: 35%');
+  assert.equal(state.effectBadges[0].textContent, 'Урон: 4 [Крит: 4]\nПопадание: 100%\nКрит: 25%');
   assert.deepEqual(plain(state.spellPreviewCenter), plain(shadow.position));
   ctx.clearHighlight();
   assert.equal(state.spellPreviewCenter, null);

@@ -418,7 +418,7 @@ window.getHitChance = function(spell, caster, target) {
 
 window.getCritChance = function(spell, caster, target) {
   if (!caster || !['spell', 'ability', 'weapon-strike'].includes(spell.abilityType)) return 0;
-  const base = spell.abilityType === 'weapon-strike' ? (spell.baseCritChance ?? 0) : 0;
+  const base = spell.abilityType === 'weapon-strike' || spell.isShot ? (spell.baseCritChance ?? 0) : 0;
   const overflow = spell.abilityType !== 'spell' || spell.isShot
     ? Math.max(0, window.getRawHitChance(spell, caster, target) - 100) : 0;
   return Math.max(0, Math.min(100, base + getEffectiveStat(caster, 'cri') + overflow));

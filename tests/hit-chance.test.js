@@ -58,12 +58,12 @@ test('crit combines weapon base, effective CRI and unclamped hit overflow', () =
   caster.attributes.luc = -5; // -25 hit penalty and CRI -10; no overflow remains.
   assert.equal(ctx.getCritChance({ baseAccuracy: 100, abilityType: 'weapon-strike', baseCritChance: 5 }, caster, target), 0);
 });
-test('spells ignore weapon base and only shot spells can convert accuracy overflow into crit', () => {
+test('shot spells use their base crit and accuracy overflow; non-shot spells use only CRI', () => {
   const { ctx, spell, caster, target } = setup();
   caster.attributes.att = 25;
   caster.cri = 10;
   assert.equal(ctx.getCritChance({ baseAccuracy: 100, abilityType: 'spell', baseCritChance: 90 }, caster, target), 10);
-  assert.equal(ctx.getCritChance({ baseAccuracy: 100, abilityType: 'spell', isShot: true, baseCritChance: 90 }, caster, target), 35);
+  assert.equal(ctx.getCritChance({ baseAccuracy: 100, abilityType: 'spell', isShot: true, baseCritChance: 10 }, caster, target), 45);
   assert.equal(ctx.getCritChance({ abilityType: 'weapon-strike', baseAccuracy: 100 }, caster, target), 35);
   assert.equal(ctx.getCritChance({ damage: 2 }, caster, target), 0, 'ticks and reflected damage cannot crit');
   caster.cri = 200;

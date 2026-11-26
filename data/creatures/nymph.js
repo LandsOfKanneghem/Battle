@@ -16,7 +16,7 @@ window.CREATURE_TEMPLATES['nymph'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'water-shot', abilityType: 'spell', magicSchool: 'water', isShot: true, baseAccuracy: 100,
+    id: 'water-shot', abilityType: 'spell', magicSchool: 'water', isShot: true, baseAccuracy: 80, baseCritChance: 10,
     name: 'Водный выстрел', stackable: false, damageBase: 3, damageType: 'water', target: 'any',
     description: 'Наносит небольшой урон водой.',
     range: 4, minRange: 1, modifiable: false, noLOS: false,

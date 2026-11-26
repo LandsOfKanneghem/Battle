@@ -283,7 +283,13 @@ test('accuracy belongs to every weapon attack and shot, never to a creature', ()
   vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
   const common = vm.runInContext('SPELL_DEFINITIONS', ctx);
   const check = spell => {
-    if (spell.abilityType === 'weapon-strike' || spell.isShot) assert.equal(spell.baseAccuracy, 100, spell.id);
+    if (spell.abilityType === 'weapon-strike' || spell.isShot) {
+      const accuracy = spell.isShot ? 80 : spell.id === 'boulder-smash' ? 90 : 95;
+      assert.equal(spell.baseAccuracy, accuracy, spell.id);
+      if (spell.isShot) assert.equal(spell.baseCritChance, 10, spell.id);
+      if (spell.id === 'boulder-smash') assert.equal(spell.baseCritChance, 0);
+      if (spell.id === 'sword-strike') assert.equal(spell.baseCritChance, 5);
+    }
     else assert.equal(spell.baseAccuracy, undefined, spell.id);
   };
   for (const spell of Object.values(common)) check(spell);

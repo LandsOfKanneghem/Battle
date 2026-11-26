@@ -24,7 +24,7 @@ window.CREATURE_TEMPLATES['wolf'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'bite', baseCritChance: 5, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', baseAccuracy: 100, magicSchool: null, name: 'Укус волка', stackable: false,
+    id: 'bite', baseCritChance: 5, isShot: false, effectDescription: 'Кровотечение [50%]', abilityType: 'weapon-strike', baseAccuracy: 95, magicSchool: null, name: 'Укус волка', stackable: false,
     damageBase: 2, damagePerStr: 1, damageType: 'physical', target: 'any',
     description: 'Наносит физический урон и с шансом 50% накладывает на цель 1 стак кровотечения.',
     stateId: 'bleeding', bleedChance: 50, bleedDuration: 2,

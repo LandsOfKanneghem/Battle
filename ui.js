@@ -145,7 +145,7 @@ window.showSpellTooltip = function(icon, spell) {
       : accuracy > spell.baseAccuracy ? '#4ade80' : '#ff4d4d';
     addLine('Точность', `${accuracy}%`, color);
   }
-  if (spell.abilityType === 'weapon-strike' && (spell.baseCritChance ?? 0) > 0) {
+  if ((spell.abilityType === 'weapon-strike' || spell.isShot) && (spell.baseCritChance ?? 0) > 0) {
     const baseCritChance = spell.baseCritChance;
     // В книге нет конкретной цели: избыток точности против её уклонения не учитываем.
     const critChance = window.shiftHeld || !caster ? baseCritChance

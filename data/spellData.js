@@ -72,7 +72,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1, magicSchool: 'water',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#d0f4ff" opacity=".7"/><path d="M8 14 Q14 8 22 10" fill="none" stroke="#a0d4ff" stroke-width="1.5" opacity=".6"/><path d="M20 6 V2 M14 4 L20 2 L26 4" fill="none" stroke="#c3ffff" stroke-width="2" stroke-linecap="round"/></svg>`
 }, {
-  id: 'fire-shot', abilityType: 'spell', magicSchool: 'fire', isShot: true, baseAccuracy: 100, name: 'Огненный выстрел', stackable: false, damageBase: 2, damagePerInt: 1, damageType: 'fire', target: 'any',
+  id: 'fire-shot', abilityType: 'spell', magicSchool: 'fire', isShot: true, baseAccuracy: 80, baseCritChance: 10, name: 'Огненный выстрел', stackable: false, damageBase: 2, damagePerInt: 1, damageType: 'fire', target: 'any',
   description: 'Наносит урон огнем по одиночной цели.',
   range: 6, minRange: 1, modifiable: true, noLOS: false, apCost: 3, maxUsesPerTurn: 2,
   maxCooldown: 0, isAOE: false, aoeSize: 1,
@@ -140,7 +140,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: true, aoeSize: 3,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 23 Q1 14 10 3 L14 13 L20 1 L25 13 L33 5 Q42 25 30 34 H11 Z" fill="#fa642b"/><path d="M12 34 L9 23 Q9 19 12 21 L16 25 V13 Q16 10 19 12 V22 V10 Q21 7 23 11 V23 V14 Q26 11 27 15 V25 L30 21 Q34 20 32 26 L28 35 Z" fill="#ffd18b" stroke="#a95429"/><path d="M16 38 H28" stroke="#ffe4ac" stroke-width="2"/></svg>`
 }, {
-  id: 'ice-arrow', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Охлаждение', magicSchool: 'water', name: 'Ледяная стрела', stackable: false, isShot: true, baseAccuracy: 100, target: 'any',
+  id: 'ice-arrow', durationBase: 2, durationPerInt: 0, abilityType: 'spell', effectDescription: 'Охлаждение', magicSchool: 'water', name: 'Ледяная стрела', stackable: false, isShot: true, baseAccuracy: 80, baseCritChance: 10, target: 'any',
   description: 'Наносит водой по одиночной цели и накладывает на нее Охлаждение.',
   damageBase: 2, damagePerInt: 1, damageType: 'water', stateId: 'chill',
   minRange: 1, range: 5, modifiable: true, noLOS: false,
@@ -155,7 +155,7 @@ const SPELL_DEFINITIONS = [{
   isAOE: false, aoeSize: 1,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 5 L20 2 L32 7 L35 21 L29 33 L20 38 L8 32 L4 18 Z" fill="#858e98" stroke="#cdd4db" stroke-width="2"/><path d="M20 3 L17 13 L23 20 L17 28 L20 37 M17 13 L5 17 M23 20 L34 16 M17 28 L9 32 M23 20 L29 32" fill="none" stroke="#434e5a" stroke-width="2"/><path d="M10 8 L14 7 M27 9 L29 12" stroke="#e3e7eb" stroke-width="2" stroke-linecap="round"/></svg>`
 }, {
-  id: 'sparks', abilityType: 'spell', magicSchool: 'air', name: 'Искры', stackable: false, isSparks: true, isShot: true, baseAccuracy: 100, target: 'any',
+  id: 'sparks', abilityType: 'spell', magicSchool: 'air', name: 'Искры', stackable: false, isSparks: true, isShot: true, baseAccuracy: 80, baseCritChance: 10, target: 'any',
   description: 'Наносит урон воздухом по одиночной цели, от нее отскакивает 2 искры в ближайшие цели на расстоянии 3 клеток, наносящие половину урона (несколько искр в одну цель отлететь не могут).',
   damageBase: 2, damagePerInt: 1, damageType: 'air', sparkRadius: 3, sparkCount: 2,
   minRange: 1, range: 5, modifiable: true, noLOS: false,

@@ -210,3 +210,46 @@ test('allied tongue hit helper performs no random roll despite zero accuracy and
   assert.equal(ctx.getHitChance(spell, caster, target), 100);
   assert.equal(ctx.shotHits(spell, caster, target), true);
 });
+
+test('diagonal pull stops only when both orthogonal side cells are blocked, in every direction', () => {
+  for (const [sx, sy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+    for (const mask of [0, 1, 2, 3]) {
+      const { ctx, state, target, point } = setup('monk');
+      target.position = { x: 5 + sx * 2, y: 5 + sy * 2 };
+      const sideX = { x: target.position.x - sx, y: target.position.y };
+      const sideY = { x: target.position.x, y: target.position.y - sy };
+      if (mask & 1) state.terrain.set(state.keyOf(sideX), 'shallow-water');
+      if (mask & 2) state.entities.push(ctx.createCreature('warrior', sideY));
+      const expected = mask === 3 ? { ...target.position } : { x: 5 + sx, y: 5 + sy };
+      assert.deepEqual(point(), expected, `${sx},${sy}: ${mask}`);
+    }
+  }
+});
+
+test('corner blocking also covers deep water, crates and void; damage still applies without pulling', () => {
+  for (const obstacle of ['crate', 'void', 'deep-water']) {
+    const { state, target, point, apply, caster, ctx, spell } = setup();
+    target.position = { x: 7, y: 7 };
+    state.terrain.set('6,7', 'shallow-water');
+    if (obstacle === 'crate') state.obstacles.set('7,6', 'crate');
+    else state.terrain.set('7,6', obstacle);
+    assert.deepEqual(point(), { x: 7, y: 7 }, obstacle);
+    const hp = target.hp;
+    apply();
+    assert.deepEqual(JSON.parse(JSON.stringify(target.position)), { x: 7, y: 7 });
+    assert.equal(target.hp, hp - ctx.getSpellDamage(spell, caster));
+  }
+});
+
+test('corner checks use the supplied simulation entities and ignore dead occupants', () => {
+  const { ctx, state, caster, target, point } = setup('monk');
+  target.position = { x: 7, y: 7 };
+  state.terrain.set('6,7', 'shallow-water');
+  const blocker = ctx.createCreature('warrior', { x: 7, y: 6 });
+  state.entities.push(blocker);
+  assert.deepEqual(point(), { x: 7, y: 7 });
+  const simulated = ctx.getTonguePullDestination(caster, target, [caster, target]);
+  assert.deepEqual(JSON.parse(JSON.stringify(simulated)), { x: 6, y: 6 });
+  blocker.hp = 0;
+  assert.deepEqual(point(), { x: 6, y: 6 });
+});

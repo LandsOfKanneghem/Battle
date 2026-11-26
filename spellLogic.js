@@ -106,14 +106,19 @@ window.getTonguePullDestination = function(caster, target, entities = window.gam
   const diagonal = Math.abs(dx) === Math.abs(dy);
   const stepX = diagonal || Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) : 0;
   const stepY = diagonal || Math.abs(dy) > Math.abs(dx) ? Math.sign(dy) : 0;
+  const blocked = point => {
+    const key = state.keyOf(point);
+    return point.x < 0 || point.x >= state.SIZE || point.y < 0 || point.y >= state.HEIGHT
+      || state.obstacles.has(key) || state.terrain.get(key) === 'void' || state.isWater(state.terrain.get(key))
+      || entities.some(entity => entity !== target && entity.hp > 0 && state.keyOf(entity.position) === key);
+  };
   let point = { ...target.position };
   for (let step = 0; step < (diagonal ? 1 : 2); step++) {
     const next = { x: point.x + stepX, y: point.y + stepY };
-    const key = state.keyOf(next);
     // Не перепрыгиваем через препятствия и существ, не занимаем клетку самого кастера.
-    if (next.x < 0 || next.x >= state.SIZE || next.y < 0 || next.y >= state.HEIGHT
-      || state.obstacles.has(key) || state.terrain.get(key) === 'void' || state.isWater(state.terrain.get(key))
-      || entities.some(entity => entity !== target && entity.hp > 0 && state.keyOf(entity.position) === key)) break;
+    if (blocked(next)) break;
+    // Диагональный шаг допускает обход одного препятствия, но не проход между двумя.
+    if (diagonal && blocked({ x: next.x, y: point.y }) && blocked({ x: point.x, y: next.y })) break;
     point = next;
   }
   return point;

@@ -119,10 +119,7 @@ window.showSpellTooltip = function(icon, spell) {
   };
   const typeName = spell.abilityType === 'weapon-strike' ? 'Атака оружием'
     : spell.abilityType === 'ability' ? 'Способность' : 'Заклинание';
-  const schoolNames = { fire: 'Огонь', water: 'Вода', air: 'Воздух', earth: 'Земля',
-    body: 'Тело', light: 'Свет', dark: 'Тьма' };
-  const schoolLabel = spell.magicSchool ? ` [${schoolNames[spell.magicSchool] ?? spell.magicSchool}]` : '';
-  addLine('Тип', `${typeName}${schoolLabel}`);
+  addLine('Тип', `${typeName}${spell.isShot ? ' [Выстрел]' : ''}`);
   addLine('ОД', spell.apCost);
   const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', dark: 'тьма', physical: 'физический' };
   if (spell.damageBase !== undefined) {
@@ -202,9 +199,7 @@ window.showSpellTooltip = function(icon, spell) {
     : finalRange > spell.range ? '#4ade80' : finalRange < spell.range ? '#ff4d4d' : '';
   addLine('Дальность', `${range} [${spell.modifiable ? 'изменяемая' : 'неизменяемая'}]`, rangeColor);
   const areaLabel = spell.isGlobal ? 'вся карта' : spell.isCone ? `конус D${spell.aoeSize}` : spell.isDiamond ? `ромб D${spell.aoeSize}` : spell.aoeSize === 1 ? '1 клетка' : `квадрат D${spell.aoeSize}`;
-  // Для выстрелов сохраняем отдельную пометку рядом с формой АОЕ.
-  const typeLabel = spell.isShot ? ' [тип: Выстрел]' : '';
-  addLine('АОЕ', `${areaLabel}${typeLabel}`);
+  addLine('АОЕ', areaLabel);
   addLine('Цель', spell.id === 'lake-spirit' ? 'незанятая клетка суши'
     : { any: 'любая', ally: 'союзник', enemy: 'враг', none: 'нет' }[spell.target] ?? 'нет');
   addLine('LOS', spell.noLOS ? 'не требует' : 'требует');

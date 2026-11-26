@@ -1,6 +1,6 @@
 // Реестр и фабрика существ. Шаблоны подключаются из data/creatures/*.js. Счётчики типов приватны; изменяемые данные не разделяются.
-window.BASE_SPELL_CASTS = 5;
-window.BASE_HIT_COUNT = 5;
+window.BASE_SPELL_CASTS = 10;
+window.BASE_HIT_COUNT = 10;
 window.DEFAULT_CREATURE_SOURCE_SIZE = Object.freeze({ width: 72, height: 86 });
 
 // Один раз перед боем: фиксируем уникальные номера 1…N только для персонажей игрока.

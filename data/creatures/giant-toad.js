@@ -3,8 +3,8 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
   name: 'Гигантская жаба', type: 'giant-toad', ai: 'giant-toad',
   level: 6, baseHP: 24, hpPerLevel: 8, baseWP: 12, wpPerLevel: 6, baseAP: 7, baseMP: 3, baseES: 0, baseVS: 0, baseRA: 0,
   baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-  baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
-  baseEarth: 0, baseMind: 0, basePoison: 0,
+  baseAC: 0, basePhysical: 0, baseFire: 1, baseWater: 3, baseAir: -1,
+  baseEarth: 0, baseMind: 0, basePoison: 4,
   attributes: { vit: 4, str: 5, att: 1, int: 0, wis: 0, cha: 0, luc: 0 },
   appearance: {
     sprite: 'assets/map-editor/mobs/giant-toad.png',

@@ -17,17 +17,20 @@ window.CREATURE_TEMPLATES['shadow'] = {
   // Собственные копии заклинаний: параметры существа можно менять независимо.
   spells: [{
     id: 'turn-invisible', name: 'Уйти в невидимость', abilityType: 'spell', magicSchool: 'dark',
-    description: 'Накладывает на заклинателя Невидимость.', effectDescription: 'Невидимость',
+    description: 'Накладывает на заклинателя Невидимость.',
     stateId: 'invisibility', durationBase: 2, durationPerInt: 0, stackable: false,
-    target: 'ally', range: 0, minRange: 0, modifiable: false, noLOS: false,
-    apCost: 3, maxCooldown: 4, maxUsesPerTurn: 1, isAOE: false, aoeSize: 1,
+    apCost: 3, maxUsesPerTurn: 1, maxCooldown: 4,
+    range: 0, minRange: 0, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'ally',
+    effectDescription: 'Невидимость',
     svg: INVISIBILITY.icon
   }, {
-    id: 'spectral-strike', name: 'Спектральный удар', abilityType: 'spell', magicSchool: 'dark',
+    id: 'spectral-strike', name: 'Спектральный удар', abilityType: 'spell', magicSchool: 'dark', isShot: false,
     description: 'Наносит урон тьмой по одиночной цели.',
-    damageType: 'dark', damageBase: 6, damagePerInt: 1, isShot: false,
-    target: 'any', range: 4, minRange: 1, modifiable: false, noLOS: false,
-    apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2, isAOE: false, aoeSize: 1,
+    damageBase: 6, damagePerInt: 1, damageType: 'dark',
+    apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
+    range: 4, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'any',
     svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="#100b20"/><path d="M16 4 H25 V9 H30 V15 H35 V25 H29 V31 H23 V36 H13 V31 H7 V24 H4 V16 H10 V10 H16 Z" fill="#45326c"/><path d="M18 9 H24 V15 H29 V24 H23 V30 H15 V25 H10 V17 H18 Z" fill="#8d70d5"/><path d="M23 10 L13 22 H21 L17 32 L30 18 H22 Z" fill="#e1d4ff"/></svg>`
   }],
   spellPages: [

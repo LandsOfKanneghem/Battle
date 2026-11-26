@@ -17,11 +17,12 @@ window.CREATURE_TEMPLATES.warrior = {
     svg: '<image href="assets/map-editor/mobs/warrior.png" width="40" height="40"/>'
   },
   spells: [{
-    id: 'sword-strike', name: 'Удар мечом', abilityType: 'weapon-strike', baseAccuracy: 95,
-    isShot: false, baseCritChance: 5, stackable: false, target: 'any',
-    apCost: 3, maxCooldown: 0, maxUsesPerTurn: 2,
-    damageType: 'physical', damageBase: 2, damagePerStr: 1,
-    minRange: 1, range: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    id: 'sword-strike', name: 'Удар мечом', abilityType: 'weapon-strike', isShot: false,
+    damageBase: 2, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 5,
+    stackable: false,
+    apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
+    range: 1, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'any',
     iconPath: 'assets/homm2/spell-sword-strike.png',
     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-sword-strike.png" width="64" height="64"/></svg>'
   }],

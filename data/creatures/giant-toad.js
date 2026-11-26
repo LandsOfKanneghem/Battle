@@ -22,13 +22,14 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
   },
   // Собственное умение жабы, независимо от общих школ магии.
   spells: [{
-    id: 'tongue-pull', abilityType: 'weapon-strike', baseAccuracy: 95, magicSchool: null, name: 'Захват языком',
-    isTonguePull: true, stackable: false, target: 'any',
+    id: 'tongue-pull', name: 'Захват языком', abilityType: 'weapon-strike', magicSchool: null,
     description: 'Притягивает языком цель на 2 клетки к себе. Вражеская цель при этом получает физический урон.',
+    damageBase: 4, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95,
+    stackable: false,
+    apCost: 3, maxUsesPerTurn: 1, maxCooldown: 1,
+    range: 6, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    isTonguePull: true, target: 'any',
     effectDescription: 'Притягивает цель на 2 клетки к заклинателю.',
-    damageBase: 4, damagePerStr: 1, damageType: 'physical',
-    range: 6, minRange: 1, modifiable: false, noLOS: false,
-    apCost: 3, maxUsesPerTurn: 1, maxCooldown: 1, isAOE: false, aoeSize: 1,
     iconPath: 'assets/homm2/spell-tongue-pull.png',
     svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 34 Q10 18 24 20 Q36 20 31 8 Q23 1 20 12" fill="none" stroke="#6e203d" stroke-width="9"/><path d="M5 34 Q10 18 24 20 Q36 20 31 8 Q23 1 20 12" fill="none" stroke="#e56991" stroke-width="5" stroke-linecap="round"/></svg>`
   }],

@@ -16,12 +16,13 @@ window.CREATURE_TEMPLATES['nymph'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'water-shot', abilityType: 'spell', magicSchool: 'water', isShot: true, baseAccuracy: 80, baseCritChance: 10,
-    name: 'Водный выстрел', stackable: false, damageBase: 3, damageType: 'water', target: 'any',
+    id: 'water-shot', name: 'Водный выстрел', abilityType: 'spell', magicSchool: 'water', isShot: true,
     description: 'Наносит небольшой урон водой.',
-    range: 4, minRange: 1, modifiable: false, noLOS: false,
+    damageBase: 3, damageType: 'water', baseAccuracy: 80, baseCritChance: 10,
+    stackable: false,
     apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
-    isAOE: false, aoeSize: 1,
+    range: 4, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'any',
     iconPath: 'assets/homm2/spell-water-shot.png',
     svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 30 Q2 22 10 14 Q18 6 28 10 Q36 14 34 24 Q32 34 20 34 Q12 34 8 30 Z" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><path d="M14 22 Q18 18 24 20" fill="none" stroke="#d0f4ff" stroke-width="1.5" opacity=".7"/></svg>`
   }],

@@ -22,10 +22,12 @@ window.CREATURE_TEMPLATES['dragon-turtle'] = {
   },
   // Собственные способности: одинаковые id у других существ не связывают их параметры.
   spells: [{
-    id: 'bite', isShot: false, abilityType: 'weapon-strike', baseAccuracy: 95, magicSchool: null, name: 'Укус черепахи', stackable: false,
-    damageBase: 4, damagePerStr: 1, damageType: 'physical', target: 'any',
-    range: 1, minRange: 1, modifiable: false, noLOS: false,
-    apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0, isAOE: false, aoeSize: 1,
+    id: 'bite', name: 'Укус черепахи', abilityType: 'weapon-strike', magicSchool: null, isShot: false,
+    damageBase: 4, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95,
+    stackable: false,
+    apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
+    range: 1, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+    target: 'any',
     iconPath: 'assets/homm2/spell-bite.png',
     svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 8 Q10 4 14 6 L18 10 Q20 8 22 10 L26 6 Q30 4 32 8 L28 18 L32 28 Q30 32 26 30 L22 26 Q20 28 18 26 L14 30 Q10 32 8 28 L12 18 Z" fill="#c93650" stroke="#ffadb6" stroke-width="2"/><circle cx="16" cy="14" r="2" fill="#fff"/><circle cx="24" cy="14" r="2" fill="#fff"/></svg>`
   }],

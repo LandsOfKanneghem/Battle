@@ -1,4 +1,4 @@
-.map-library { display: flex; flex: 1 1 0; align-items: center; flex-wrap: nowrap; gap: 4px; min-width: min(100%, 344px); max-width: 760px; margin-left: auto; font: 13px/1.3 system-ui, sans-serif; }
+.map-library { display: flex; flex: 1 1 0; align-items: center; flex-wrap: nowrap; gap: 4px; min-width: min(100%, 310px); max-width: 760px; margin-left: auto; font: 13px/1.3 system-ui, sans-serif; }
 .map-library button, .map-library select { box-sizing: border-box; height: 30px; border: 1px solid #82775c; border-radius: 2px; background: #30312e; color: #e8e5dc; font: inherit; }
 .map-library button { flex-shrink: 0; white-space: nowrap; padding: 3px 9px; cursor: pointer; }
 .map-library select { min-width: 100px; max-width: 320px; flex: 1 1 200px; padding: 3px 6px; }
@@ -6,3 +6,5 @@
 .map-library :focus-visible { outline: 2px solid #dfc075; outline-offset: 1px; }
 .map-library [hidden] { display: none !important; }
 #map-library-status { flex: 0 1 180px; min-width: 0; color: #c2b99f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+#map-library-status:empty { display: none; }

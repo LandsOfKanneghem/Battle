@@ -33,7 +33,7 @@ window.CREATURE_TEMPLATES.warrior = {
     description: 'Атака наносит урон оружием только от бонуса Силы, накладывает Увечье на вражескую цель.',
     damageBase: 0, damagePerStr: WARRIOR_SWORD_STRIKE.damagePerStr, damageType: WARRIOR_SWORD_STRIKE.damageType, baseAccuracy: WARRIOR_SWORD_STRIKE.baseAccuracy, baseCritChance: WARRIOR_SWORD_STRIKE.baseCritChance,
     stateId: 'maimed', durationBase: 2, durationPerInt: 0, stackable: false,
-    apCost: WARRIOR_SWORD_STRIKE.apCost, maxUsesPerTurn: WARRIOR_SWORD_STRIKE.maxUsesPerTurn, maxCooldown: 3,
+    apCost: WARRIOR_SWORD_STRIKE.apCost, maxUsesPerTurn: 1, maxCooldown: 3,
     range: WARRIOR_SWORD_STRIKE.range, minRange: WARRIOR_SWORD_STRIKE.minRange, modifiable: WARRIOR_SWORD_STRIKE.modifiable, noLOS: false, isAOE: false, aoeSize: 1,
     target: 'any', isMaimingStrike: true, canCastOnAnyCell: true,
     effectDescription: 'Увечье [враг]',

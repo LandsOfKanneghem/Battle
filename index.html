@@ -7,6 +7,7 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="homm2.css">
+  <link rel="stylesheet" href="mapLibrary.css">
 </head>
 <body>
   <div class="battle-toolbar" role="toolbar" aria-label="Управление картой">
@@ -147,6 +148,7 @@
   <script src="turnQueue.js"></script>
   <script src="undergroundRenderer.js"></script>
   <script src="mapObjects.js"></script>
+  <script src="mapLibrary.js"></script>
   <script src="torchInteractions.js"></script>
   <script src="lighting.js"></script>
   <script src="terrain-renderer.js"></script>
@@ -450,6 +452,11 @@
       if (file) loadBattle(async () => window.startBattleFromMap(JSON.parse(await file.text())));
     });
     window.battleReady = loadBattle(window.loadDefaultBattle);
+    window.MapLibrary.mount({
+      host: document.querySelector('.battle-toolbar'), storageKey: 'battle',
+      isBusy: () => loadMapButton.disabled,
+      onLoad: file => loadBattle(async () => window.startBattleFromMap(JSON.parse(await file.text())))
+    });
     // На мобильном остаток высоты отдаётся полю; длинная панель прокручивается сама.
     new ResizeObserver(([entry]) => {
       document.documentElement.style.setProperty('--panel-height', `${Math.ceil(entry.target.getBoundingClientRect().height)}px`);

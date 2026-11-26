@@ -1,8 +1,9 @@
 {
   "format": "kanneghem-map",
-  "version": 4,
+  "version": 8,
   "width": 12,
   "height": 12,
+  "mapType": "surface",
   "tiles": [
     [
       "grass",
@@ -178,7 +179,7 @@
       "type": "monk",
       "team": "ally",
       "x": 4,
-      "y": 7
+      "y": 9
     },
     {
       "type": "wolf",
@@ -190,19 +191,7 @@
       "type": "wizard",
       "team": "ally",
       "x": 6,
-      "y": 7
-    },
-    {
-      "type": "wolf",
-      "team": "enemy",
-      "x": 6,
-      "y": 3
-    },
-    {
-      "type": "wolf",
-      "team": "enemy",
-      "x": 1,
-      "y": 5
+      "y": 9
     },
     {
       "type": "hill-giant",
@@ -215,6 +204,18 @@
       "team": "ally",
       "x": 5,
       "y": 7
+    },
+    {
+      "type": "black-wolf",
+      "team": "enemy",
+      "x": 5,
+      "y": 3
+    },
+    {
+      "type": "dragon-turtle",
+      "team": "enemy",
+      "x": 1,
+      "y": 5
     }
   ],
   "objects": [
@@ -239,5 +240,179 @@
       "blocking": true,
       "interactive": false
     }
-  ]
+  ],
+  "lighting": {
+    "mode": "absolute",
+    "ambient": 100,
+    "cells": [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  }
 }

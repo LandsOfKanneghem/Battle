@@ -152,12 +152,20 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeContext();if(dialog.open&&!document.querySelector('dialog:modal')){dialog.close();event.preventDefault();event.stopPropagation();}}},true);
   filter.addEventListener('change',()=>{backpackPage=0;hide();gameState.selectedBackpackIndex=null;renderEquipment(shown);});
   for(const [id,delta] of [['backpack-prev',-1],['backpack-next',1]])document.getElementById(id).addEventListener('click',()=>{hide();backpackPage+=delta;renderBackpack(shown);});
-  const toolbar=document.querySelector('.battle-toolbar');
-  const positionBackpack=()=>dialog.style.setProperty('--backpack-top',`${Math.max(72,toolbar.getBoundingClientRect().bottom+16)}px`);
-  new ResizeObserver(positionBackpack).observe(toolbar);
+  const toolbar=document.querySelector('.battle-toolbar'), battlefield=document.getElementById('battlefield');
+  const positionBackpack=()=>{
+    if(!dialog.open)return;
+    const field=battlefield.getBoundingClientRect();
+    const minTop=Math.max(8,toolbar.getBoundingClientRect().bottom+8);
+    dialog.style.setProperty('--backpack-top',`${minTop}px`);
+    const width=dialog.offsetWidth,height=dialog.offsetHeight;
+    dialog.style.left=`${Math.max(8,Math.min(field.left+(field.width-width)/2,innerWidth-width-8))}px`;
+    dialog.style.top=`${Math.max(minTop,Math.min(field.top+(field.height-height)/2,innerHeight-height-8))}px`;
+  };
+  const observer=new ResizeObserver(positionBackpack);observer.observe(toolbar);observer.observe(battlefield);
   window.addEventListener('resize',positionBackpack);
-  positionBackpack();
-  document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);if(!dialog.open)dialog.show();});
+  window.addEventListener('scroll',positionBackpack,{capture:true,passive:true});
+  document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);if(!dialog.open)dialog.show();positionBackpack();});
   document.getElementById('close-backpack').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',hide);
   const entity=gameState.entities.find(e=>e.id===(gameState.selectedEntityId??gameState.hoveredEntityId??gameState.activeEntityId));

@@ -3,9 +3,11 @@
   const slots=document.getElementById('equipment-slots');
   const dialog=document.getElementById('backpack-dialog');
   const order=['gloves','head','boots','rightHand','chest','leftHand','belt','other1','other2'];
-  const allowed={head:'шлем, шляпа',boots:'ботинки, сапоги',gloves:'перчатки',belt:'пояс',chest:'нагрудная броня, кольчуга, мантия',rightHand:'одноручное оружие, двуручное оружие',leftHand:'щит, двуручное оружие',other1:'кольцо, амулет, плащ',other2:'кольцо, амулет, плащ'};
+  const allowed={head:'шлем, шляпа',boots:'ботинки, сапоги',gloves:'перчатки',belt:'пояс',chest:'нагрудная броня, кольчуга, мантия',rightHand:'одноручное оружие, двуручное оружие',leftHand:'щит, двуручное оружие',other1:'кольцо, амулет, плащ',other2:'кольцо, амулет, плащ',consumables:'зелье'};
   const outlines={head:'head',boots:'boots',gloves:'gloves',belt:'belt',chest:'chest',rightHand:'sword',leftHand:'shield',other1:'ring',other2:'ring'};
-  let shown=null, tooltip=null;
+  let shown=null, tooltip=null, contextMenu=null;
+  const consumableSlots=document.getElementById('consumable-slots');
+  const closeContext=()=>{contextMenu?.remove();contextMenu=null;};
   const bagSlots=document.getElementById('backpack-slots');
   const backpackSize=100;
   const filter=document.getElementById('backpack-filter');
@@ -16,12 +18,12 @@
     if(type==='other')return item.allowedSlots?.some(slot=>slot==='other1'||slot==='other2');
     return item.allowedSlots?.includes(type);
   };
-  const modifierNames={maxHP:'Макс. ОЗ',maxWP:'Макс. WP',mp:'ОП',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума'};
+  const modifierNames={maxHP:'Макс. ОЗ',maxWP:'Макс. WP',mp:'ОП',maxAP:'ОД',consumableSlots:'Слот расходников',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума'};
   const hide=()=>{tooltip?.remove();tooltip=null;};
   function show(anchor,item,slot,entity){
     hide();
     tooltip=document.createElement('div');tooltip.className='spell-tooltip equipment-tooltip';tooltip.setAttribute('role','tooltip');
-    const heading=document.createElement('h3');heading.className='spell-title';heading.textContent=item?.name??window.EQUIPMENT_SLOTS[slot];tooltip.append(heading);
+    const heading=document.createElement('h3');heading.className='spell-title';heading.textContent=item?.name??window.EQUIPMENT_SLOTS[slot]??'Расходник';tooltip.append(heading);
     const line=(label,value)=>{const p=document.createElement('p');p.textContent=`${label}: ${value}`;tooltip.append(p);};
     if(!item)line('Слот для',allowed[slot]);
     else if(item.attack){
@@ -34,12 +36,18 @@
       line('AC',window.getArmorSourceAC(item));line('Прочность',item.indestructible?'Несокрушимый':`${item.durability} / ${item.maxDurability}`);
       if(window.isArmorBroken(item))line('Состояние','Сломано');
     }
+    const damageNames={physical:'физический',poison:'яд',fire:'огонь',water:'вода',earth:'земля',air:'воздух',light:'свет',dark:'тьма'};
+    for(const part of item?.attack?.bonusDamage??[])line('Дополнительный урон',`+${part.damage} ${damageNames[part.damageType]??part.damageType}`);
+    if(item?.consumable){line('Лечение',`+${item.consumable.heal} ОЗ`);line('Применение','2 ОД');}
+    if(item?.consumableSlots!==undefined)line('Слоты расходников',item.consumableSlots);
     for(const [key,value] of Object.entries(item?.modifiers??{})) { const effective=item.ac!==undefined&&window.isArmorBroken(item)?Math.floor(value*.25):value;line(modifierNames[key]??key,`${effective>=0?'+':''}${effective}`); }
     (anchor.closest('dialog[open]')??document.body).append(tooltip);
     const r=anchor.getBoundingClientRect();tooltip.style.left=`${Math.max(8,Math.min(r.left,innerWidth-tooltip.offsetWidth-8))}px`;tooltip.style.top=`${Math.max(8,Math.min(r.bottom+8,innerHeight-tooltip.offsetHeight-8))}px`;
   }
   window.renderEquipment=function(entity){
+    if(shown?.id!==entity?.id)closeContext();
     shown=entity;
+    renderConsumables(entity);
     renderBackpack(entity);
     const equipment=entity?.Equipment??{};
     const key=JSON.stringify([entity?.id,equipment,gameState.selectedBackpackIndex,window.canManageEquipment(entity)]);
@@ -83,6 +91,11 @@
         cell.addEventListener('mouseleave',hide);cell.addEventListener('blur',hide);
         cell.addEventListener('click',()=>{gameState.selectedBackpackIndex=gameState.selectedBackpackIndex===index?null:index;renderEquipment(shown);});
         cell.addEventListener('dblclick',()=>{
+          if(item.consumable){
+            const count=window.getConsumableSlotCount(shown);if(!count)return;
+            let slot=shown.consumables.findIndex((value,index)=>!value&&index<count);if(slot<0)slot=0;
+            window.changeConsumable(shown,index,slot);return;
+          }
           const destination=item.allowedSlots.find(slot=>!shown?.Equipment?.[slot])??item.allowedSlots[0];
           window.changeEquipment(shown,index,destination);
         });
@@ -90,6 +103,33 @@
       bagSlots.append(cell);
     }
   }
+  function renderConsumables(entity){
+    const capacity=window.getConsumableSlotCount(entity),items=entity?.consumables??[];
+    const key=JSON.stringify([entity?.id,capacity,items,entity?.ap,gameState.activeEntityId,gameState.selectedBackpackIndex,window.canManageEquipment(entity)]);
+    if(consumableSlots.dataset.key===key)return;
+    consumableSlots.dataset.key=key;consumableSlots.replaceChildren();
+    for(let slot=0;slot<6;slot++){
+      const item=items[slot],locked=slot>=capacity,cell=document.createElement('button');
+      cell.type='button';cell.className=`equipment-slot consumable-slot${locked?' locked':''}`;cell.dataset.consumableSlot=slot;
+      cell.setAttribute('aria-label',locked?'Недоступный слот расходника':item?.name??'Свободный слот расходника');
+      cell.setAttribute('aria-disabled',String(locked));
+      if(item){const image=document.createElement('img');image.src=item.iconPath;image.alt='';cell.append(image);}
+      cell.classList.toggle('equipment-compatible',!locked&&!!gameState.backpack?.[gameState.selectedBackpackIndex]?.consumable);
+      cell.addEventListener('click',()=>{if(!locked)window.changeConsumable(shown,gameState.selectedBackpackIndex??null,slot);});
+      cell.addEventListener('mouseenter',()=>{if(!locked)show(cell,item,'consumables',shown);});cell.addEventListener('mouseleave',hide);
+      cell.addEventListener('contextmenu',event=>{
+        event.preventDefault();closeContext();hide();if(locked||!item)return;
+        const owner=shown;contextMenu=document.createElement('div');contextMenu.className='consumable-menu';contextMenu.setAttribute('role','menu');
+        const use=document.createElement('button');use.type='button';use.textContent='Применить';use.setAttribute('role','menuitem');use.disabled=!window.canUseConsumable(owner,slot);
+        use.addEventListener('click',()=>{window.useConsumable(owner,slot);closeContext();});contextMenu.append(use);document.body.append(contextMenu);
+        contextMenu.style.left=`${Math.max(0,Math.min(event.clientX,innerWidth-contextMenu.offsetWidth-8))}px`;
+        contextMenu.style.top=`${Math.max(0,Math.min(event.clientY,innerHeight-contextMenu.offsetHeight-8))}px`;
+      });
+      consumableSlots.append(cell);
+    }
+  }
+  document.addEventListener('pointerdown',event=>{if(!event.target.closest('.consumable-menu'))closeContext();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeContext();});
   filter.addEventListener('change',()=>{hide();gameState.selectedBackpackIndex=null;renderEquipment(shown);});
   document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);dialog.showModal();});
   document.getElementById('close-backpack').addEventListener('click',()=>dialog.close());

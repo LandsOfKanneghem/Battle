@@ -102,6 +102,7 @@
     </aside>
     <aside class="equipment-column" aria-label="Экипировка">
       <section id="equipment-panel" aria-label="Экипировка персонажа"><div id="equipment-slots"></div></section>
+      <div id="consumable-slots" aria-label="Расходники"></div>
       <button id="open-backpack" type="button" aria-haspopup="dialog" aria-controls="backpack-dialog">Рюкзак</button>
     </aside>
   </main>
@@ -112,7 +113,7 @@
       <option value="gloves">Перчатки</option><option value="belt">Пояс</option>
       <option value="chest">Грудь</option>
       <option value="melee">Ближнее оружие</option><option value="ranged">Дальнее оружие</option>
-      <option value="leftHand">Щит</option><option value="other">Прочее</option>
+      <option value="leftHand">Щит</option><option value="other">Прочее</option><option value="consumables">Расходники</option>
     </select>
     <button id="close-backpack" type="button" aria-label="Закрыть рюкзак">×</button>
     <div id="backpack-slots"></div>
@@ -165,6 +166,7 @@
   <script src="data/equipment/melee-weapons.js"></script>
   <script src="data/equipment/ranged-weapons.js"></script>
   <script src="data/equipment/accessories.js"></script>
+  <script src="data/equipment/consumables.js"></script>
   <script src="data/creatures.js"></script>
   <script src="data/allies/wizard.js"></script>
   <script src="data/allies/monk.js"></script>

@@ -379,14 +379,15 @@ window.damageBreakdown = function(spell, entity, attacker = null, detailed = fal
   const enchantment = window.getStoneEnchantment(spell, attacker);
   const hasModifier = spell.projectileType === 'sling-stone' && (attacker?.appliedEffects ?? [])
     .some(effect => effect.isEnchantStones && effect.duration > 0 && !effect.suppressed);
-  const parts = [{ ...spell, kind: 'base' }];
+  const parts = [{ ...spell, kind: 'base' }, ...(spell.bonusDamage??[]).map(part=>({...part,kind:'modifier'}))];
   if (hasModifier) parts.push({ damage: enchantment.damage, damageType: 'earth', kind: 'modifier' });
   const contributions = [];
   let remainingES = getCurrentES(entity), absorbed = 0, hpDamage = 0;
   for (const part of parts) {
     const armor = part.damageType === 'physical' && part.abilityType === 'weapon-strike'
       ? getEffectiveStat(entity, 'ac') : 0;
-    const resistance = getEffectiveStat(entity, part.damageType) + armor;
+    const immune=part.damageType==='water'&&hasActiveState(entity,'water-entity');
+    const resistance = immune ? part.damage : getEffectiveStat(entity, part.damageType) + armor;
     const afterResistance = Math.max(0, part.damage - resistance);
     const blocked = isMagicalDamage(part.damageType) ? Math.min(remainingES, afterResistance) : 0;
     remainingES -= blocked;

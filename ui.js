@@ -154,6 +154,7 @@ window.showSpellTooltip = function(icon, spell) {
       : critChance > baseCritChance ? '#4ade80' : '#ff4d4d';
     addLine('Крит шанс', `${critChance}%`, color);
   }
+  for (const part of spell.bonusDamage??[]) addLine('Дополнительный урон', `${part.damage} ${elements[part.damageType]??part.damageType}`, '#4ade80');
   const stoneBonus = window.getStoneEnchantment(spell, caster).damage;
   if (!window.shiftHeld && stoneBonus > 0) addLine('Дополнительный урон', `${stoneBonus} земля`, '#4ade80');
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);

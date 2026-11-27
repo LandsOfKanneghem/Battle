@@ -9,6 +9,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/worn-belt.png",
     "modifiers": {"maxHP": 1},
+    "consumableSlots": 1,
   },
   "rope-belt": {
     "id": "rope-belt",
@@ -19,6 +20,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/rope-belt.png",
     "modifiers": {"maxWP": 1},
+    "consumableSlots": 2,
   },
   "broad-belt": {
     "id": "broad-belt",
@@ -29,6 +31,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/broad-belt.png",
     "modifiers": {"str": 1},
+    "consumableSlots": 3,
   },
   "utility-belt": {
     "id": "utility-belt",
@@ -39,6 +42,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/utility-belt.png",
     "modifiers": {"maxHP": 2},
+    "consumableSlots": 4,
   },
   "hunter-belt": {
     "id": "hunter-belt",
@@ -49,5 +53,14 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/hunter-belt.png",
     "modifiers": {"vit": 1},
+    "consumableSlots": 5,
+  },
+  "starter-belt": {
+    "id": "starter-belt",
+    "name": "Простой пояс",
+    "itemType": "Пояс",
+    "allowedSlots": ["belt"],
+    "iconPath": "assets/equipment/starter/worn-belt.png",
+    "consumableSlots": 2,
   },
 });

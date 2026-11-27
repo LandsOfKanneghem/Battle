@@ -34,7 +34,7 @@ body {
 }
 .battle-log {
   grid-area: logs; align-self: start; display: flex; flex-direction: column;
-  width: 220px; height: 582px; margin-top: 2px; margin-right: 0;
+  width: 220px; height: 582px; margin-top: 0; margin-right: 0;
   border: 2px solid #555; background: #fff; color: #171717;
   font: 14px/1.4 system-ui, sans-serif; min-width: 0;
 }
@@ -63,7 +63,7 @@ body {
   grid-template-areas: 'queue field';
   align-items: start;
   grid-area: arena; width: auto; max-width: 100%; align-self: start; overflow-x: auto;
-  gap: var(--queue-gap); padding: 2px 0 2px 2px; border: 0; background: transparent; box-shadow: none;
+  gap: var(--queue-gap); padding: 0 0 0 2px; border: 0; background: transparent; box-shadow: none;
 }
 #battlefield {
   position: relative; overflow: hidden;
@@ -137,7 +137,7 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
   grid-area: panel; width: var(--panel-width); align-self: start;
   display: grid; grid-template-columns: 100%;
   grid-template-rows: minmax(0, 1fr) max-content max-content calc(4 * var(--spell-slot-size));
-  height: 582px; margin-top: 2px;
+  height: 582px; margin-top: 0;
   max-height: none; overflow: visible; padding: 0;
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }
@@ -362,3 +362,11 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .equipment-compatible { border-color: #6ee782; }
 
 #backpack-filter { position: absolute; top: 3px; left: 8px; height: 24px; max-width: calc(100% - 48px); width: 260px; padding: 0 6px; border: 1px solid #b99a5b; border-radius: 0; background: #3b332b; color: #ead7af; font: 13px Georgia,serif; }
+
+#consumable-slots { display: grid; grid-template-columns: repeat(3,var(--spell-slot-size)); gap: 0; margin-top: 4px; }
+.consumable-slot.locked { filter: grayscale(1); opacity: .5; }
+.consumable-slot.locked::after { content: '×'; color: #999; font-size: 22px; }
+.consumable-slot img { display:block; width: var(--spell-image-size); height: var(--spell-image-size); image-rendering:pixelated; }
+.consumable-menu { position:fixed; z-index:1100; padding:4px; border:2px ridge #baa168; background:#29231e; }
+.consumable-menu button { display:block; padding:6px 18px; border:0; background:#66503c; color:#ead7af; font:14px Georgia,serif; }
+.consumable-menu button:disabled { color:#948674; }

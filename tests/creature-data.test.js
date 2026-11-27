@@ -427,7 +427,7 @@ test('hero equipment owns armor sources, weapons and independent battle durabili
   ctx.wearArmor(a);assert.equal(a.Equipment.chest.durability,9);assert.equal(b.Equipment.chest.durability,10);
   assert.equal(ctx.CREATURE_TEMPLATES.warrior.Equipment.chest.durability,undefined);
   for(const type of ['wizard','monk','druid']){
-    const hero=ctx.createCreature(type,{x:1,y:1});assert(Object.values(hero.Equipment).every(item=>item===null));assert.equal(ctx.getEffectiveStat(hero,'ac'),0);
+    const hero=ctx.createCreature(type,{x:1,y:1});assert(Object.entries(hero.Equipment).every(([slot,item])=>slot==='belt'?item.id==='starter-belt':item===null));assert.equal(ctx.getConsumableSlotCount(hero),2);assert.equal(ctx.getEffectiveStat(hero,'ac'),0);
   }
   assert.equal(ctx.CREATURE_TEMPLATES.archer.Equipment.rightHand.hands,2);
   assert.equal(ctx.CREATURE_TEMPLATES.archer.Equipment.leftHand,null);

@@ -10,7 +10,7 @@ window.CREATURE_TEMPLATES['wizard'] = {
     head: null,
     boots: null,
     gloves: null,
-    belt: null,
+    belt: window.EQUIPMENT_ITEMS['starter-belt'],
     chest: null,
     rightHand: null,
     leftHand: null,

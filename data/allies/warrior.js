@@ -13,7 +13,7 @@ window.CREATURE_TEMPLATES.warrior = {
     head: null,
     boots: null,
     gloves: null,
-    belt: null,
+    belt: window.EQUIPMENT_ITEMS['starter-belt'],
     chest: window.EQUIPMENT_ITEMS['body-armor'],
     rightHand: window.EQUIPMENT_ITEMS['warrior-weapon'],
     leftHand: window.EQUIPMENT_ITEMS['shield'],

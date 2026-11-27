@@ -1,5 +1,6 @@
 window.EQUIPMENT_ITEMS = {};
 window.STARTER_BACKPACK_IDS = ["patched-cap", "apprentice-hood", "padded-coif", "leather-cap", "iron-kettle-helm", "worn-shoes", "ankle-boots", "adventurer-boots", "wrapped-shoes", "fur-boots", "fingerless-gloves", "cloth-gloves", "work-gloves", "padded-mitts", "reinforced-gloves", "worn-belt", "rope-belt", "broad-belt", "utility-belt", "hunter-belt", "patched-tunic", "quilted-gambeson", "leather-vest", "apprentice-robe", "short-chainmail", "iron-dagger", "worn-shortsword", "woodcutter-axe", "simple-sling", "shortbow", "wood-buckler", "wicker-shield", "plank-shield", "hide-shield", "iron-rim-shield", "copper-ring", "wood-beads", "green-stone-ring", "bone-pendant", "cloth-charm", "patched-cloak", "copper-brooch", "green-cape", "brass-medallion", "blue-pebble-ring"];
+window.STARTER_BACKPACK_IDS.push("sun-amulet", "wind-ring", "potion-holder", "toxic-dagger", "ember-sword", "frost-bow", "earth-sling", "healing-potion", "healing-potion", "healing-potion", "healing-potion", "healing-potion");
 // Экипировка копируется на каждый бой; предмет брони и источник AC — один объект.
 window.EQUIPMENT_SLOTS = Object.freeze({head:'Голова',boots:'Обувь',gloves:'Перчатки',belt:'Пояс',chest:'Нагрудник',rightHand:'Правая рука',leftHand:'Левая рука',other1:'Прочее 1',other2:'Прочее 2'});
 window.createEquipment = function(definition = {}) {
@@ -7,7 +8,8 @@ window.createEquipment = function(definition = {}) {
     const source = definition?.[slot];
     if (!source) return [slot,null];
     const item = {...source};
-    if (item.attack) item.attack = {...item.attack};
+    if (item.attack) item.attack = {...item.attack, ...(item.attack.bonusDamage ? {bonusDamage:item.attack.bonusDamage.map(part=>({...part}))} : {})};
+    if (item.consumable) item.consumable={...item.consumable};
     if (item.modifiers) item.modifiers = {...item.modifiers};
     if (item.allowedSlots) item.allowedSlots = [...item.allowedSlots];
     if (item.ac !== undefined) {
@@ -23,7 +25,7 @@ window.equipmentSpellDefinitions = function(template, equipment, defaults) {
   if (weapon) definitions.push(weapon);
   return definitions.map(spell => {
     if (!weapon || (!spell.isMaimingStrike && !spell.isCharge)) return spell;
-    const properties = Object.fromEntries(['damagePerStr','damageType','baseAccuracy','baseCritChance','isShot'].map(key => [key,weapon[key]]));
+    const properties = Object.fromEntries(['damagePerStr','damageType','baseAccuracy','baseCritChance','isShot','bonusDamage'].map(key => [key,weapon[key]]));
     return {...spell,...properties,damageBase:spell.isMaimingStrike ? 0 : weapon.damageBase,
       apCost:weapon.apCost+(spell.isCharge ? 1 : 0),
       ...(spell.isMaimingStrike ? {range:weapon.range,minRange:weapon.minRange,modifiable:weapon.modifiable} : {})};
@@ -87,10 +89,43 @@ window.changeEquipment = function(entity, index, slot) {
   else {entity.Equipment[slot]=null;store(old);}
   if(item?.hands===2&&slot==='rightHand'){store(entity.Equipment.leftHand);entity.Equipment.leftHand=null;}
   if(item&&slot==='leftHand'&&entity.Equipment.rightHand?.hands===2){store(entity.Equipment.rightHand);entity.Equipment.rightHand=null;}
+  window.normalizeConsumableSlots(entity);
   entity.armorSources=Object.values(entity.Equipment).filter(item=>item?.ac!==undefined);
   window.rebuildEquipmentSpells(entity);
   window.recalculateStateStats(entity);
   state.preparedSpellId=null;state.selectedBackpackIndex=null;
   window.clearHighlight?.();window.renderSpellPanel?.(false);window.updatePanel?.();
   return true;
+};
+
+window.getConsumableSlotCount = entity => Math.max(0,Math.min(6,
+  (entity?.Equipment?.belt?.consumableSlots??0)+window.getEquipmentBonus(entity,'consumableSlots')));
+window.normalizeConsumableSlots = function(entity){
+  entity.consumables??=Array(6).fill(null);
+  const capacity=window.getConsumableSlotCount(entity),bag=window.gameState.backpack;
+  for(let slot=capacity;slot<6;slot++)if(entity.consumables[slot]){
+    let free=bag.indexOf(null);if(free<0)free=bag.length;
+    bag[free]=entity.consumables[slot];entity.consumables[slot]=null;
+  }
+};
+window.changeConsumable = function(entity,index,slot){
+  if(!window.canManageEquipment(entity)||!Number.isInteger(slot)||slot<0||slot>=window.getConsumableSlotCount(entity))return false;
+  entity.consumables??=Array(6).fill(null);
+  const bag=window.gameState.backpack,item=index===null?null:bag[index],old=entity.consumables[slot];
+  if(index!==null&&!item?.consumable)return false;
+  if(!item&&!old)return false;
+  if(item){bag[index]=old??null;entity.consumables[slot]=item;}
+  else {let free=bag.indexOf(null);if(free<0)free=bag.length;bag[free]=old;entity.consumables[slot]=null;}
+  window.gameState.selectedBackpackIndex=null;window.updatePanel?.();return true;
+};
+window.canUseConsumable = (entity,slot) => window.canManageEquipment(entity)
+  && entity.id===window.gameState.activeEntityId && entity.ap>=2 && !window.isFrozen(entity)
+  && slot>=0 && slot<window.getConsumableSlotCount(entity) && !!entity.consumables?.[slot]?.consumable;
+window.useConsumable = function(entity,slot){
+  if(!window.canUseConsumable(entity,slot))return false;
+  const item=entity.consumables[slot];
+  entity.ap-=2;entity.consumables[slot]=null;
+  window.battleLog?.cast(entity,{name:item.name,target:'ally'},entity);
+  if(item.consumable.heal)window.healEntity(entity,item.consumable.heal,entity);
+  window.updatePanel?.();return true;
 };

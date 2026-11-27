@@ -100,4 +100,28 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "iconPath": "assets/equipment/starter/blue-pebble-ring.png",
     "modifiers": {"water": 1},
   },
+  "sun-amulet": {
+    "id": "sun-amulet",
+    "name": "Амулет действия",
+    "itemType": "Прочее",
+    "allowedSlots": ["other1", "other2"],
+    "iconPath": "assets/equipment/sun-amulet.png",
+    "modifiers": {"maxAP": 1},
+  },
+  "wind-ring": {
+    "id": "wind-ring",
+    "name": "Кольцо подвижности",
+    "itemType": "Прочее",
+    "allowedSlots": ["other1", "other2"],
+    "iconPath": "assets/equipment/wind-ring.png",
+    "modifiers": {"mp": 1},
+  },
+  "potion-holder": {
+    "id": "potion-holder",
+    "name": "Подсумок алхимика",
+    "itemType": "Прочее",
+    "allowedSlots": ["other1", "other2"],
+    "iconPath": "assets/equipment/potion-holder.png",
+    "modifiers": {"consumableSlots": 1},
+  },
 });

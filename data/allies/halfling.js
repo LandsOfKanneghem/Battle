@@ -12,7 +12,7 @@ window.CREATURE_TEMPLATES.halfling = {
     head: null,
     boots: null,
     gloves: null,
-    belt: null,
+    belt: window.EQUIPMENT_ITEMS['starter-belt'],
     chest: window.EQUIPMENT_ITEMS['lightweight-chest-protector'],
     rightHand: window.EQUIPMENT_ITEMS['halfling-weapon'],
     leftHand: null,

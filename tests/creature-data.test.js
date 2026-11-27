@@ -19,6 +19,39 @@ function setup() {
   return context;
 }
 
+test('map loadouts replace defaults before calculating stats, attacks and initial snapshots', () => {
+  const ctx = setup();
+  vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
+  const equipment = Object.fromEntries(Object.keys(ctx.EQUIPMENT_SLOTS).map(slot => [slot, null]));
+  Object.assign(equipment, { rightHand: 'noon-blade', belt: 'hunter-belt', other1: 'sun-amulet', other2: 'wind-ring', chest: 'body-armor' });
+  const loadout = { equipment, consumables: ['healing-potion', 'healing-potion', 'bandages', null, null, null] };
+  const first = ctx.createCreature('warrior', { x: 1, y: 1 }, loadout);
+  const second = ctx.createCreature('warrior', { x: 2, y: 1 }, loadout);
+  assert.equal(first.Equipment.rightHand.id, 'noon-blade');
+  assert.equal(first.Equipment.leftHand, null, 'removed default shield does not reappear');
+  assert.equal(ctx.getEffectiveStat(first, 'ac'), 4);
+  assert.equal(first.maxAP, 7); assert.equal(first.ap, 7);
+  assert.equal(first.maxMP, 5); assert.equal(first.mp, 5);
+  assert.equal(first.initialStats.maxAP, 7);
+  const attack = first.availableSpells.find(spell => spell.fromEquipment);
+  assert.equal(attack.id, 'noon-blade-attack'); assert.equal(attack.damageBase, 5);
+  assert.equal(first.availableSpells.find(spell => spell.isCharge).baseAccuracy, 100);
+  assert.equal(first.consumables[2].id, 'bandages');
+  assert.notEqual(first.consumables[0], first.consumables[1]);
+  assert.notEqual(first.consumables[0], second.consumables[0]);
+  ctx.wearArmor(first);
+  assert.equal(first.Equipment.chest.durability, 9);
+  assert.equal(second.Equipment.chest.durability, 10);
+  assert.equal(ctx.EQUIPMENT_ITEMS['body-armor'].durability, undefined);
+  const naked = ctx.createCreature('warrior', { x: 3, y: 1 }, { equipment: {} });
+  assert(Object.values(naked.Equipment).every(item => item === null));
+  assert.equal(ctx.getEffectiveStat(naked, 'ac'), 0);
+  assert(!naked.availableSpells.some(spell => spell.fromEquipment));
+  const mage = ctx.createCreature('wizard', { x: 4, y: 1 }, loadout);
+  assert(mage.availableSpells.some(spell => spell.fromEquipment && spell.id === 'noon-blade-attack'));
+  assert(mage.spellPages.every(page => page.length === 20));
+});
+
 test('every creature template file is connected to the game', () => {
   for (const directory of ['data/creatures', 'data/allies']) {
     for (const file of fs.readdirSync(path.join(root, directory)).filter(file => file.endsWith('.js'))) {

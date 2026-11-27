@@ -8,7 +8,7 @@
 
   window.validateBattleMap = function(data) {
     const state = window.gameState;
-    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7, 8].includes(data.version)) {
+    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7, 8, 9].includes(data.version)) {
       throw new Error('Неподдерживаемый формат или версия карты.');
     }
     if (data.width !== state.SIZE || data.height !== state.HEIGHT) throw new Error('Размер карты должен быть 12×12.');
@@ -58,7 +58,8 @@
       const team = data.version >= 4 ? mob.team : teamOf(window.CREATURE_TEMPLATES[mob.type]);
       if (!['ally', 'enemy'].includes(team) || (['wizard', 'monk', 'warrior', 'archer', 'halfling', 'druid'].includes(mob.type) && team !== 'ally'))
         throw new Error('Неверная сторона существа.');
-      return { type: mob.type, team, x: mob.x, y: mob.y };
+      return { type: mob.type, team, x: mob.x, y: mob.y,
+        ...window.MapEquipment.read({ ...mob, team }, window.EQUIPMENT_ITEMS) };
     });
     const normalizedObjects = window.MapObjects.readObjects(objects, { mapType, tiles: content.tiles }, normalizedMobs, data.version);
     const lighting = window.BattleLighting.read(content.lighting);
@@ -178,7 +179,7 @@
     }
     window.refreshTorchLighting();
     for (const mob of map.mobs) {
-      const creature = window.createCreature(mob.type, mob);
+      const creature = window.createCreature(mob.type, mob, mob);
       creature.team = mob.team;
       if (mob.team === 'ally') delete creature.ai;
       state.entities.push(creature);

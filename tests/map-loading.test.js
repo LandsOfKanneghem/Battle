@@ -10,7 +10,7 @@ function setup() {
   const ctx = { document: { getElementById: () => ({}), createElement: () => ({}) }, setTimeout() {} };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const file of ['gameState.js', 'mapObjects.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
+  for (const file of ['gameState.js', 'mapObjects.js', 'mapEquipment.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
   }
   ctx.CREATURE_TEMPLATES = { wizard: { type: 'wizard' }, wolf: { type: 'wolf' } };
@@ -28,6 +28,45 @@ function fixture(mapType = 'surface') {
   if (mapType === 'underground') map.wallStyles = Array.from({ length: 12 }, () => Array(12).fill(null));
   return map;
 }
+
+test('v9 hero loadouts are validated and copied before replacing combat; old heroes retain defaults', () => {
+  const ctx = setup();
+  ctx.CREATURE_TEMPLATES.warrior = { type: 'warrior' };
+  ctx.EQUIPMENT_ITEMS = {
+    belt: { allowedSlots: ['belt'], consumableSlots: 2 },
+    sword: { allowedSlots: ['rightHand'], hands: 1 },
+    bow: { allowedSlots: ['rightHand'], hands: 2 },
+    shield: { allowedSlots: ['leftHand'] },
+    potion: { allowedSlots: ['consumables'], consumable: { heal: 10 } }
+  };
+  const data = { ...fixture(), version: 9 };
+  data.mobs = [{ type: 'warrior', team: 'ally', x: 2, y: 3,
+    equipment: { belt: 'belt', rightHand: 'sword' },
+    consumables: ['potion', 'potion', null, null, null, null] }];
+  const normalized = ctx.validateBattleMap(data).mobs[0];
+  assert.equal(normalized.equipment.rightHand, 'sword');
+  assert.equal(normalized.equipment.chest, null);
+  assert.equal(normalized.consumables[0], 'potion');
+  normalized.equipment.rightHand = null;
+  normalized.consumables[0] = null;
+  assert.equal(data.mobs[0].equipment.rightHand, 'sword');
+  assert.equal(data.mobs[0].consumables[0], 'potion');
+  const entities = ctx.gameState.entities;
+  for (const change of [
+    m => { m.equipment.rightHand = 'unknown-item'; },
+    m => { m.equipment.head = 'sword'; },
+    m => { m.equipment.rightHand = 'bow'; m.equipment.leftHand = 'shield'; },
+    m => { m.consumables[2] = 'potion'; },
+    m => { m.type = 'wolf'; }
+  ]) {
+    const invalid = plain(data);
+    change(invalid.mobs[0]);
+    assert.throws(() => ctx.validateBattleMap(invalid));
+    assert.equal(ctx.gameState.entities, entities);
+  }
+  delete data.mobs[0].equipment; delete data.mobs[0].consumables;
+  assert.equal(ctx.validateBattleMap(data).mobs[0].equipment, undefined);
+});
 
 test('load a version 6 underground with both floor materials and mixed wall styles', () => {
   const ctx = setup(), data = fixture('underground');

@@ -53,7 +53,7 @@ window.captureInitialStats = function(creature) {
 
   const typeCounters = new Map();
   window.resetCreatureCounters = () => typeCounters.clear();
-  window.createCreature = function(templateId, position) {
+  window.createCreature = function(templateId, position, loadout = {}) {
     if (!Object.hasOwn(CREATURE_TEMPLATES, templateId)) throw new Error(`Неизвестный шаблон существа: ${templateId}`);
     const template = CREATURE_TEMPLATES[templateId];
     const next = (typeCounters.get(template.type) ?? 0) + 1;
@@ -68,7 +68,11 @@ window.captureInitialStats = function(creature) {
     const level = template.level ?? 1;
     const maxHP = template.baseHP + template.hpPerLevel * (level + attributes.vit);
     const maxWP = template.baseWP + template.wpPerLevel * (level + attributes.cha);
-    const Equipment = window.createEquipment(template.Equipment);
+    const equipmentDefinition = loadout.equipment === undefined ? template.Equipment
+      : Object.fromEntries(Object.entries(loadout.equipment).map(([slot, id]) => [slot, id === null ? null : window.EQUIPMENT_ITEMS[id]]));
+    const Equipment = window.createEquipment(equipmentDefinition);
+    const consumables = (loadout.consumables ?? Array(6).fill(null))
+      .map(id => id === null ? null : window.createEquipmentItem(window.EQUIPMENT_ITEMS[id]));
     // Каждый источник получает отдельную полную прочность на новый бой.
     const armorSources = template.Equipment ? Object.values(Equipment).filter(item => item?.ac !== undefined) : (template.armorSources ?? ((template.baseAC ?? 0) > 0
       ? [{ id: 'armor', name: 'Броня', ac: template.baseAC, maxDurability: 10 }] : []))
@@ -78,7 +82,7 @@ window.captureInitialStats = function(creature) {
           maxDurability, durability: maxDurability };
       });
     const creature = {
-      id, name: template.name, type: template.type, Equipment, consumables: Array(6).fill(null),
+      id, name: template.name, type: template.type, Equipment, consumables,
       level, baseHP: template.baseHP, hpPerLevel: template.hpPerLevel, hp: maxHP, maxHP,
       baseWP: template.baseWP, wpPerLevel: template.wpPerLevel, wp: maxWP, maxWP,
       baseAP: template.baseAP, ap: template.baseAP + wisBonus, maxAP: template.baseAP + wisBonus,

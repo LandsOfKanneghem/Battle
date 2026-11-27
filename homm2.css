@@ -353,8 +353,7 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .equipment-tooltip { padding: 8px; }
 .equipment-tooltip .spell-title { margin: 0 0 8px; }
 #open-backpack { margin: 0; width: 100%; border: 2px outset #b8a16a; border-radius: 0; padding: 6px; background: linear-gradient(#985e40, #773b29 48%, #4d201d 49%, #6a3325); color: #f0dfad; font: bold 14px Georgia,serif; }
-#backpack-dialog { box-sizing: border-box; width: max-content; max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); margin: auto; padding: 32px 8px 8px; overflow: auto; background: #3b332b; border: 3px ridge #baa168; color: #ead7af; }
-#backpack-dialog::backdrop { background: #0008; }
+#backpack-dialog { position: fixed; inset: 0; z-index: 220; height: max-content; box-sizing: border-box; width: max-content; max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); margin: auto; padding: 32px 8px 8px; overflow: auto; background: #3b332b; border: 3px ridge #baa168; color: #ead7af; }
 #close-backpack { position: absolute; top: 3px; right: 5px; width: 24px; height: 24px; padding: 0; border: 1px solid #b99a5b; background: #66503c; color: #ead7af; font-size: 20px; line-height: 20px; }
 #backpack-slots { display: grid; grid-template-columns: repeat(10,var(--spell-slot-size)); gap: 0; width: max-content; }
 .backpack-slot img { display: block; width: var(--spell-image-size); height: var(--spell-image-size); image-rendering: pixelated; object-fit: contain; }
@@ -365,7 +364,6 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 
 #consumable-slots { display: grid; grid-template-columns: repeat(3,var(--spell-slot-size)); gap: 0; margin-top: 4px; }
 .consumable-slot.locked { filter: grayscale(1); opacity: .5; }
-.consumable-slot.locked::after { content: '×'; color: #999; font-size: 22px; }
 .consumable-slot img { display:block; width: var(--spell-image-size); height: var(--spell-image-size); image-rendering:pixelated; }
 .consumable-menu { position:fixed; z-index:1100; padding:4px; border:2px ridge #baa168; background:#29231e; }
 .consumable-menu button { display:block; padding:6px 18px; border:0; background:#66503c; color:#ead7af; font:14px Georgia,serif; }

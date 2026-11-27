@@ -301,7 +301,6 @@
     });
     document.getElementById('close-hotkeys').addEventListener('click', () => hotkeysDialog.close());
     document.addEventListener('keydown', event => {
-      if (document.getElementById('backpack-dialog').open) return;
       if (hotkeysDialog.open || gameHelpDialog.open) {
         if (event.key === 'Escape') { event.preventDefault(); (gameHelpDialog.open ? gameHelpDialog : hotkeysDialog).close(); }
         return;

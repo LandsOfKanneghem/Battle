@@ -31,7 +31,7 @@
       line('Оружие',item.hands===2?'Двуручное':'Одноручное');line('ОД',a.apCost);
       line('Урон',`${a.damageBase} + ${a.damagePerStr??0} × STR (физический)`);
       line('Точность',`${a.baseAccuracy}%`);line('Крит шанс',`${a.baseCritChance}%`);
-      line('Дальность',`${a.minRange}–${a.range}${a.modifiable?' [изменяемая]':' [неизменяемая]'}`);
+      line('Дальность',`${a.minRange===a.range||a.minRange===undefined?a.range:`${a.minRange}–${a.range}`}${a.modifiable?' [изменяемая]':' [неизменяемая]'}`);
     }else if(item.ac!==undefined){
       line('AC',window.getArmorSourceAC(item));line('Прочность',item.indestructible?'Несокрушимый':`${item.durability} / ${item.maxDurability}`);
       if(window.isArmorBroken(item))line('Состояние','Сломано');
@@ -129,9 +129,9 @@
     }
   }
   document.addEventListener('pointerdown',event=>{if(!event.target.closest('.consumable-menu'))closeContext();});
-  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeContext();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeContext();if(dialog.open&&!document.querySelector('dialog:modal')){dialog.close();event.preventDefault();event.stopPropagation();}}},true);
   filter.addEventListener('change',()=>{hide();gameState.selectedBackpackIndex=null;renderEquipment(shown);});
-  document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);dialog.showModal();});
+  document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);if(!dialog.open)dialog.show();});
   document.getElementById('close-backpack').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',hide);
   const entity=gameState.entities.find(e=>e.id===(gameState.selectedEntityId??gameState.hoveredEntityId??gameState.activeEntityId));

@@ -344,6 +344,11 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .equipment-art { width: var(--spell-image-size); height: var(--spell-image-size); display: grid; place-items: center; }
 .equipment-art svg, .equipment-art img { height: var(--spell-image-size); width: var(--spell-image-size); image-rendering: pixelated; object-fit: contain; }
 .equipment-outline { opacity: .65; }
+.equipment-slot[data-slot="other1"] .equipment-outline,
+.equipment-slot[data-slot="other2"] .equipment-outline {
+  width: calc(var(--spell-image-size) / 2);
+  height: calc(var(--spell-image-size) / 2);
+}
 .equipment-placeholder { flex: 1; min-height: 0; background: #414141; border: 2px solid #655b4b; }
 .equipment-tooltip { position: fixed; z-index: 1000; pointer-events: none; }
 

@@ -237,6 +237,7 @@
         description.textContent = state.description ?? 'Описание пока отсутствует.';
         details.append(icon, description);
         gameHelpContent.appendChild(details);
+        window.appendStateInteractionNotes(gameHelpContent, state.id);
       }
       gameHelpTitle.focus({ preventScroll: true });
     }

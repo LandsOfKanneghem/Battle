@@ -253,3 +253,17 @@ test('corner checks use the supplied simulation entities and ignore dead occupan
   blocker.hp = 0;
   assert.deepEqual(point(), { x: 6, y: 6 });
 });
+
+test('Heavy prevents tongue displacement for either side but preserves enemy damage', () => {
+  for (const kind of ['enemy', 'ally', 'light']) {
+    const { ctx, caster, target, apply, point } = setup();
+    if (kind === 'ally') caster.team = target.team = 'ally';
+    ctx.applyState(target, { id: 'heavy', duration: 3, casterId: caster.id });
+    if (kind === 'light') ctx.applyState(target, { id: 'light', duration: 2, casterId: caster.id });
+    const hp = target.hp;
+    assert.deepEqual(point(), { x: kind === 'light' ? 7 : 9, y: 5 });
+    apply();
+    assert.equal(target.position.x, kind === 'light' ? 7 : 9);
+    assert.equal(target.hp, hp - (kind === 'ally' ? 0 : 11));
+  }
+});

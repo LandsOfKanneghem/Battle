@@ -321,6 +321,23 @@ window.hideEffectTooltip = function() {
   effectTooltip = null;
 };
 
+window.appendStateInteractionNotes = function(container, id) {
+  const notes = window.getStateInteractionNotes?.(id) ?? [];
+  if (!notes.length) return;
+  const section = document.createElement('section');
+  section.className = 'state-interactions';
+  const title = document.createElement('strong');
+  title.textContent = 'Взаимодействия';
+  const list = document.createElement('ul');
+  for (const note of notes) {
+    const item = document.createElement('li');
+    item.textContent = note;
+    list.appendChild(item);
+  }
+  section.append(title, list);
+  container.appendChild(section);
+};
+
 window.showEffectTooltip = function(icon, effect, kind = 'spell') {
   hideEffectTooltip();
   const tooltip = document.createElement('div');
@@ -350,6 +367,7 @@ window.showEffectTooltip = function(icon, effect, kind = 'spell') {
     line.textContent = text;
     tooltip.appendChild(line);
   }
+  if (kind === 'state') window.appendStateInteractionNotes(tooltip, effect.id);
   if (effect.suppressed) {
     const line = document.createElement('p');
     line.textContent = 'Неактивно';

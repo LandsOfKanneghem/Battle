@@ -147,3 +147,14 @@ test('Heavy prevents AI jump plans; negative MP alone does not prevent an AP-bas
   h.ctx.applyState(h.toad, { id: 'light', duration: 2 });
   assert.equal(h.plan().kind, 'jump');
 });
+
+test('Heavy on a target prevents the planner from inventing a tongue-plus-bite combination', () => {
+  const h = setup({ start: { x: 5, y: 2 }, mage: { x: 5, y: 5 }, warrior: { x: 4, y: 2 }, mp: 0, ap: 6 });
+  h.ctx.applyState(h.wizard, { id: 'heavy', duration: 3, casterId: h.toad.id });
+  h.toad.availableSpells.find(s => s.id === 'jump').cooldown = 1;
+  const first = h.plan();
+  assert.equal(first.spellId, 'tongue-pull');
+  h.turn();
+  assert.equal(h.wizard.position.y, 5);
+  assert(!h.casts.some(c => c.id === 'poison-bite' && c.target === h.wizard.id));
+});

@@ -328,3 +328,8 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .game-help-state-icon svg { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 .game-help-state p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
 @media (max-width: 420px) { .game-help-state { flex-direction: column; } }
+
+
+.state-interactions { margin-top: 12px; padding-top: 8px; border-top: 1px solid currentColor; font-size: .875em; line-height: 1.4; }
+.state-interactions ul { margin: 6px 0 0; padding-left: 18px; }
+.state-interactions li + li { margin-top: 4px; }

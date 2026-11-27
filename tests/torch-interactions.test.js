@@ -540,3 +540,37 @@ test('Heavy blocks jumping before AP payment, Light restores it, and teleport re
   assert(ctx.castSpell(state.cells[15], { ...deps(), playTeleportAnimation() {} }));
   assert.equal(wizard.position.x, 3);
 });
+
+test('Heavy suppresses levitation regardless of application order and Light restores water crossing', () => {
+  for (const heavyFirst of [false, true]) {
+    const { ctx, state, wizard } = setup();
+    const apply = id => ctx.applyState(wizard, { id, duration: 3, casterId: wizard.id });
+    if (heavyFirst) apply('heavy');
+    apply('levitation');
+    if (!heavyFirst) apply('heavy');
+    state.terrain.set('2,1', 'shallow-water');
+    const levitation = wizard.states.find(s => s.id === 'levitation');
+    assert(levitation && levitation.suppressed);
+    assert.equal(ctx.hasActiveState(wizard, 'levitation'), false);
+    assert.equal(state.entryCost({ x: 2, y: 1 }, wizard), Infinity);
+    apply('light');
+    assert.equal(ctx.hasActiveState(wizard, 'heavy'), false);
+    assert.equal(ctx.hasActiveState(wizard, 'levitation'), true);
+    assert.equal(state.entryCost({ x: 2, y: 1 }, wizard), 1);
+    ctx.removeState(wizard, 'light');
+    assert.equal(ctx.hasActiveState(wizard, 'levitation'), false);
+    ctx.removeState(wizard, 'heavy');
+    assert.equal(ctx.hasActiveState(wizard, 'levitation'), true);
+  }
+});
+
+test('suppressed levitation still expires and is not recreated when Heavy is removed', () => {
+  const { ctx, state, wizard } = setup();
+  const toad = ctx.createCreature('giant-toad', { x: 2, y: 1 });state.entities.push(toad);
+  ctx.applyState(wizard, { id: 'levitation', duration: 1, casterId: wizard.id });
+  ctx.applyState(wizard, { id: 'heavy', duration: 3, casterId: toad.id });
+  ctx.tickCasterEffects(wizard.id);
+  assert(!wizard.states.some(s => s.id === 'levitation'));
+  ctx.removeState(wizard, 'heavy');
+  assert.equal(ctx.hasActiveState(wizard, 'levitation'), false);
+});

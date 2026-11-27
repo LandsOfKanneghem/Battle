@@ -33,8 +33,8 @@ const WET = {
 };
 const HEAVY = {
   id: 'heavy', name: 'Тяжесть', mpBonus: 0, initiativeBonus: 0,
-  description: 'Нельзя толкнуть и нельзя прыгать; обычная ходьба разрешена', duration: 2, casterName: '', suppressed: false,
-  overrides: ['light'], neutralizes: [], blocks: [], permanent: false, innate: false,
+  description: 'Цель нельзя двигать, цель не может использовать любые формы прыжков, левитации и полета. При этом цель может телепортироваться и быть телепортирована, а также перемещаться под землей.', duration: 2, casterName: '', suppressed: false,
+  overrides: ['light', 'levitation'], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M15 14 V10 Q15 4 20 4 Q25 4 25 10 V14" fill="none" stroke="#c5c9ce" stroke-width="4"/><path d="M11 14 H29 L35 35 H5 Z" fill="#57616e" stroke="#bbc4cf" stroke-width="2"/><path d="M20 18 V29 M15 24 L20 29 L25 24" fill="none" stroke="#e5e9ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 };
 const LIGHT = {
@@ -135,3 +135,62 @@ const MAIMED = {
   icon: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/state-maimed.png" width="64" height="64"/></svg>'
 };
 const stateTypes = new Map([[MAIMED.id, MAIMED], [WEAK_POISON.id, WEAK_POISON], [INVISIBILITY.id, INVISIBILITY], [SHARP_SHELL.id, SHARP_SHELL], [OLD_AGE.id, OLD_AGE], [LEVITATION.id, LEVITATION], [WATER_ENTITY.id, WATER_ENTITY], [SPEED.id, SPEED], [SLOWNESS.id, SLOWNESS], [FREEZE.id, FREEZE], [BURNING.id, BURNING], [WET.id, WET], [HEAVY.id, HEAVY], [LIGHT.id, LIGHT], [CHILL.id, CHILL], [ADRENALINE.id, ADRENALINE], [ADRENALINE_CRASH.id, ADRENALINE_CRASH], [WEAKNESS.id, WEAKNESS], [EXHAUSTION.id, EXHAUSTION], [VIGOR.id, VIGOR], [BLEEDING.id, BLEEDING]]);
+
+// Дополнительные связи, заданные специальными правилами боя, а не массивами overrides/blocks.
+const STATE_INTERACTION_NOTES = {
+  adrenaline: [
+    'Не позволяет накладывать временные Слабость и Истощение. При наложении снимает их временные варианты, а перманентные — только подавляет.',
+    'После окончания создаёт Адреналиновый откат на 1 ход.',
+    'Нельзя наложить при активном Адреналиновом откате.'
+  ],
+  'adrenaline-crash': [
+    'Возникает после окончания Адреналина.',
+    'Не позволяет наложить Адреналин и Бодрость. При появлении снимает Бодрость.',
+    'Пока действует, Слабость нельзя снять.'
+  ],
+  vigor: [
+    'Не позволяет накладывать временную Слабость. При наложении снимает временную Слабость, а перманентную — только подавляет.',
+    'Нельзя наложить при активном Адреналиновом откате; появление отката снимает Бодрость.'
+  ],
+  weakness: ['Адреналин и Бодрость снимают временную Слабость, но только подавляют перманентную. Пока бафф активен, временная Слабость не накладывается.',
+    'При активном Адреналиновом откате Слабость нельзя снять.'],
+  exhaustion: ['Адреналин снимает временное Истощение, но только подавляет перманентное. Пока Адреналин активен, временное Истощение не накладывается.'],
+  freeze: ['Защищает от урона Горения, Кровотечения, Слабого яда и отражения Острого панциря.',
+    'Опаляющие руки снимают Заморозку после попытки нанести урон.'],
+  burning: ['Заморозка защищает от тиков урона.', 'Опаляющие руки снимают Влагу, Охлаждение и Заморозку перед наложением Горения.'],
+  wet: ['Опаляющие руки снимают Влагу после нанесения урона.'],
+  chill: ['Опаляющие руки снимают Охлаждение после нанесения урона.'],
+  heavy: ['Подавляет Левитацию, но не снимает её. После снятия Тяжести Левитация возобновляется, если ещё действует.',
+    'Блокирует притягивание языком и отталкивание, но не телепортацию.'],
+  levitation: ['Под Тяжестью не действует, но её длительность продолжает отсчитываться.',
+    'Если Лёгкость перекрыла Тяжесть, Левитация снова действует.'],
+  light: ['Нельзя наложить, если Тяжесть неснимаемая.', 'Перекрывая Тяжесть, позволяет снова использовать Прыжок и Левитацию.'],
+  bleeding: ['Заморозка защищает от тиков урона.', 'Исцелить/ранить снимает один последний наложенный стак Кровотечения с союзника.'],
+  'weak-poison': ['Заморозка защищает от тиков урона.', 'Любое лечение снимает Слабый яд, даже при полном здоровье.'],
+  'sharp-shell': ['Под Заморозкой не отражает урон: входящий урон полностью блокируется.', 'Заморозка атакующего защищает его от отражённого урона.'],
+  invisibility: ['Горение, Кровотечение и Слабый яд продолжают наносить урон, не снимая Невидимость.'],
+  maimed: ['Штраф ОП складывается со штрафом Медлительности.'],
+  slowness: ['Штраф ОП складывается со штрафом Увечья.']
+};
+
+window.getStateInteractionNotes = function(id) {
+  const state = stateTypes.get(id);
+  if (!state) return [];
+  const notes = [], names = ids => ids.map(key => `«${stateTypes.get(key)?.name ?? key}»`).join(', ');
+  const reverse = field => [...stateTypes.values()].filter(other => other.id !== id && (other[field] ?? []).includes(id)).map(other => other.id);
+  const mutual = (state.overrides ?? []).filter(key => stateTypes.get(key)?.overrides.includes(id));
+  if (mutual.length) notes.push(`Взаимное перекрытие с ${names(mutual)}: действует последнее успешно наложенное состояние.`);
+  const overrides = (state.overrides ?? []).filter(key => !mutual.includes(key));
+  if (overrides.length) notes.push(`Перекрывает: ${names(overrides)}.`);
+  const overriddenBy = reverse('overrides').filter(key => !mutual.includes(key));
+  if (overriddenBy.length) notes.push(`Перекрывается: ${names(overriddenBy)}.`);
+  const neutralizes = state.neutralizes ?? [];
+  if (neutralizes.length) notes.push(`При наложении снимает ${names(neutralizes)}; само при этом не появляется.`);
+  const removedBy = reverse('neutralizes');
+  if (removedBy.length) notes.push(`Снимается при наложении ${names(removedBy)}; новое состояние при этом не появляется.`);
+  if (state.blocks?.length) notes.push(`Не позволяет наложить: ${names(state.blocks)}.`);
+  const blockedBy = reverse('blocks');
+  if (blockedBy.length) notes.push(`Нельзя наложить, пока активно: ${names(blockedBy)}.`);
+  notes.push(...(STATE_INTERACTION_NOTES[id] ?? []));
+  return [...new Set(notes.length ? notes : ['Особых взаимодействий с другими состояниями нет.'])];
+};

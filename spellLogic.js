@@ -100,6 +100,7 @@ window.affectedCells = function(center, spell, caster, entities, obstacles, terr
 
 // Ось фиксируется по исходному положению; диагональ сдвигается на одну клетку.
 window.getTonguePullDestination = function(caster, target, entities = window.gameState.entities) {
+  if (window.hasActiveState(target, 'heavy')) return { ...target.position };
   const state = window.gameState;
   const dx = caster.position.x - target.position.x;
   const dy = caster.position.y - target.position.y;

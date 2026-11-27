@@ -12,14 +12,13 @@ const HALFLING_SLING_SHOT = {
 
 window.CREATURE_TEMPLATES.halfling = {
   name: 'Полурослик', type: 'halfling', partyOrder: 5,
-  level: 1, baseHP: 16, hpPerLevel: 8, baseWP: 10, wpPerLevel: 4,
+  level: 1, baseHP: 14, hpPerLevel: 7, baseWP: 10, wpPerLevel: 4,
   baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
   baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-  baseAC: 5, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+  baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   armorSources: [
-    { id: 'body-armor', name: 'Доспех', ac: 4, maxDurability: 10 },
-    { id: 'shield', name: 'Щит', ac: 1, maxDurability: 5 }
+    { id: 'lightweight-chest-protector', name: 'Легкий нагрудник', ac: 1, maxDurability: 6 },
   ],
   attributes: { vit: 2, str: 2, att: 2, int: 0, wis: 1, cha: 0, luc: 1 },
   appearance: {

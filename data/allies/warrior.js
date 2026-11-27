@@ -16,7 +16,7 @@ window.CREATURE_TEMPLATES.warrior = {
   level: 1, baseHP: 16, hpPerLevel: 8, baseWP: 10, wpPerLevel: 4,
   baseAP: 6, baseMP: 4, baseES: 0, baseVS: 0, baseRA: 0,
   baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
-  baseAC: 5, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
+  baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
   armorSources: [
     { id: 'body-armor', name: 'Доспех', ac: 4, maxDurability: 10 },

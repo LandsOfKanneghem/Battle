@@ -27,7 +27,7 @@ window.CREATURE_TEMPLATES['wizard'] = {
     ['fire-shot', 'burning-hands', 'reckless', 'torch', 'teleport',
       'liquid-membrane', 'rain', 'ice-arrow', 'lake-spirit', null,
       'haste', 'wind-rose', 'sparks', 'sky-shot', 'water-walk',
-      'slow', 'dead-weight', null, null, 'apply-old-age'],
+      'slow', 'dead-weight', 'enchant-stones', null, 'apply-old-age'],
     ['fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin',
       'fire-cube', null, null, null, null,
       null, null, null, null, null,

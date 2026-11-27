@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "fingerless-gloves": {
     "id": "fingerless-gloves",
     "name": "Перчатки без пальцев",
-    "slot": "gloves",
     "allowedSlots": ["gloves"],
-    "suggestedLevel": 1,
     "itemType": "Перчатки",
     "iconPath": "assets/equipment/starter/fingerless-gloves.png",
     "modifiers": {"att": 1},
@@ -13,9 +11,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "cloth-gloves": {
     "id": "cloth-gloves",
     "name": "Холщовые перчатки",
-    "slot": "gloves",
     "allowedSlots": ["gloves"],
-    "suggestedLevel": 1,
     "itemType": "Перчатки",
     "iconPath": "assets/equipment/starter/cloth-gloves.png",
     "modifiers": {"maxWP": 1},
@@ -23,9 +19,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "work-gloves": {
     "id": "work-gloves",
     "name": "Рабочие перчатки",
-    "slot": "gloves",
     "allowedSlots": ["gloves"],
-    "suggestedLevel": 2,
     "itemType": "Перчатки",
     "iconPath": "assets/equipment/starter/work-gloves.png",
     "modifiers": {"str": 1},
@@ -33,9 +27,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "padded-mitts": {
     "id": "padded-mitts",
     "name": "Стёганые рукавицы",
-    "slot": "gloves",
     "allowedSlots": ["gloves"],
-    "suggestedLevel": 2,
     "itemType": "Перчатки",
     "iconPath": "assets/equipment/starter/padded-mitts.png",
     "modifiers": {"maxHP": 2},
@@ -43,11 +35,16 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "reinforced-gloves": {
     "id": "reinforced-gloves",
     "name": "Укреплённые перчатки",
-    "slot": "gloves",
     "allowedSlots": ["gloves"],
-    "suggestedLevel": 3,
     "itemType": "Перчатки",
     "iconPath": "assets/equipment/starter/reinforced-gloves.png",
     "modifiers": {"physical": 1},
+  },
+  "scarlet-grasp": {
+    "id": "scarlet-grasp",
+    "name": "Перчатки алой хватки",
+    "allowedSlots": ["gloves"],
+    "iconPath": "assets/equipment/scarlet-grasp.png",
+    "modifiers": {"str": 3, "att": 5, "cri": 5},
   },
 });

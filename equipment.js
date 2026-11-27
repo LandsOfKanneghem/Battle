@@ -10,6 +10,7 @@
   const closeContext=()=>{contextMenu?.remove();contextMenu=null;};
   const bagSlots=document.getElementById('backpack-slots');
   const backpackSize=100;
+  let backpackPage=0;
   const filter=document.getElementById('backpack-filter');
   const matchesFilter=(item,type)=>{
     if(type==='all')return true;
@@ -18,7 +19,7 @@
     if(type==='other')return item.allowedSlots?.some(slot=>slot==='other1'||slot==='other2');
     return item.allowedSlots?.includes(type);
   };
-  const modifierNames={maxHP:'ОЗ',maxWP:'WP',mp:'ОП',maxMP:'ОП',maxAP:'ОД',consumableSlots:'Слот расходников',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума'};
+  const modifierNames={maxHP:'ОЗ',maxWP:'WP',mp:'ОП',maxMP:'ОП',maxAP:'ОД',consumableSlots:'Слот расходников',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума',dark:'Защита от тьмы',light:'Защита от света',cri:'Крит (%)',blo:'Блок (%)'};
   const hide=()=>{tooltip?.remove();tooltip=null;};
   function show(anchor,item,slot,entity){
     hide();
@@ -38,7 +39,14 @@
     }
     const damageNames={physical:'физический',poison:'яд',fire:'огонь',water:'вода',earth:'земля',air:'воздух',light:'свет',dark:'тьма'};
     for(const part of item?.attack?.bonusDamage??[])line('Дополнительный урон',`+${part.damage} ${damageNames[part.damageType]??part.damageType}`);
-    if(item?.consumable){line('Лечение',`+${item.consumable.heal} ОЗ`);line('Применение','2 ОД');}
+    if(item?.consumable){
+      const use=item.consumable;
+      if(use.heal)line('Лечение',`+${use.heal} ОЗ`);
+      if(use.cleansePoison)line('Эффект','Снимает яд');
+      if(use.removeBleedingStacks)line('Эффект','Снимает 1 стак Кровотечения');
+      if(use.spell){line('Урон','6 огонь');line('Дальность','1–5 [неизменяемая]');line('АОЕ','Квадрат 3×3');line('LOS','Требует');line('Эффект','Горение на 2 хода');}
+      line('Применение',`${use.apCost??2} ОД`);
+    }
     if(item?.consumableSlots!==undefined)line('Слоты расходников',item.consumableSlots);
     for(const [key,value] of Object.entries(item?.modifiers??{})) {
       const effective=item.ac!==undefined&&window.isArmorBroken(item)?Math.floor(value*.25):value;
@@ -83,12 +91,17 @@
     if(!gameState.backpack)window.resetSharedBackpack();
     const bag=gameState.backpack;
     for(const cell of bagSlots.children)cell.setAttribute('aria-pressed',String(gameState.selectedBackpackIndex===Number(cell.dataset.index)));
-    const key=JSON.stringify([entity?.id,bag,filter.value,window.canManageEquipment(entity)]);
+    const entries=bag.map((item,index)=>({item,index})).filter(entry=>matchesFilter(entry.item,filter.value));
+    while(entries.length&&!entries.at(-1).item)entries.pop();
+    const pages=Math.max(1,Math.ceil(entries.length/backpackSize));
+    backpackPage=Math.max(0,Math.min(backpackPage,pages-1));
+    document.getElementById('backpack-prev').disabled=backpackPage===0;
+    document.getElementById('backpack-next').disabled=backpackPage===pages-1;
+    const key=JSON.stringify([entity?.id,bag,filter.value,backpackPage,window.canManageEquipment(entity)]);
     if(bagSlots.dataset.key===key)return;
     bagSlots.dataset.key=key;bagSlots.replaceChildren();
-    const entries=bag.map((item,index)=>({item,index})).filter(entry=>matchesFilter(entry.item,filter.value));
     for(let position=0;position<backpackSize;position++){
-      const {item,index}=entries[position]??{item:null,index:-1};
+      const {item,index}=entries[backpackPage*backpackSize+position]??{item:null,index:-1};
       const cell=document.createElement('button');cell.type='button';cell.className='equipment-slot backpack-slot';cell.dataset.index=index;
       cell.setAttribute('aria-label',item?.name??'Свободная ячейка');cell.setAttribute('aria-pressed',String(gameState.selectedBackpackIndex===index));
       if(item){
@@ -127,7 +140,7 @@
         event.preventDefault();closeContext();hide();if(locked||!item)return;
         const owner=shown;contextMenu=document.createElement('div');contextMenu.className='consumable-menu';contextMenu.setAttribute('role','menu');
         const use=document.createElement('button');use.type='button';use.textContent='Применить';use.setAttribute('role','menuitem');use.disabled=!window.canUseConsumable(owner,slot);
-        use.addEventListener('click',()=>{window.useConsumable(owner,slot);closeContext();});contextMenu.append(use);document.body.append(contextMenu);
+        use.addEventListener('click',()=>{if(window.useConsumable(owner,slot)&&item.consumable.spell){hide();dialog.close();}closeContext();});contextMenu.append(use);document.body.append(contextMenu);
         contextMenu.style.left=`${Math.max(0,Math.min(event.clientX,innerWidth-contextMenu.offsetWidth-8))}px`;
         contextMenu.style.top=`${Math.max(0,Math.min(event.clientY,innerHeight-contextMenu.offsetHeight-8))}px`;
       });
@@ -136,7 +149,8 @@
   }
   document.addEventListener('pointerdown',event=>{if(!event.target.closest('.consumable-menu'))closeContext();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeContext();if(dialog.open&&!document.querySelector('dialog:modal')){dialog.close();event.preventDefault();event.stopPropagation();}}},true);
-  filter.addEventListener('change',()=>{hide();gameState.selectedBackpackIndex=null;renderEquipment(shown);});
+  filter.addEventListener('change',()=>{backpackPage=0;hide();gameState.selectedBackpackIndex=null;renderEquipment(shown);});
+  for(const [id,delta] of [['backpack-prev',-1],['backpack-next',1]])document.getElementById(id).addEventListener('click',()=>{hide();backpackPage+=delta;renderBackpack(shown);});
   document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);if(!dialog.open)dialog.show();});
   document.getElementById('close-backpack').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',hide);

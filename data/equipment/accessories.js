@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "copper-ring": {
     "id": "copper-ring",
     "name": "Медное кольцо",
-    "slot": "other1",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 1,
     "itemType": "Кольцо",
     "iconPath": "assets/equipment/starter/copper-ring.png",
     "modifiers": {"maxHP": 1},
@@ -13,9 +11,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "wood-beads": {
     "id": "wood-beads",
     "name": "Деревянные бусы",
-    "slot": "other1",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 1,
     "itemType": "Амулет",
     "iconPath": "assets/equipment/starter/wood-beads.png",
     "modifiers": {"wis": 1},
@@ -23,9 +19,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "green-stone-ring": {
     "id": "green-stone-ring",
     "name": "Кольцо с зелёным камнем",
-    "slot": "other1",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 2,
     "itemType": "Кольцо",
     "iconPath": "assets/equipment/starter/green-stone-ring.png",
     "modifiers": {"poison": 1},
@@ -33,9 +27,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "bone-pendant": {
     "id": "bone-pendant",
     "name": "Костяной оберег",
-    "slot": "other1",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 2,
     "itemType": "Амулет",
     "iconPath": "assets/equipment/starter/bone-pendant.png",
     "modifiers": {"luc": 1},
@@ -43,9 +35,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "cloth-charm": {
     "id": "cloth-charm",
     "name": "Ладанка путника",
-    "slot": "other1",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 3,
     "itemType": "Оберег",
     "iconPath": "assets/equipment/starter/cloth-charm.png",
     "modifiers": {"maxWP": 1},
@@ -53,9 +43,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "patched-cloak": {
     "id": "patched-cloak",
     "name": "Латаный плащ",
-    "slot": "other2",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 1,
     "itemType": "Плащ",
     "iconPath": "assets/equipment/starter/patched-cloak.png",
     "modifiers": {"eva": 1},
@@ -63,9 +51,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "copper-brooch": {
     "id": "copper-brooch",
     "name": "Медная фибула",
-    "slot": "other2",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 1,
     "itemType": "Брошь",
     "iconPath": "assets/equipment/starter/copper-brooch.png",
     "modifiers": {"cha": 1},
@@ -73,9 +59,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "green-cape": {
     "id": "green-cape",
     "name": "Зелёная накидка",
-    "slot": "other2",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 2,
     "itemType": "Плащ",
     "iconPath": "assets/equipment/starter/green-cape.png",
     "modifiers": {"earth": 1},
@@ -83,9 +67,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "brass-medallion": {
     "id": "brass-medallion",
     "name": "Латунный медальон",
-    "slot": "other2",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 2,
     "itemType": "Амулет",
     "iconPath": "assets/equipment/starter/brass-medallion.png",
     "modifiers": {"mind": 1},
@@ -93,9 +75,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "blue-pebble-ring": {
     "id": "blue-pebble-ring",
     "name": "Кольцо с голубым камнем",
-    "slot": "other2",
     "allowedSlots": ["other1", "other2"],
-    "suggestedLevel": 3,
     "itemType": "Кольцо",
     "iconPath": "assets/equipment/starter/blue-pebble-ring.png",
     "modifiers": {"water": 1},
@@ -123,5 +103,20 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "allowedSlots": ["other1", "other2"],
     "iconPath": "assets/equipment/potion-holder.png",
     "modifiers": {"consumableSlots": 1},
+  },
+  "ancient-root-ring": {
+    "id": "ancient-root-ring",
+    "name": "Кольцо древних корней",
+    "allowedSlots": ["other1", "other2"],
+    "iconPath": "assets/equipment/ancient-root-ring.png",
+    "modifiers": {"vit": 3, "earth": 4, "maxHP": 8},
+    "itemType": "Кольцо",
+  },
+  "moon-seal": {
+    "id": "moon-seal",
+    "name": "Лунная печать",
+    "allowedSlots": ["other1", "other2"],
+    "iconPath": "assets/equipment/moon-seal.png",
+    "modifiers": {"int": 3, "wis": 3, "maxAP": 2, "dark": 4},
   },
 });

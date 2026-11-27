@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "worn-belt": {
     "id": "worn-belt",
     "name": "Потёртый ремень",
-    "slot": "belt",
     "allowedSlots": ["belt"],
-    "suggestedLevel": 1,
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/worn-belt.png",
     "modifiers": {"maxHP": 1},
@@ -14,9 +12,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "rope-belt": {
     "id": "rope-belt",
     "name": "Верёвочный пояс",
-    "slot": "belt",
     "allowedSlots": ["belt"],
-    "suggestedLevel": 1,
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/rope-belt.png",
     "modifiers": {"maxWP": 1},
@@ -25,9 +21,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "broad-belt": {
     "id": "broad-belt",
     "name": "Широкий кожаный пояс",
-    "slot": "belt",
     "allowedSlots": ["belt"],
-    "suggestedLevel": 2,
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/broad-belt.png",
     "modifiers": {"str": 1},
@@ -36,9 +30,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "utility-belt": {
     "id": "utility-belt",
     "name": "Пояс с подсумком",
-    "slot": "belt",
     "allowedSlots": ["belt"],
-    "suggestedLevel": 2,
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/utility-belt.png",
     "modifiers": {"maxHP": 2},
@@ -47,9 +39,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "hunter-belt": {
     "id": "hunter-belt",
     "name": "Пояс охотника",
-    "slot": "belt",
     "allowedSlots": ["belt"],
-    "suggestedLevel": 3,
     "itemType": "Пояс",
     "iconPath": "assets/equipment/starter/hunter-belt.png",
     "modifiers": {"vit": 1},

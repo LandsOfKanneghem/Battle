@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "worn-shoes": {
     "id": "worn-shoes",
     "name": "Стоптанные башмаки",
-    "slot": "boots",
     "allowedSlots": ["boots"],
-    "suggestedLevel": 1,
     "itemType": "Ботинки",
     "iconPath": "assets/equipment/starter/worn-shoes.png",
     "modifiers": {"eva": 1},
@@ -13,9 +11,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "ankle-boots": {
     "id": "ankle-boots",
     "name": "Кожаные полусапожки",
-    "slot": "boots",
     "allowedSlots": ["boots"],
-    "suggestedLevel": 1,
     "itemType": "Ботинки",
     "iconPath": "assets/equipment/starter/ankle-boots.png",
     "modifiers": {"maxHP": 1},
@@ -23,9 +19,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "adventurer-boots": {
     "id": "adventurer-boots",
     "name": "Сапоги искателя",
-    "slot": "boots",
     "allowedSlots": ["boots"],
-    "suggestedLevel": 2,
     "itemType": "Сапоги",
     "iconPath": "assets/equipment/starter/adventurer-boots.png",
     "modifiers": {"mp": 1},
@@ -33,9 +27,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "wrapped-shoes": {
     "id": "wrapped-shoes",
     "name": "Дорожные обмотки",
-    "slot": "boots",
     "allowedSlots": ["boots"],
-    "suggestedLevel": 2,
     "itemType": "Ботинки",
     "iconPath": "assets/equipment/starter/wrapped-shoes.png",
     "modifiers": {"poison": 1},
@@ -43,11 +35,16 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "fur-boots": {
     "id": "fur-boots",
     "name": "Меховые сапоги",
-    "slot": "boots",
     "allowedSlots": ["boots"],
-    "suggestedLevel": 3,
     "itemType": "Сапоги",
     "iconPath": "assets/equipment/starter/fur-boots.png",
     "modifiers": {"water": 1},
+  },
+  "windwalker-boots": {
+    "id": "windwalker-boots",
+    "name": "Сапоги ветроступа",
+    "allowedSlots": ["boots"],
+    "iconPath": "assets/equipment/windwalker-boots.png",
+    "modifiers": {"mp": 2, "eva": 10, "water": 3},
   },
 });

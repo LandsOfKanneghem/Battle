@@ -7,7 +7,7 @@ function setup(){
  return {ctx,hero,bag:ctx.gameState.backpack,index:id=>ctx.gameState.backpack.findIndex(item=>item?.id===id)};
 }
 test('shared inventory starts with starter items and independent healing potions and valid icons',()=>{
- const {ctx,bag}=setup();assert.equal(bag.length,57);assert.equal(new Set(bag.map(i=>i.id)).size,53);assert.equal(new Set(bag.filter(i=>i.id==='healing-potion')).size,5);
+ const {ctx,bag}=setup();assert.equal(bag.length,82);assert.equal(new Set(bag.map(i=>i.id)).size,66);assert.equal(new Set(bag.filter(i=>i.id==='healing-potion')).size,5);
  for(const item of bag)assert(fs.existsSync(path.join(__dirname,'..',item.iconPath)));
  const before=bag[0];ctx.resetSharedBackpack();assert.notEqual(before,ctx.gameState.backpack[0]);
 });
@@ -24,7 +24,7 @@ test('two-handed gear returns displaced equipment and shields clear two-handed w
  const {ctx,hero,bag,index}=setup();const shield=hero.Equipment.leftHand,sword=hero.Equipment.rightHand;
  assert(ctx.changeEquipment(hero,index('shortbow'),'rightHand'));assert.equal(hero.Equipment.leftHand,null);assert(bag.includes(shield));assert(bag.includes(sword));
  const bow=hero.Equipment.rightHand;assert(ctx.changeEquipment(hero,index('wood-buckler'),'leftHand'));assert.equal(hero.Equipment.rightHand,null);assert(bag.includes(bow));
- const all=[...bag.filter(Boolean),...Object.values(hero.Equipment).filter(Boolean)];assert.equal(new Set(all).size,all.length);assert.equal(all.length,61);
+ const all=[...bag.filter(Boolean),...Object.values(hero.Equipment).filter(Boolean)];assert.equal(new Set(all).size,all.length);assert.equal(all.length,86);
 });
 test('weapon replacement updates attacks and techniques while preserving counters and other spell cooldowns',()=>{
  const {ctx,hero,index}=setup();hero.availableSpells[0].usesThisTurn=2;hero.availableSpells.find(s=>s.isCharge).cooldown=2;
@@ -82,4 +82,30 @@ test('new weapon damage components use separate resistances, one armor wear, and
  const sling=hero.availableSpells.find(s=>s.fromEquipment),parts=ctx.damageBreakdown({...sling,damage:4},victim,hero,true).parts;
  assert.equal(parts.length,3);assert.equal(parts[1].rawDamage,2);assert.equal(parts[2].rawDamage,2);
  const maim=hero.availableSpells.find(s=>s.isMaimingStrike);assert.equal(maim.bonusDamage[0].damageType,'earth');
+});
+
+test('item catalog has no legacy slot or suggestedLevel and contains ten new named items',()=>{
+ const {ctx}=setup();
+ for(const item of Object.values(ctx.EQUIPMENT_ITEMS)){assert(!Object.hasOwn(item,'slot'));assert(!Object.hasOwn(item,'suggestedLevel'));}
+ for(const id of ['dawn-crown','star-robe','dragon-scale-armor','windwalker-boots','scarlet-grasp','noon-blade','moon-hunter-bow','lion-shield','ancient-root-ring','moon-seal'])assert(ctx.EQUIPMENT_ITEMS[id]);
+});
+test('antidote removes poison for 2 AP; bandages remove exactly one bleeding stack for 1 AP',()=>{
+ const {ctx,hero,index}=setup();ctx.gameState.activeEntityId=hero.id;
+ ctx.applyState(hero,{id:'weak-poison',duration:3,casterId:hero.id});
+ assert(ctx.changeConsumable(hero,index('antidote'),0));const hp=hero.hp;
+ assert(ctx.useConsumable(hero,0));assert.equal(hero.ap,4);assert.equal(hero.hp,hp);assert(!hero.states.some(s=>s.id==='weak-poison'));
+ for(let i=0;i<3;i++)ctx.applyState(hero,{id:'bleeding',duration:3,casterId:'source-'+i});
+ assert.equal(hero.states.filter(s=>s.id==='bleeding').length,3);
+ assert(ctx.changeConsumable(hero,index('bandages'),0));assert(ctx.useConsumable(hero,0));
+ assert.equal(hero.ap,3);assert.equal(hero.states.filter(s=>s.id==='bleeding').length,2);
+});
+test('volatile mixture prepares a target without paying or consuming and stays out of the spell book',()=>{
+ const {ctx,hero,index}=setup();ctx.gameState.activeEntityId=hero.id;
+ ctx.highlightSpellRange=()=>{};
+ assert(ctx.changeConsumable(hero,index('volatile-mixture'),0));const item=hero.consumables[0],ap=hero.ap;
+ assert(ctx.useConsumable(hero,0));assert.equal(hero.ap,ap);assert.equal(hero.consumables[0],item);
+ const spell=ctx.getPreparedSpell();assert(spell.consumableCast);assert.equal(spell.damageBase,6);assert.equal(spell.aoeSize,3);assert.equal(spell.apCost,2);assert.equal(spell.durationBase,2);
+ assert.equal(spell.range,5);assert.equal(spell.noLOS,false);assert.equal(spell.target,'any');assert(ctx.canPrepareSpell(spell));
+ assert(!hero.availableSpells.includes(spell));assert.equal(ctx.getCritChance(spell,hero,hero),0);
+ hero.consumables[0]=null;assert(!ctx.canPrepareSpell(spell));
 });

@@ -152,7 +152,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   const baseDamage = window.getSpellDamage(spell, caster, chargeRoute?.path.length ?? 0);
   // Округляем штраф до защиты/ES, сохраняя исходные данные заклинания или атаки.
   const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
-  const damageMultiplier = caster && ((spell.abilityType === 'spell' && hasActiveState(caster, 'exhaustion'))
+  const damageMultiplier = !spell.fixedDamage && caster && ((spell.abilityType === 'spell' && hasActiveState(caster, 'exhaustion'))
     || (isNonSpell && hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
   const adjustedSpell = { ...spell, damage: Math.floor((baseDamage ?? 0) * damageMultiplier) };
   // Фиксируем срок один раз до эффектов: собственный бафф INT от Часа силы его не меняет.
@@ -583,6 +583,7 @@ const spellAnimationHandlers = {
 
 // Общий учёт оплаченных заклинаний игрока и ИИ, включая провалы.
 window.recordSpellAttempt = function(spell, caster, deps) {
+  if(spell.consumableCast)return;
   if (spell.abilityType === 'spell' && (caster.spellCastCount ?? 0) < caster.maxSpellCasts) {
     caster.spellCastCount = (caster.spellCastCount ?? 0) + 1;
     if (caster.spellCastCount >= caster.maxSpellCasts && !caster.states?.some(state => state.id === 'exhaustion' && state.permanent)) {
@@ -596,6 +597,7 @@ window.recordSpellAttempt = function(spell, caster, deps) {
 
 // Общий учёт оплаченных попыток атаки игрока и ИИ, включая промахи.
 window.recordHitAttempt = function(spell, caster, deps) {
+  if(spell.consumableCast)return;
   if ((spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike')
     && (caster.hitCount ?? 0) < caster.maxHitCount) {
     caster.hitCount = (caster.hitCount ?? 0) + 1;
@@ -620,7 +622,7 @@ window.castSpell = function(targetCell, deps) {
   if (gameState.isCasting) return false;
   const target = { x: Number(targetCell.dataset.x), y: Number(targetCell.dataset.y) };
   const caster = activeEntity();
-  const spell = caster?.availableSpells.find(item => item.id === gameState.preparedSpellId);
+  const spell = window.getPreparedSpell?.(caster) ?? caster?.availableSpells.find(item => item.id === gameState.preparedSpellId);
   if (!canPrepareSpell(spell) || !canTarget(target, spell)) return false;
   // Единое правило: новые заклинания с требованием пустой клетки помечаются requiresEmptyCell.
   const requiresEmptyCell = spell.requiresEmptyCell || spell.isSummon || spell.isTeleport;
@@ -649,6 +651,10 @@ window.castSpell = function(targetCell, deps) {
 
   // Фаза 1: фиксируем цель и оплачиваем попытку каста независимо от результата SFC.
   caster.ap -= spell.apCost;
+  if(spell.consumableCast){
+    caster.consumables[gameState.pendingConsumable.slot]=null;
+    gameState.pendingConsumable=null;
+  }
   window.battleLog?.cast(caster, spell, entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)));
   // Считаем оплаченные заклинания до лимита, включая провалы SFC; способности не учитываем.
   window.recordSpellAttempt(spell, caster, deps);
@@ -689,6 +695,8 @@ window.castSpell = function(targetCell, deps) {
   const handler = spellAnimationHandlers[spell.id];
   if (handler) {
     handler(ctx);
+  } else if (spell.consumableCast) {
+    spellAnimationHandlers['fire-cube'](ctx);
   } else if (spell.equipmentAnimation) {
     if (spell.equipmentAnimation === 'melee') {
       deps.playBiteAnimation(targetCell);setTimeout(finishCast,500);

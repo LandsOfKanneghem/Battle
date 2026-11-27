@@ -1,6 +1,7 @@
 window.EQUIPMENT_ITEMS = {};
 window.STARTER_BACKPACK_IDS = ["patched-cap", "apprentice-hood", "padded-coif", "leather-cap", "iron-kettle-helm", "worn-shoes", "ankle-boots", "adventurer-boots", "wrapped-shoes", "fur-boots", "fingerless-gloves", "cloth-gloves", "work-gloves", "padded-mitts", "reinforced-gloves", "worn-belt", "rope-belt", "broad-belt", "utility-belt", "hunter-belt", "patched-tunic", "quilted-gambeson", "leather-vest", "apprentice-robe", "short-chainmail", "iron-dagger", "worn-shortsword", "woodcutter-axe", "simple-sling", "shortbow", "wood-buckler", "wicker-shield", "plank-shield", "hide-shield", "iron-rim-shield", "copper-ring", "wood-beads", "green-stone-ring", "bone-pendant", "cloth-charm", "patched-cloak", "copper-brooch", "green-cape", "brass-medallion", "blue-pebble-ring"];
 window.STARTER_BACKPACK_IDS.push("sun-amulet", "wind-ring", "potion-holder", "toxic-dagger", "ember-sword", "frost-bow", "earth-sling", "healing-potion", "healing-potion", "healing-potion", "healing-potion", "healing-potion");
+window.STARTER_BACKPACK_IDS.push("dawn-crown","star-robe","dragon-scale-armor","windwalker-boots","scarlet-grasp","noon-blade","moon-hunter-bow","lion-shield","ancient-root-ring","moon-seal","antidote","antidote","antidote","antidote","antidote","bandages","bandages","bandages","bandages","bandages","volatile-mixture","volatile-mixture","volatile-mixture","volatile-mixture","volatile-mixture");
 // Экипировка копируется на каждый бой; предмет брони и источник AC — один объект.
 window.EQUIPMENT_SLOTS = Object.freeze({head:'Голова',boots:'Обувь',gloves:'Перчатки',belt:'Пояс',chest:'Нагрудник',rightHand:'Правая рука',leftHand:'Левая рука',other1:'Прочее 1',other2:'Прочее 2'});
 window.createEquipment = function(definition = {}) {
@@ -43,7 +44,7 @@ window.getEquipmentBonus = function(entity, stat) {
 };
 window.resetSharedBackpack = function() {
   window.gameState.backpack=window.STARTER_BACKPACK_IDS.map(id=>window.createEquipmentItem(window.EQUIPMENT_ITEMS[id]));
-  window.gameState.selectedBackpackIndex=null;
+  window.gameState.selectedBackpackIndex=null;window.gameState.pendingConsumable=null;
 };
 window.rebuildEquipmentSpells = function(entity) {
   const template=window.CREATURE_TEMPLATES[entity.type];
@@ -119,13 +120,31 @@ window.changeConsumable = function(entity,index,slot){
   window.gameState.selectedBackpackIndex=null;window.updatePanel?.();return true;
 };
 window.canUseConsumable = (entity,slot) => window.canManageEquipment(entity)
-  && entity.id===window.gameState.activeEntityId && entity.ap>=2 && !window.isFrozen(entity)
+  && entity.id===window.gameState.activeEntityId && entity.ap>=(entity.consumables?.[slot]?.consumable?.apCost??2) && !window.isFrozen(entity)
   && slot>=0 && slot<window.getConsumableSlotCount(entity) && !!entity.consumables?.[slot]?.consumable;
 window.useConsumable = function(entity,slot){
   if(!window.canUseConsumable(entity,slot))return false;
   const item=entity.consumables[slot];
-  entity.ap-=2;entity.consumables[slot]=null;
+  if(item.consumable.spell){
+    window.cancelSpell?.();
+    const spell={...item.consumable.spell,consumableCast:true,cooldown:0,usesThisTurn:0,usesTotal:0};
+    window.gameState.pendingConsumable={ownerId:entity.id,slot,item,spell};
+    window.gameState.preparedSpellId=spell.id;
+    window.highlightSpellRange?.();window.updatePanel?.();return true;
+  }
+  entity.ap-=item.consumable.apCost??2;entity.consumables[slot]=null;
   window.battleLog?.cast(entity,{name:item.name,target:'ally'},entity);
   if(item.consumable.heal)window.healEntity(entity,item.consumable.heal,entity);
+  if(item.consumable.cleansePoison){
+    for(const state of [...entity.states].filter(state=>state.damageType==='poison'||state.id.includes('poison')))window.removeState(entity,state.id);
+  }
+  for(let i=0;i<(item.consumable.removeBleedingStacks??0);i++)window.removeState(entity,'bleeding');
   window.updatePanel?.();return true;
+};
+
+window.getPreparedSpell = function(caster=window.gameState.activeEntity()){
+  const state=window.gameState,pending=state.pendingConsumable;
+  if(pending?.ownerId===caster?.id&&pending.spell.id===state.preparedSpellId
+    &&caster.consumables?.[pending.slot]===pending.item)return pending.spell;
+  return caster?.availableSpells.find(spell=>spell.id===state.preparedSpellId);
 };

@@ -115,6 +115,7 @@
       <option value="melee">Ближнее оружие</option><option value="ranged">Дальнее оружие</option>
       <option value="leftHand">Щит</option><option value="other">Прочее</option><option value="consumables">Расходники</option>
     </select>
+    <nav class="backpack-navigation" aria-label="Страницы рюкзака"><button id="backpack-prev" type="button" aria-label="Предыдущая страница">←</button><button id="backpack-next" type="button" aria-label="Следующая страница">→</button></nav>
     <button id="close-backpack" type="button" aria-label="Закрыть рюкзак">×</button>
     <div id="backpack-slots"></div>
   </dialog>
@@ -416,7 +417,7 @@
       const mover = window.activeMover();
       if (gameState.isMoving || !mover) return;
       if (gameState.preparedSpellId) {
-        const spell = gameState.activeEntity()?.availableSpells.find(item => item.id === gameState.preparedSpellId);
+        const spell = window.getPreparedSpell();
         if (spell) {
           const key = `spell:${gameState.keyOf(target)}`;
           if (gameState.previewKey !== key) {

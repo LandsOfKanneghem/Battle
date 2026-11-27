@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "iron-dagger": {
     "id": "iron-dagger",
     "name": "Простой кинжал",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
-    "suggestedLevel": 1,
     "itemType": "Оружие",
     "iconPath": "assets/equipment/starter/iron-dagger.png",
     "attack": {
@@ -23,9 +21,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "worn-shortsword": {
     "id": "worn-shortsword",
     "name": "Потёртый короткий меч",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
-    "suggestedLevel": 1,
     "itemType": "Оружие",
     "iconPath": "assets/equipment/starter/worn-shortsword.png",
     "attack": {
@@ -43,9 +39,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "woodcutter-axe": {
     "id": "woodcutter-axe",
     "name": "Малый топор",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
-    "suggestedLevel": 2,
     "itemType": "Оружие",
     "iconPath": "assets/equipment/starter/woodcutter-axe.png",
     "attack": {
@@ -80,7 +74,6 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "toxic-dagger": {
     "id": "toxic-dagger",
     "name": "Ядовитый кинжал",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
     "iconPath": "assets/equipment/toxic-dagger.png",
@@ -100,7 +93,6 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "ember-sword": {
     "id": "ember-sword",
     "name": "Тлеющий меч",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
     "iconPath": "assets/equipment/ember-sword.png",
@@ -116,5 +108,23 @@ Object.assign(window.EQUIPMENT_ITEMS, {
       "bonusDamage": [{"damage": 2, "damageType": "fire"}],
     },
     "hands": 1,
+  },
+  "noon-blade": {
+    "id": "noon-blade",
+    "name": "Клинок полудня",
+    "allowedSlots": ["rightHand"],
+    "iconPath": "assets/equipment/noon-blade.png",
+    "hands": 1,
+    "attack": {
+      "id": "noon-blade-attack", "name": "Удар мечом", "abilityType": "weapon-strike", "isShot": false,
+      "damageBase": 5, "damagePerStr": 1, "damageType": "physical", "baseAccuracy": 100, "baseCritChance": 15,
+      "apCost": 3, "maxUsesPerTurn": 2, "maxCooldown": 0,
+      "range": 1, "minRange": 1, "modifiable": false, "noLOS": false, "isAOE": false, "aoeSize": 1,
+      "target": "any",
+      "iconPath": "assets/equipment/noon-blade.png",
+      "svg": "<svg viewBox=\"0 0 64 64\" aria-hidden=\"true\"><image href=\"assets/equipment/noon-blade.png\" width=\"64\" height=\"64\"/></svg>",
+      "equipmentAnimation": "melee",
+      "bonusDamage": [{"damage": 2, "damageType": "fire"}, {"damage": 3, "damageType": "light"}],
+    },
   },
 });

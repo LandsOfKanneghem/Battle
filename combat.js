@@ -449,6 +449,7 @@ window.getHitChance = function(spell, caster, target) {
 };
 
 window.getCritChance = function(spell, caster, target) {
+  if(spell.noCrit)return 0;
   if (!caster || !['spell', 'ability', 'weapon-strike'].includes(spell.abilityType)) return 0;
   const base = spell.abilityType === 'weapon-strike' || spell.isShot ? (spell.baseCritChance ?? 0) : 0;
   const overflow = spell.abilityType !== 'spell' || spell.isShot

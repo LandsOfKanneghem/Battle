@@ -273,6 +273,7 @@ window.clearHighlight = function() {
 };
 
 window.cancelSpell = function() {
+  window.gameState.pendingConsumable = null;
   window.gameState.preparedSpellId = null;
   window.clearHighlight();
   window.updatePanel();

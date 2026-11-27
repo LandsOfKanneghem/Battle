@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "wood-buckler": {
     "id": "wood-buckler",
     "name": "Деревянный баклер",
-    "slot": "leftHand",
     "allowedSlots": ["leftHand"],
-    "suggestedLevel": 1,
     "itemType": "Щит",
     "iconPath": "assets/equipment/starter/wood-buckler.png",
     "ac": 1,
@@ -14,9 +12,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "wicker-shield": {
     "id": "wicker-shield",
     "name": "Плетёный щит",
-    "slot": "leftHand",
     "allowedSlots": ["leftHand"],
-    "suggestedLevel": 1,
     "itemType": "Щит",
     "iconPath": "assets/equipment/starter/wicker-shield.png",
     "ac": 1,
@@ -25,9 +21,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "plank-shield": {
     "id": "plank-shield",
     "name": "Дощатый щит",
-    "slot": "leftHand",
     "allowedSlots": ["leftHand"],
-    "suggestedLevel": 2,
     "itemType": "Щит",
     "iconPath": "assets/equipment/starter/plank-shield.png",
     "ac": 1,
@@ -36,9 +30,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "hide-shield": {
     "id": "hide-shield",
     "name": "Обтянутый кожей щит",
-    "slot": "leftHand",
     "allowedSlots": ["leftHand"],
-    "suggestedLevel": 2,
     "itemType": "Щит",
     "iconPath": "assets/equipment/starter/hide-shield.png",
     "ac": 1,
@@ -47,9 +39,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "iron-rim-shield": {
     "id": "iron-rim-shield",
     "name": "Щит с железным ободом",
-    "slot": "leftHand",
     "allowedSlots": ["leftHand"],
-    "suggestedLevel": 3,
     "itemType": "Щит",
     "iconPath": "assets/equipment/starter/iron-rim-shield.png",
     "ac": 2,
@@ -62,5 +52,14 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "ac": 1,
     "maxDurability": 5,
     "allowedSlots": ["leftHand"],
+  },
+  "lion-shield": {
+    "id": "lion-shield",
+    "name": "Львиный щит",
+    "allowedSlots": ["leftHand"],
+    "iconPath": "assets/equipment/lion-shield.png",
+    "modifiers": {"blo": 10, "physical": 1},
+    "ac": 4,
+    "maxDurability": 16,
   },
 });

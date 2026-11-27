@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "patched-tunic": {
     "id": "patched-tunic",
     "name": "Латаная туника",
-    "slot": "chest",
     "allowedSlots": ["chest"],
-    "suggestedLevel": 1,
     "itemType": "Туника",
     "iconPath": "assets/equipment/starter/patched-tunic.png",
     "modifiers": {"maxHP": 1},
@@ -13,9 +11,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "quilted-gambeson": {
     "id": "quilted-gambeson",
     "name": "Стёганка",
-    "slot": "chest",
     "allowedSlots": ["chest"],
-    "suggestedLevel": 1,
     "itemType": "Нагрудная броня",
     "iconPath": "assets/equipment/starter/quilted-gambeson.png",
     "ac": 1,
@@ -24,9 +20,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "leather-vest": {
     "id": "leather-vest",
     "name": "Кожаный жилет",
-    "slot": "chest",
     "allowedSlots": ["chest"],
-    "suggestedLevel": 2,
     "itemType": "Нагрудная броня",
     "iconPath": "assets/equipment/starter/leather-vest.png",
     "ac": 1,
@@ -35,9 +29,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "apprentice-robe": {
     "id": "apprentice-robe",
     "name": "Мантия ученика",
-    "slot": "chest",
     "allowedSlots": ["chest"],
-    "suggestedLevel": 2,
     "itemType": "Мантия",
     "iconPath": "assets/equipment/starter/apprentice-robe.png",
     "modifiers": {"maxWP": 2},
@@ -45,9 +37,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "short-chainmail": {
     "id": "short-chainmail",
     "name": "Короткая кольчуга",
-    "slot": "chest",
     "allowedSlots": ["chest"],
-    "suggestedLevel": 3,
     "itemType": "Нагрудная броня",
     "iconPath": "assets/equipment/starter/short-chainmail.png",
     "ac": 2,
@@ -68,5 +58,21 @@ Object.assign(window.EQUIPMENT_ITEMS, {
     "ac": 1,
     "maxDurability": 6,
     "allowedSlots": ["chest"],
+  },
+  "star-robe": {
+    "id": "star-robe",
+    "name": "Мантия звездочёта",
+    "allowedSlots": ["chest"],
+    "iconPath": "assets/equipment/star-robe.png",
+    "modifiers": {"int": 4, "maxWP": 12, "fire": 3},
+  },
+  "dragon-scale-armor": {
+    "id": "dragon-scale-armor",
+    "name": "Драконий доспех",
+    "allowedSlots": ["chest"],
+    "iconPath": "assets/equipment/dragon-scale-armor.png",
+    "modifiers": {"physical": 2, "maxHP": 12},
+    "ac": 7,
+    "maxDurability": 20,
   },
 });

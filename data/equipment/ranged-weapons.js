@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "simple-sling": {
     "id": "simple-sling",
     "name": "Простая праща",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
-    "suggestedLevel": 2,
     "itemType": "Оружие",
     "iconPath": "assets/equipment/starter/simple-sling.png",
     "attack": {
@@ -24,9 +22,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "shortbow": {
     "id": "shortbow",
     "name": "Короткий лук",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
-    "suggestedLevel": 3,
     "itemType": "Оружие",
     "iconPath": "assets/equipment/starter/shortbow.png",
     "attack": {
@@ -79,7 +75,6 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "frost-bow": {
     "id": "frost-bow",
     "name": "Морозный лук",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
     "iconPath": "assets/equipment/frost-bow.png",
@@ -99,7 +94,6 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "earth-sling": {
     "id": "earth-sling",
     "name": "Праща земли",
-    "slot": "rightHand",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
     "iconPath": "assets/equipment/earth-sling.png",
@@ -116,5 +110,23 @@ Object.assign(window.EQUIPMENT_ITEMS, {
       "bonusDamage": [{"damage": 2, "damageType": "earth"}],
     },
     "hands": 1,
+  },
+  "moon-hunter-bow": {
+    "id": "moon-hunter-bow",
+    "name": "Лук лунного охотника",
+    "allowedSlots": ["rightHand"],
+    "iconPath": "assets/equipment/moon-hunter-bow.png",
+    "hands": 2,
+    "attack": {
+      "id": "moon-hunter-bow-attack", "name": "Выстрел из лука", "abilityType": "weapon-strike", "isShot": true,
+      "damageBase": 5, "damagePerStr": 1, "damageType": "physical", "baseAccuracy": 90, "baseCritChance": 20,
+      "apCost": 3, "maxUsesPerTurn": 2, "maxCooldown": 0,
+      "range": 8, "minRange": 1, "modifiable": true, "noLOS": false, "isAOE": false, "aoeSize": 1,
+      "target": "any",
+      "iconPath": "assets/equipment/moon-hunter-bow.png",
+      "svg": "<svg viewBox=\"0 0 64 64\" aria-hidden=\"true\"><image href=\"assets/equipment/moon-hunter-bow.png\" width=\"64\" height=\"64\"/></svg>",
+      "equipmentAnimation": "arrow",
+      "bonusDamage": [{"damage": 3, "damageType": "air"}],
+    },
   },
 });

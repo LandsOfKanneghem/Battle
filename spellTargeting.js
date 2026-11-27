@@ -1,9 +1,16 @@
 // Проверки заклинаний и превью: общий gameState, геометрия и расчёт урона.
 // DOM и зависимости используются только при вызове; clearHighlight остаётся в index.html.
 
+window.isCasterSpell = function(caster,spell){
+  if(caster?.availableSpells.includes(spell))return true;
+  const pending=window.gameState.pendingConsumable;
+  return !!(spell?.consumableCast&&pending?.spell===spell&&pending.ownerId===caster?.id
+    &&caster.consumables?.[pending.slot]===pending.item&&window.canUseConsumable(caster,pending.slot));
+};
+
 window.canPrepareSpell = function(spell) {
   const caster = window.gameState.activeEntity();
-  return !!spell && !!caster && caster.hp > 0 && caster.availableSpells.includes(spell) && !window.gameState.isMoving && !window.gameState.isCasting && !window.gameState.isSkippingTurn && !window.isFrozen(caster) && !window.isJumpBlocked(spell, caster)
+  return !!spell && !!caster && caster.hp > 0 && window.isCasterSpell(caster,spell) && !window.gameState.isMoving && !window.gameState.isCasting && !window.gameState.isSkippingTurn && !window.isFrozen(caster) && !window.isJumpBlocked(spell, caster)
     && (!spell.requiresWeapon || !!caster.Equipment?.rightHand?.attack)
     && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
     && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
@@ -66,7 +73,7 @@ window.effectiveSpellRange = function(spell, caster = window.gameState.activeEnt
 
 window.inSpellReach = function(target, spell) {
   const caster = window.gameState.activeEntity();
-  if (!caster || !spell || !caster.availableSpells.includes(spell) || window.isJumpBlocked(spell, caster)) return false;
+  if (!caster || !spell || !window.isCasterSpell(caster,spell) || window.isJumpBlocked(spell, caster)) return false;
   const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
   return target.x >= 0 && target.x < window.gameState.SIZE && target.y >= 0 && target.y < window.gameState.HEIGHT
     && window.gameState.terrain.get(window.gameState.keyOf(target)) !== 'void'
@@ -131,7 +138,7 @@ window.isSpellPreviewTarget = function(entity, spell, caster, center) {
 
 window.highlightSpellRange = function(center = null) {
   window.clearHighlight();
-  const spell = window.gameState.activeEntity()?.availableSpells.find(item => item.id === window.gameState.preparedSpellId);
+  const spell = window.getPreparedSpell?.() ?? window.gameState.activeEntity()?.availableSpells.find(item => item.id === window.gameState.preparedSpellId);
   if (!spell) return;
   // Зелёный фон — допустимые центры; голубая обводка — зона удара.
   for (let y = 0; y < window.gameState.HEIGHT; y++) for (let x = 0; x < window.gameState.SIZE; x++) {
@@ -173,7 +180,7 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
     window.gameState.entities.filter(unit => !window.gameState.isHiddenFrom(unit, caster))) : null;
   const baseDamage = window.getSpellDamage(spell, caster, chargeRoute?.path.length ?? 0);
   const isNonSpell = spell.abilityType === 'ability' || spell.abilityType === 'weapon-strike';
-  const mult = caster && ((spell.abilityType === 'spell' && window.hasActiveState(caster, 'exhaustion'))
+  const mult = !spell.fixedDamage && caster && ((spell.abilityType === 'spell' && window.hasActiveState(caster, 'exhaustion'))
     || (isNonSpell && window.hasActiveState(caster, 'weakness'))) ? 0.8 : 1;
   const dmgSpell = { ...spell, damage: Math.floor(baseDamage * mult) };
   const keys = new Set(area.map(window.gameState.keyOf));

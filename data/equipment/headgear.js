@@ -3,9 +3,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "patched-cap": {
     "id": "patched-cap",
     "name": "Латаная шапка",
-    "slot": "head",
     "allowedSlots": ["head"],
-    "suggestedLevel": 1,
     "itemType": "Шапка",
     "iconPath": "assets/equipment/starter/patched-cap.png",
     "modifiers": {"maxHP": 1},
@@ -13,9 +11,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "apprentice-hood": {
     "id": "apprentice-hood",
     "name": "Капюшон ученика",
-    "slot": "head",
     "allowedSlots": ["head"],
-    "suggestedLevel": 1,
     "itemType": "Капюшон",
     "iconPath": "assets/equipment/starter/apprentice-hood.png",
     "modifiers": {"int": 1},
@@ -23,9 +19,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "padded-coif": {
     "id": "padded-coif",
     "name": "Стёганый подшлемник",
-    "slot": "head",
     "allowedSlots": ["head"],
-    "suggestedLevel": 2,
     "itemType": "Подшлемник",
     "iconPath": "assets/equipment/starter/padded-coif.png",
     "ac": 1,
@@ -34,9 +28,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "leather-cap": {
     "id": "leather-cap",
     "name": "Кожаный шлем",
-    "slot": "head",
     "allowedSlots": ["head"],
-    "suggestedLevel": 2,
     "itemType": "Шлем",
     "iconPath": "assets/equipment/starter/leather-cap.png",
     "ac": 1,
@@ -45,12 +37,19 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   "iron-kettle-helm": {
     "id": "iron-kettle-helm",
     "name": "Простой железный шлем",
-    "slot": "head",
     "allowedSlots": ["head"],
-    "suggestedLevel": 3,
     "itemType": "Шлем",
     "iconPath": "assets/equipment/starter/iron-kettle-helm.png",
     "ac": 1,
     "maxDurability": 6,
+  },
+  "dawn-crown": {
+    "id": "dawn-crown",
+    "name": "Корона рассвета",
+    "allowedSlots": ["head"],
+    "iconPath": "assets/equipment/dawn-crown.png",
+    "modifiers": {"cha": 3, "wis": 3, "luc": 2},
+    "ac": 2,
+    "maxDurability": 15,
   },
 });

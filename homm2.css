@@ -311,10 +311,13 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 #battlefield .small-map-object.spell-target { filter: brightness(var(--entity-lighting, 1)) url('#queue-entity-outline'); }
 
 
-#game-help-dialog { height: min(520px, calc(100vh - 32px)); padding-top: 42px; overflow: hidden; }
+#game-help-dialog { height: min(520px, calc(100vh - 32px)); overflow: hidden; }
 #game-help-dialog[open] { display: flex; flex-direction: column; }
-#game-help-back { position: absolute; top: 6px; left: 8px; width: 28px; height: 28px; padding: 0; border: 0; background: transparent; color: #4d2e15; font: 26px/1 system-ui, sans-serif; cursor: pointer; }
-#close-game-help { width: 28px; height: 28px; padding: 0; }
+.game-help-header { display: flex; align-items: flex-start; gap: 12px; flex-shrink: 0; margin-bottom: 18px; }
+#game-help-dialog .game-help-header h2 { flex: 1; min-width: 0; margin: 0; }
+.game-help-actions { display: flex; gap: 6px; padding-top: 2px; }
+#game-help-back { width: 28px; height: 28px; padding: 0; border: 0; background: transparent; color: #4d2e15; font: 26px/1 system-ui, sans-serif; cursor: pointer; }
+#close-game-help { position: static; width: 28px; height: 28px; padding: 0; }
 #game-help-content { min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
 .game-help-entry { display: block; width: 100%; padding: 10px 6px; text-align: left; border: 0; border-bottom: 1px solid #98764e; background: transparent; color: #4d2e15; font: inherit; cursor: pointer; }
 .game-help-entry:hover { background: #cdb58e; }

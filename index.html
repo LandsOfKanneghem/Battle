@@ -114,9 +114,13 @@
     </tbody></table>
   </dialog>
   <dialog id="game-help-dialog" aria-labelledby="game-help-title">
-    <button id="close-game-help" type="button" aria-label="Закрыть">×</button>
-    <button id="game-help-back" type="button" aria-label="Назад" title="Назад" hidden>←</button>
-    <h2 id="game-help-title" tabindex="-1">Справочник</h2>
+    <div class="game-help-header">
+      <h2 id="game-help-title" tabindex="-1">Справочник</h2>
+      <div class="game-help-actions">
+        <button id="game-help-back" type="button" aria-label="Назад" title="Назад" hidden>←</button>
+        <button id="close-game-help" type="button" aria-label="Закрыть">×</button>
+      </div>
+    </div>
     <div id="game-help-content"></div>
   </dialog>
   <div id="defeat-overlay" hidden aria-live="assertive">

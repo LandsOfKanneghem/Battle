@@ -30,8 +30,10 @@ test('forward and reverse relations distinguish overrides, neutralization and im
 test('special rules cover permanent penalties, crash lock, healing and periodic immunities', () => {
   const { notes } = setup();
   assert.match(notes('adrenaline'), /перманентные — только подавляет/);
-  assert.match(notes('adrenaline-crash'), /Слабость нельзя снять/);
-  assert.match(notes('vigor'), /появление отката снимает Бодрость/);
+  assert.doesNotMatch(notes('adrenaline-crash'), /Слабость/);
+  assert.doesNotMatch(notes('weakness'), /откат/);
+  assert.doesNotMatch(notes('vigor'), /откат/);
+  assert.doesNotMatch(notes('adrenaline-crash'), /Бодрость/);
   assert.match(notes('weak-poison'), /Любое лечение.*даже при полном здоровье/);
   assert.match(notes('freeze'), /Горения, Кровотечения, Слабого яда/);
   assert.match(notes('bleeding'), /один последний наложенный стак/);

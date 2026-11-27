@@ -574,3 +574,33 @@ test('suppressed levitation still expires and is not recreated when Heavy is rem
   ctx.removeState(wizard, 'heavy');
   assert.equal(ctx.hasActiveState(wizard, 'levitation'), false);
 });
+
+test('Adrenaline Crash neither applies Weakness nor prevents removing it', () => {
+  const { ctx, wizard } = setup();
+  ctx.applyState(wizard, { id: 'adrenaline-crash', duration: 1 });
+  assert.equal(ctx.hasActiveState(wizard, 'weakness'), false);
+  ctx.applyState(wizard, { id: 'weakness', duration: 2 });
+  assert.equal(ctx.hasActiveState(wizard, 'weakness'), true);
+  ctx.removeState(wizard, 'weakness');
+  assert.equal(ctx.hasActiveState(wizard, 'weakness'), false);
+  assert.equal(ctx.hasActiveState(wizard, 'adrenaline-crash'), true);
+  assert.equal(ctx.applyState(wizard, { id: 'adrenaline', duration: 2 }), false);
+  assert.equal(ctx.applyState(wizard, { id: 'vigor', duration: 2 }), true);
+});
+
+
+test('Vigor and Adrenaline Crash coexist regardless of application order', () => {
+  for (const vigorFirst of [false, true]) {
+    const { ctx, wizard } = setup();
+    if (vigorFirst) ctx.applyState(wizard, { id: 'vigor', duration: 2, casterId: 'vigor-source' });
+    ctx.applyState(wizard, { id: 'adrenaline-crash', duration: 1, casterId: 'crash-source' });
+    if (!vigorFirst) ctx.applyState(wizard, { id: 'vigor', duration: 2, casterId: 'vigor-source' });
+    assert(ctx.hasActiveState(wizard, 'vigor'));
+    assert(ctx.hasActiveState(wizard, 'adrenaline-crash'));
+    assert.equal(ctx.applyState(wizard, { id: 'weakness', duration: 2 }), false);
+    assert.equal(ctx.applyState(wizard, { id: 'adrenaline', duration: 2 }), false);
+    ctx.tickCasterEffects('crash-source');
+    assert(ctx.hasActiveState(wizard, 'vigor'));
+    assert.equal(ctx.hasActiveState(wizard, 'adrenaline-crash'), false);
+  }
+});

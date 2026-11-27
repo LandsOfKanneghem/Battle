@@ -78,7 +78,7 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
   // Иммунитет Адреналина действует самостоятельно, без Бодрости.
   if (['weakness', 'exhaustion'].includes(input.id) && hasActiveState(entity, 'adrenaline') && !isPermanent) return false;
   if (input.id === 'weakness' && hasActiveState(entity, 'vigor') && !isPermanent) return false;
-  if (['adrenaline', 'vigor'].includes(input.id) && hasActiveState(entity, 'adrenaline-crash')) return false;
+  if (input.id === 'adrenaline' && hasActiveState(entity, 'adrenaline-crash')) return false;
   const neutralizes = input.neutralizes ?? template.neutralizes;
   if (entity.states.some(state => neutralizes.includes(state.id))) {
     // A нейтрализует B: снимаем B, но A не появляется. Урон уже прошёл раньше.
@@ -123,8 +123,6 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
       return state.permanent;
     });
   }
-  // Откат снимает Бодрость до создания Слабости, чтобы иммунитет уже не действовал.
-  if (input.id === 'adrenaline-crash') entity.states = entity.states.filter(state => state.id !== 'vigor');
   entity.states = entity.states.filter(state => !sameInstance(state));
   entity.states.push({ ...template, ...input, duration: stateDuration, casterId: input.casterId ?? window.gameState.activeEntity()?.id,
     suppressed: false, appliedOrder: ++window.gameState.effectOrder,
@@ -138,7 +136,6 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
 };
 
 window.removeState = function(entity, stateId) {
-  if (stateId === 'weakness' && hasActiveState(entity, 'adrenaline-crash')) return;
   if (stateTypes.get(stateId)?.stackable === true) {
     const latest = entity.states.filter(state => state.id === stateId && !state.unremovable && !state.permanent && !state.innate)
       .reduce((last, state) => !last || state.appliedOrder > last.appliedOrder ? state : last, null);
@@ -207,7 +204,6 @@ window.tickCasterEffects = function(casterId) {
     const expiredAdrenaline = target.states.filter(state => state.id === 'adrenaline'
       && state.casterId === casterId && !state.permanent && !state.innate && state.duration <= 1);
     // Все состояния, включая Слабость, тикают только у своего источника.
-    // Слабость от отката и сам откат имеют одинаковый срок и спадают вместе.
     // Подавленные состояния тоже тикают; врождённые и постоянные не истекают.
     target.states = target.states.map(state => state.casterId === casterId && !state.permanent && !state.innate
       ? { ...state, duration: state.duration - 1 } : state)

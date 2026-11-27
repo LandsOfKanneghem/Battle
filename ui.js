@@ -354,12 +354,10 @@ window.showEffectTooltip = function(icon, effect, kind = 'spell') {
   const spellDescription = effect.amount !== undefined
     ? effect.damageType === 'physical' ? `Блокирует ${effect.amount} ед. физического урона`
       : `Блокирует ${effect.amount} ед. урона стихии ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[effect.damageType]}` : effect.description;
-  const weaknessLocked = kind === 'state' && effect.id === 'weakness' && window.gameState.entities.some(entity =>
-    entity.states.includes(effect) && window.hasActiveState(entity, 'adrenaline-crash'));
   const lines = kind === 'state'
     ? [...(effect.description === undefined ? [] : [effect.description]),
       ...(effect.permanent ? [] : [`Длительность: ${n} ${word}`]),
-      ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable || weaknessLocked ? [effect.id === 'weakness' ? 'Неснимаемая' : 'Неснимаемое'] : [])]
+      ...(effect.innate ? ['Врождённое'] : []), ...(effect.permanent ? ['Перманентное'] : []), ...(effect.unremovable ? [effect.id === 'weakness' ? 'Неснимаемая' : 'Неснимаемое'] : [])]
     : [...(spellDescription === undefined ? [] : [spellDescription]), `Длительность: ${n} ${word}${effect.isSkyShot ? ' или до первого применения' : ''}`,
       `Источник: ${effect.casterName ?? 'Неизвестно'}`];
   for (const text of lines) {

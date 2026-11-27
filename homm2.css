@@ -71,9 +71,9 @@ body {
   width: var(--battlefield-width); height: var(--battlefield-height); aspect-ratio: auto;
   grid-template-columns: repeat(12, var(--cell-size));
   grid-template-rows: repeat(12, var(--cell-size));
-  gap: 0; padding: 0; border: 3px solid #222b22;
+  gap: 0; padding: 0; border: 3px solid #172b4d;
   outline: 1px solid #ac9155;
-  background: #3d502c; box-shadow: 0 0 0 2px #151c18;
+  background: #3d502c; box-shadow: none;
 }
 .cell, .cell:hover { background: transparent; isolation: auto; }
 .cell::before {

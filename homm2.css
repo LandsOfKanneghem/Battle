@@ -338,10 +338,14 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .equipment-column { grid-area: equipment; height: var(--battlefield-height, 576px); align-self: start; display: flex; flex-direction: column; width: 220px; }
 #equipment-panel { box-sizing: border-box; flex: none; background: #d9c49b; color: #493117; border: 2px solid var(--panel-frame-color); padding: 5px; overflow: auto; }
 #equipment-panel h2 { margin: 0 0 4px; text-align: center; font: bold 15px Georgia,serif; }
-#equipment-slots { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; }
-.equipment-slot { min-width: 0; padding: 2px; border: 1px solid #8e6a3d; background: #bba47b; color: #493117; font: 10px Georgia,serif; cursor: default; }
-.equipment-slot.filled { background: #312b25; color: #ead7ac; }
-.equipment-art { height: 43px; display: grid; place-items: center; }
-.equipment-art svg { height: 40px; width: 40px; image-rendering: pixelated; }
+#equipment-slots { display: grid; grid-template-columns: repeat(3,var(--spell-slot-size)); gap: 0; justify-content: center; }
+.equipment-slot { box-sizing: border-box; width: var(--spell-slot-size); height: var(--spell-slot-size); min-width: 0; padding: 1px; border: 2px solid var(--panel-frame-color); border-radius: 0; background: #321920 url('assets/homm2/leather.png') center/cover; color: #a48c70; box-shadow: var(--panel-frame-bevel); cursor: default; }
+.equipment-slot:hover, .equipment-slot:focus-visible { border-color: #e9cf8a; }
+.equipment-art { width: var(--spell-image-size); height: var(--spell-image-size); display: grid; place-items: center; }
+.equipment-art svg, .equipment-art img { height: var(--spell-image-size); width: var(--spell-image-size); image-rendering: pixelated; object-fit: contain; }
+.equipment-outline { opacity: .65; }
 .equipment-placeholder { flex: 1; min-height: 0; background: #414141; border: 2px solid #655b4b; }
 .equipment-tooltip { position: fixed; z-index: 1000; pointer-events: none; }
+
+.equipment-tooltip { padding: 8px; }
+.equipment-tooltip .spell-title { margin: 0 0 8px; }

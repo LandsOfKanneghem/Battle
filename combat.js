@@ -13,7 +13,7 @@ window.hasActiveState = function(entity, id) {
     && (state.duration > 0 || state.permanent || state.innate));
 };
 
-window.recalculateStateStats = function(entity, allowNegativeMP = false) {
+window.recalculateStateStats = function(entity) {
   const oldMaxAP = entity.maxAP;
   entity.maxAP = Math.max(1, entity.baseAP + entity.states.filter(state => !state.suppressed)
     .reduce((sum, state) => sum + (state.apBonus ?? 0), 0)
@@ -23,17 +23,16 @@ window.recalculateStateStats = function(entity, allowNegativeMP = false) {
   const oldMaxMP = entity.maxMP;
   const tempMpBonus = (entity.mpBonuses ?? []).filter(bonus => bonus.turnsLeft > 0)
     .reduce((sum, bonus) => sum + bonus.amount, 0);
-  entity.maxMP = Math.max(1, entity.baseMP + entity.states.filter(state => !state.suppressed)
+  entity.maxMP = entity.baseMP + entity.states.filter(state => !state.suppressed)
     .reduce((sum, state) => sum + state.mpBonus, 0) + tempMpBonus
-    + Math.floor(window.getEffectiveStat(entity, 'str') / 20));
+    + Math.floor(window.getEffectiveStat(entity, 'str') / 20);
   entity.ini = entity.baseINI + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.initiativeBonus, 0);
-  // Берём фактическую дельту после ограничения maxMP >= 1, а не сумму бонусов.
+  // ОП и их максимум не ограничены снизу; сохраняем уже потраченные очки.
   // Перекрытие Скорости Медлительностью, например, даёт сразу -4 MP.
   const delta = entity.maxMP - oldMaxMP;
   if (delta !== 0) {
     const adjusted = Math.min(entity.maxMP, entity.mp + delta);
-    // Наложение допускает долг MP; при снятии/истечении остаток не ниже нуля.
-    entity.mp = allowNegativeMP ? adjusted : Math.max(0, adjusted);
+    entity.mp = adjusted;
   }
   const oldMaxHP = entity.maxHP;
   const effectiveVit = window.getEffectiveStat(entity, 'vit');
@@ -132,7 +131,7 @@ window.applyState = function(entity, stateOrId, duration, casterName) {
     overrides: [...(input.overrides ?? template.overrides)],
     neutralizes: [...(input.neutralizes ?? template.neutralizes)], blocks: [...(input.blocks ?? template.blocks)] });
   resolveStateSuppression(entity);
-  recalculateStateStats(entity, true);
+  recalculateStateStats(entity);
   window.battleLog?.applied(entity, entity.states.find(state => state.appliedOrder === window.gameState.effectOrder));
   window.updatePanel?.();
   return true;
@@ -294,12 +293,12 @@ window.applySpellOnEntity = function(entity, spellOnMe) {
     entity.mpBonuses ??= [];
     entity.mpBonuses.push({ ...bonus, amount: applied.mpAmount });
   }
-  if (hadMpBonus || applied.mpAmount) recalculateStateStats(entity, true);
+  if (hadMpBonus || applied.mpAmount) recalculateStateStats(entity);
   if (applied.stateId) applyState(entity, {
     id: applied.stateId, duration: applied.duration,
     casterId: applied.casterId, casterName: applied.casterName
   });
-  if (applied.modifiers?.vit || applied.modifiers?.cha) recalculateStateStats(entity, true);
+  if (applied.modifiers?.vit || applied.modifiers?.cha) recalculateStateStats(entity);
   window.updatePanel?.();
 };
 
@@ -344,6 +343,8 @@ window.getSpellDamage = function(spell, caster, movementCells = 0) {
   const per = isNonSpell ? (spell.damagePerStr ?? 0) : (spell.damagePerInt ?? 0);
   return Math.floor(spell.damageBase + per * stat * (spell.isCharge ? 1 + movementCells : 1));
 };
+
+window.isJumpBlocked = (spell, caster) => !!spell?.isJump && !!caster && window.hasActiveState(caster, 'heavy');
 
 window.getSpellDuration = function(spell, caster) {
   if (spell.durationBase !== undefined && caster) {

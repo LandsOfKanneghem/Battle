@@ -23,7 +23,7 @@
   }
 
   function usableSpells(entity) {
-    return entity.availableSpells.filter(spell => entity.ap >= spell.apCost && spell.cooldown <= 0
+    return entity.availableSpells.filter(spell => !window.isJumpBlocked(spell, entity) && entity.ap >= spell.apCost && spell.cooldown <= 0
       && (spell.maxUsesPerTurn === undefined || spell.usesThisTurn < spell.maxUsesPerTurn)
       && (spell.maxUsesPerBattle === undefined || (spell.usesTotal ?? 0) < spell.maxUsesPerBattle));
   }

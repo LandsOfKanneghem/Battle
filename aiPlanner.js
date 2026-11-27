@@ -8,7 +8,7 @@
       [key, (unit[key] ?? []).map(value => ({ ...value }))])),
     availableSpells: (unit.availableSpells ?? []).map(s => ({ ...s })), baseES: unit.baseES ?? 0 });
   const copy = world => ({ ...world, actor: clone(world.actor), target: clone(world.target) });
-  const usable = (actor, spell) => spell && spell.apCost > 0 && actor.ap >= spell.apCost && !(spell.cooldown > 0)
+  const usable = (actor, spell) => spell && !window.isJumpBlocked(spell, actor) && spell.apCost > 0 && actor.ap >= spell.apCost && !(spell.cooldown > 0)
     && (spell.usesThisTurn ?? 0) < (spell.maxUsesPerTurn ?? Infinity)
     && (spell.usesTotal ?? 0) < (spell.maxUsesPerBattle ?? Infinity);
   const occupants = world => [world.actor, world.target, ...world.others].filter(unit => unit.hp > 0);
@@ -48,7 +48,7 @@
     const key = n => `${n.point.x},${n.point.y}:${n.jump?.id ?? ''}:${n.water}`;
     nodes.set(key(first), first);
     function add(n) {
-      if (n.cost > actor.mp || n.cost >= (nodes.get(key(n))?.cost ?? Infinity)) return;
+      if (n.cost > Math.max(0, actor.mp) || n.cost >= (nodes.get(key(n))?.cost ?? Infinity)) return;
       nodes.set(key(n), n); open.push(n);
     }
     while (open.length) {

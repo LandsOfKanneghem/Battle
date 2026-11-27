@@ -128,7 +128,7 @@ window.getTonguePullDestination = function(caster, target, entities = window.gam
 // Только эффект: ресурсы уже оплачены в первой фазе каста.
 window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = null, shotHit = null) {
   const { entities, cells, SIZE, HEIGHT, keyOf, obstacles, terrain, isAlly } = window.gameState;
-  if (terrain?.get(keyOf(target)) === 'void') return;
+  if (terrain?.get(keyOf(target)) === 'void' || window.isJumpBlocked(spell, caster)) return;
   const {
     stateTypes, applyState, applyDamage, applySpellOnEntity, hasActiveState, shotHits, playMissAnimation,
     renderPosition, findSparkTargets, affectedCells, addElementalShield,

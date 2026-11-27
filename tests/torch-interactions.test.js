@@ -381,10 +381,10 @@ test('Maiming Strike inherits sword parameters and deals only STR damage; maims 
     assert.equal(target.hp, hp - (kind === 'miss' ? 0 : 2));
     assert.equal(ctx.hasActiveState(target, 'maimed'), kind === 'enemy');
     if (kind === 'enemy') {
-      assert.equal(target.maxMP, Math.max(1, maxMP - 2));
+      assert.equal(target.maxMP, maxMP - 2);
       ctx.applySpellEffect(maim, target.position, warrior, deps(), null, true);
       assert.equal(target.states.filter(s => s.id === 'maimed').length, 1);
-      assert.equal(target.maxMP, Math.max(1, maxMP - 2));
+      assert.equal(target.maxMP, maxMP - 2);
       ctx.tickCasterEffects(warrior.id);ctx.tickCasterEffects(warrior.id);
       assert.equal(ctx.hasActiveState(target, 'maimed'), false);
       assert.equal(target.maxMP, maxMP);
@@ -500,4 +500,43 @@ test('Charge range includes empty cardinal cells; casting there pays and fails w
     assert.equal(charge.cooldown, 3);assert.equal(charge.usesThisTurn, 1);
     assert.equal(failures, 1);assert.equal(animations, 1);
   }
+});
+
+test('movement penalties stack without a lower bound and removal preserves negative spent MP', () => {
+  const { ctx, state } = setup();
+  const toad = ctx.createCreature('giant-toad', { x: 2, y: 1 });state.entities.push(toad);
+  toad.mp = 1; // Two points already spent out of three.
+  ctx.applyState(toad, { id: 'slowness', duration: 2 });
+  assert.equal(toad.maxMP, 1);assert.equal(toad.mp, -1);
+  ctx.applyState(toad, { id: 'maimed', duration: 2 });
+  assert.equal(toad.maxMP, -1);assert.equal(toad.mp, -3);
+  ctx.removeState(toad, 'slowness');
+  assert.equal(toad.maxMP, 1);assert.equal(toad.mp, -1);
+  ctx.applyState(toad, { id: 'slowness', duration: 2, mpBonus: -100 });
+  assert.equal(toad.maxMP, -99);assert.equal(toad.mp, -101);
+  ctx.removeState(toad, 'slowness');ctx.removeState(toad, 'maimed');
+  assert.equal(toad.maxMP, 3);assert.equal(toad.mp, 1);
+});
+
+test('Heavy blocks jumping before AP payment, Light restores it, and teleport remains allowed', () => {
+  const { ctx, state, wizard, deps } = setup();
+  const toad = ctx.createCreature('giant-toad', { x: 1, y: 1 });
+  state.entities = [toad];state.activeEntityId = toad.id;
+  const jump = toad.availableSpells.find(s => s.id === 'jump');state.preparedSpellId = jump.id;
+  ctx.applyState(toad, { id: 'heavy', duration: 2 });
+  assert.equal(ctx.canPrepareSpell(jump), false);assert.equal(ctx.canTarget({ x: 3, y: 1 }, jump), false);
+  const ap = toad.ap;
+  assert.equal(ctx.castSpell(state.cells[15], deps()), false);
+  assert.equal(toad.ap, ap);assert.equal(jump.cooldown, 0);
+  ctx.applySpellEffect(jump, { x: 3, y: 1 }, toad, deps());
+  assert.equal(toad.position.x, 1);
+  ctx.applyState(toad, { id: 'light', duration: 2 });
+  assert.equal(ctx.canPrepareSpell(jump), true);
+  assert.equal(ctx.canTarget({ x: 3, y: 1 }, jump), true);
+  state.entities = [wizard];state.activeEntityId = wizard.id;
+  const teleport = wizard.availableSpells.find(s => s.id === 'teleport');state.preparedSpellId = teleport.id;
+  ctx.applyState(wizard, { id: 'heavy', duration: 2 });
+  assert.equal(ctx.canPrepareSpell(teleport), true);
+  assert(ctx.castSpell(state.cells[15], { ...deps(), playTeleportAnimation() {} }));
+  assert.equal(wizard.position.x, 3);
 });

@@ -3,7 +3,7 @@
 
 window.canPrepareSpell = function(spell) {
   const caster = window.gameState.activeEntity();
-  return !!spell && !!caster && caster.hp > 0 && caster.availableSpells.includes(spell) && !window.gameState.isMoving && !window.gameState.isCasting && !window.gameState.isSkippingTurn && !window.isFrozen(caster)
+  return !!spell && !!caster && caster.hp > 0 && caster.availableSpells.includes(spell) && !window.gameState.isMoving && !window.gameState.isCasting && !window.gameState.isSkippingTurn && !window.isFrozen(caster) && !window.isJumpBlocked(spell, caster)
     && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
     && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
     && spell.cooldown === 0;
@@ -65,7 +65,7 @@ window.effectiveSpellRange = function(spell, caster = window.gameState.activeEnt
 
 window.inSpellReach = function(target, spell) {
   const caster = window.gameState.activeEntity();
-  if (!caster || !spell || !caster.availableSpells.includes(spell)) return false;
+  if (!caster || !spell || !caster.availableSpells.includes(spell) || window.isJumpBlocked(spell, caster)) return false;
   const distance = Math.abs(target.x - caster.position.x) + Math.abs(target.y - caster.position.y);
   return target.x >= 0 && target.x < window.gameState.SIZE && target.y >= 0 && target.y < window.gameState.HEIGHT
     && window.gameState.terrain.get(window.gameState.keyOf(target)) !== 'void'

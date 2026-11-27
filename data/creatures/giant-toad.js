@@ -37,7 +37,7 @@ window.CREATURE_TEMPLATES['giant-toad'] = {
     description: 'Совершает прыжок на несколько клеток.',
     apCost: 2, maxUsesPerTurn: 1, maxCooldown: 1,
     range: 2, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
-    target: 'none', isTeleport: true, requiresEmptyCell: true,
+    target: 'none', isTeleport: true, isJump: true, requiresEmptyCell: true,
     iconPath: 'assets/homm2/spell-jump.png',
     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-jump.png" width="64" height="64"/></svg>'
   }, {

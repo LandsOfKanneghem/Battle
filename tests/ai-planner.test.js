@@ -137,3 +137,13 @@ test('planner handles Charge movement and its path-dependent damage without chan
   assert.equal(action.spellId, 'charge');assert.equal(action.targetId, h.wizard.id);
   assert.equal(JSON.stringify(h.state.entities), before);
 });
+
+test('Heavy prevents AI jump plans; negative MP alone does not prevent an AP-based jump', () => {
+  const h = setup({ start: { x: 5, y: 2 }, mage: { x: 7, y: 3 }, warrior: { x: 5, y: 3 }, mp: 0, ap: 5 });
+  h.toad.mp = -3;
+  assert.equal(h.plan().kind, 'jump');
+  h.ctx.applyState(h.toad, { id: 'heavy', duration: 2 });
+  assert.notEqual(h.plan()?.kind, 'jump');
+  h.ctx.applyState(h.toad, { id: 'light', duration: 2 });
+  assert.equal(h.plan().kind, 'jump');
+});

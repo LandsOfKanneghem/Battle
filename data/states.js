@@ -33,7 +33,7 @@ const WET = {
 };
 const HEAVY = {
   id: 'heavy', name: 'Тяжесть', mpBonus: 0, initiativeBonus: 0,
-  description: 'Нельзя толкнуть; обычная ходьба разрешена', duration: 2, casterName: '', suppressed: false,
+  description: 'Нельзя толкнуть и нельзя прыгать; обычная ходьба разрешена', duration: 2, casterName: '', suppressed: false,
   overrides: ['light'], neutralizes: [], blocks: [], permanent: false, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M15 14 V10 Q15 4 20 4 Q25 4 25 10 V14" fill="none" stroke="#c5c9ce" stroke-width="4"/><path d="M11 14 H29 L35 35 H5 Z" fill="#57616e" stroke="#bbc4cf" stroke-width="2"/><path d="M20 18 V29 M15 24 L20 29 L25 24" fill="none" stroke="#e5e9ef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 };

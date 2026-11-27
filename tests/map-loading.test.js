@@ -16,6 +16,7 @@ function setup() {
   ctx.CREATURE_TEMPLATES = { wizard: { type: 'wizard' }, wolf: { type: 'wolf' } };
   ctx.hasActiveState = (entity, id) => entity.states?.some(s => s.id === id);
   ctx.isFrozen = () => false;
+  ctx.isJumpBlocked = (spell, entity) => !!spell?.isJump && ctx.hasActiveState(entity, 'heavy');
   ctx.getEffectiveStat = () => 0;
   return ctx;
 }

@@ -72,7 +72,9 @@ body {
   grid-template-columns: repeat(12, var(--cell-size));
   grid-template-rows: repeat(12, var(--cell-size));
   gap: 0; padding: 0; border: 3px solid #172b4d;
-  outline: 1px solid #ac9155;
+  outline: none;
+  /* Both colors belong to the border box, so the scroll container cannot clip them. */
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9'%3E%3Cpath fill='%23ac9155' d='M0 0h9v9H0z'/%3E%3Cpath fill='%23172b4d' d='M1 1h7v7H1z'/%3E%3C/svg%3E") 3 stretch;
   background: #3d502c; box-shadow: none;
 }
 .cell, .cell:hover { background: transparent; isolation: auto; }
@@ -136,9 +138,8 @@ svg, svg image, #creature-portrait { image-rendering: auto; }
 .panel {
   grid-area: panel; width: var(--panel-width); align-self: start;
   display: grid; grid-template-columns: 100%;
-  grid-template-rows: minmax(0, 1fr) max-content 37px calc(4 * var(--spell-slot-size));
-  /* Include the battlefield bottom outline in the visible panel height. */
-  height: 583px; margin-top: 0;
+  grid-template-rows: minmax(0, 1fr) max-content 36px calc(4 * var(--spell-slot-size));
+  height: 582px; margin-top: 0;
   max-height: none; overflow: visible; padding: 0;
   background: transparent; border: 0; border-radius: 0; box-shadow: none;
 }

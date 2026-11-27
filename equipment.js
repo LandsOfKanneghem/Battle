@@ -18,7 +18,7 @@
     if(type==='other')return item.allowedSlots?.some(slot=>slot==='other1'||slot==='other2');
     return item.allowedSlots?.includes(type);
   };
-  const modifierNames={maxHP:'Макс. ОЗ',maxWP:'Макс. WP',mp:'ОП',maxAP:'ОД',consumableSlots:'Слот расходников',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума'};
+  const modifierNames={maxHP:'ОЗ',maxWP:'WP',mp:'ОП',maxMP:'ОП',maxAP:'ОД',consumableSlots:'Слот расходников',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума'};
   const hide=()=>{tooltip?.remove();tooltip=null;};
   function show(anchor,item,slot,entity){
     hide();
@@ -40,7 +40,13 @@
     for(const part of item?.attack?.bonusDamage??[])line('Дополнительный урон',`+${part.damage} ${damageNames[part.damageType]??part.damageType}`);
     if(item?.consumable){line('Лечение',`+${item.consumable.heal} ОЗ`);line('Применение','2 ОД');}
     if(item?.consumableSlots!==undefined)line('Слоты расходников',item.consumableSlots);
-    for(const [key,value] of Object.entries(item?.modifiers??{})) { const effective=item.ac!==undefined&&window.isArmorBroken(item)?Math.floor(value*.25):value;line(modifierNames[key]??key,`${effective>=0?'+':''}${effective}`); }
+    for(const [key,value] of Object.entries(item?.modifiers??{})) {
+      const effective=item.ac!==undefined&&window.isArmorBroken(item)?Math.floor(value*.25):value;
+      const amount=`${effective>=0?'+':''}${effective}`;
+      if(['maxHP','maxWP','maxAP','maxMP','mp'].includes(key)){
+        const p=document.createElement('p');p.textContent=`${amount} ${modifierNames[key]}`;tooltip.append(p);
+      }else line(modifierNames[key]??key,amount);
+    }
     (anchor.closest('dialog[open]')??document.body).append(tooltip);
     const r=anchor.getBoundingClientRect();tooltip.style.left=`${Math.max(8,Math.min(r.left,innerWidth-tooltip.offsetWidth-8))}px`;tooltip.style.top=`${Math.max(8,Math.min(r.bottom+8,innerHeight-tooltip.offsetHeight-8))}px`;
   }

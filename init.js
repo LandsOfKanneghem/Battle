@@ -4,7 +4,7 @@
     'monastery-floor', 'cave-earth', 'void']);
   const mapTypes = new Set(['surface', 'underground']);
   const wallTypes = new Set(['monastery', 'dungeon']);
-  const teamOf = template => ['wizard', 'monk', 'warrior', 'archer', 'halfling'].includes(template.type) || template.isSummon ? 'ally' : 'enemy';
+  const teamOf = template => ['wizard', 'monk', 'warrior', 'archer', 'halfling', 'druid'].includes(template.type) || template.isSummon ? 'ally' : 'enemy';
 
   window.validateBattleMap = function(data) {
     const state = window.gameState;
@@ -56,7 +56,7 @@
       }
       checkPosition(mob);
       const team = data.version >= 4 ? mob.team : teamOf(window.CREATURE_TEMPLATES[mob.type]);
-      if (!['ally', 'enemy'].includes(team) || (['wizard', 'monk', 'warrior', 'archer', 'halfling'].includes(mob.type) && team !== 'ally'))
+      if (!['ally', 'enemy'].includes(team) || (['wizard', 'monk', 'warrior', 'archer', 'halfling', 'druid'].includes(mob.type) && team !== 'ally'))
         throw new Error('Неверная сторона существа.');
       return { type: mob.type, team, x: mob.x, y: mob.y };
     });

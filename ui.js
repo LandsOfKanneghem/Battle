@@ -156,8 +156,8 @@ window.showSpellTooltip = function(icon, spell) {
   }
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
   if (spell.isSummon) {
-    addLine('Призыв', spell.name);
-    addLine('Длительность', spellTurnLabel(window.getSpellDuration(spell, caster)));
+    addLine('Призыв', window.CREATURE_TEMPLATES[spell.summonType ?? 'lake-spirit'].name);
+    addLine('Длительность', spell.permanentSummon ? 'Неограниченно' : spellTurnLabel(window.getSpellDuration(spell, caster)));
   }
   const effects = [];
   let effectColor;
@@ -559,7 +559,7 @@ window.updatePanel = function() {
     const active = entity.id === window.gameState.activeEntityId;
     window.gameState.turnSlots.get(entity.id).classList.toggle('active', active);
     window.gameState.turnSlots.get(entity.id).setAttribute('aria-current', active ? 'true' : 'false');
-    if (entity.isSummon) {
+    if (entity.isSummon && !entity.permanentSummon) {
       const slot = window.gameState.turnSlots.get(entity.id);
       if (slot) {
         let badge = slot.querySelector('.summon-badge');

@@ -5,7 +5,7 @@
 // Сторона задаётся картой; призывы сохраняют прежнюю принадлежность союзникам.
 // При отдельной загрузке боевого модуля устанавливаем ту же проверку.
 window.gameState.isAlly ??= entity => entity.isSummon === true || entity.team === 'ally'
-  || (entity.team === undefined && ['wizard', 'monk', 'warrior', 'archer', 'halfling'].includes(entity.type));
+  || (entity.team === undefined && ['wizard', 'monk', 'warrior', 'archer', 'halfling', 'druid'].includes(entity.type));
 
 // Состояния: наложение, подавление, пересчёт характеристик и сроки источника.
 window.hasActiveState = function(entity, id) {
@@ -221,7 +221,7 @@ window.tickCasterEffects = function(casterId) {
     // VIT из заклинания должен исчезнуть из maxHP в том же тике, что и сам эффект.
     recalculateStateStats(target);
     // Единственный тик — у appliedEffect; поле для очереди лишь отражает его срок.
-    if (target.isSummon && target.ownerId === casterId) {
+    if (target.isSummon && target.ownerId === casterId && !target.permanentSummon) {
       const timeEffect = target.appliedEffects.find(effect => effect.id === 'summon-time');
       target.summonDuration = timeEffect?.duration ?? 0;
       if (target.summonDuration <= 0) {

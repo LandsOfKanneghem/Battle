@@ -173,12 +173,14 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
   }
   window.applyTorchSpell?.(effectArea, spell, caster);
   if (spell.isSummon) {
-    const creature = window.createCreature('lake-spirit', target);
-    // Поставленный на карту дух — обычный моб; призыв управляется его владельцем.
+    const creature = window.createCreature(spell.summonType ?? 'lake-spirit', target);
+    // Призыв управляется владельцем и наследует его сторону.
     creature.isSummon = true;
     delete creature.ai;
     creature.ownerId = caster.id;
-    creature.summonDuration = duration;
+    creature.team = caster.team ?? (isAlly(caster) ? 'ally' : 'enemy');
+    creature.permanentSummon = spell.permanentSummon === true;
+    creature.summonDuration = creature.permanentSummon ? null : duration;
     entities.push(creature);
     window.battleLog?.summoned(caster, creature);
     const gameState = window.gameState;
@@ -202,7 +204,7 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
     gameState.turnSlots.set(creature.id, slot);
     window.turnQueue.addSummon(creature);
     renderPosition();
-    applySpellOnEntity(creature, {
+    if (!creature.permanentSummon) applySpellOnEntity(creature, {
       id: 'summon-time', sourceId: 'summon-time', name: 'Время жизни',
       icon: window.SUMMON_TIME_ICON, stackable: false,
       duration, casterId: caster.id, casterName: caster.name

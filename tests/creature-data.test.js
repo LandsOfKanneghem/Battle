@@ -344,3 +344,26 @@ test('halfling is the fifth allied hero and sling shot shares all bow combat par
     'target', 'baseAccuracy', 'baseCritChance']) assert.equal(shot[key], bow[key], key);
   assert.equal(ctx.getSpellDamage(shot, halfling), ctx.getSpellDamage(bow, archer));
 });
+
+test('druid is the sixth allied hero with a free, once-per-battle permanent wolf summon', () => {
+  const ctx = setup();
+  vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
+  const druid = ctx.createCreature('druid', { x: 1, y: 1 });
+  assert(ctx.gameState.isAlly(druid)); assert.equal(druid.ai, undefined);
+  assert.equal(druid.partyOrder, 6); assert.equal(druid.availableSpells.length, 1);
+  const summon = druid.availableSpells[0];
+  for (const [key, value] of Object.entries({ id:'summon-wolf', abilityType:'spell', apCost:0,
+    maxCooldown:0, maxUsesPerTurn:1, maxUsesPerBattle:1, minRange:1, range:2, modifiable:false,
+    noLOS:false, target:'none', isAOE:false, aoeSize:1, isSummon:true, summonType:'wolf',
+    permanentSummon:true, requiresEmptyCell:true })) assert.equal(summon[key], value, key);
+  const permanent = ctx.createCreature('wolf', { x: 2, y: 1 });
+  Object.assign(permanent, {isSummon:true, ownerId:druid.id, permanentSummon:true, summonDuration:null});
+  const timed = ctx.createCreature('lake-spirit', { x: 1, y: 2 });
+  Object.assign(timed, {isSummon:true, ownerId:druid.id, summonDuration:2});
+  timed.appliedEffects.push({id:'summon-time', casterId:druid.id, duration:2});
+  ctx.gameState.entities = [druid, permanent, timed];
+  ctx.gameState.activeEntity = () => druid;
+  for (let i = 0; i < 12; i++) ctx.tickCasterEffects(druid.id);
+  assert(permanent.hp > 0); assert.equal(permanent.summonDuration, null);
+  assert.equal(timed.hp, 0); assert.equal(timed.summonDuration, 0);
+});

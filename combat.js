@@ -17,7 +17,7 @@ window.recalculateStateStats = function(entity) {
   const oldMaxAP = entity.maxAP;
   entity.maxAP = Math.max(1, entity.baseAP + entity.states.filter(state => !state.suppressed)
     .reduce((sum, state) => sum + (state.apBonus ?? 0), 0)
-    + Math.floor(window.getEffectiveStat(entity, 'wis') / 20));
+    + Math.floor(window.getEffectiveStat(entity, 'wis') / 20) + window.getEquipmentBonus(entity,'maxAP'));
   // Изменяется именно остаток AP: потраченные действия не возвращаем; долг AP допустим.
   entity.ap += entity.maxAP - oldMaxAP;
   const oldMaxMP = entity.maxMP;
@@ -25,7 +25,7 @@ window.recalculateStateStats = function(entity) {
     .reduce((sum, bonus) => sum + bonus.amount, 0);
   entity.maxMP = entity.baseMP + entity.states.filter(state => !state.suppressed)
     .reduce((sum, state) => sum + state.mpBonus, 0) + tempMpBonus
-    + Math.floor(window.getEffectiveStat(entity, 'str') / 20);
+    + Math.floor(window.getEffectiveStat(entity, 'str') / 20) + window.getEquipmentBonus(entity,'mp') + window.getEquipmentBonus(entity,'maxMP');
   entity.ini = entity.baseINI + entity.states.filter(state => !state.suppressed).reduce((sum, state) => sum + state.initiativeBonus, 0);
   // ОП и их максимум не ограничены снизу; сохраняем уже потраченные очки.
   // Перекрытие Скорости Медлительностью, например, даёт сразу -4 MP.
@@ -36,14 +36,14 @@ window.recalculateStateStats = function(entity) {
   }
   const oldMaxHP = entity.maxHP;
   const effectiveVit = window.getEffectiveStat(entity, 'vit');
-  entity.maxHP = entity.baseHP + entity.hpPerLevel * (entity.level + effectiveVit);
+  entity.maxHP = entity.baseHP + entity.hpPerLevel * (entity.level + effectiveVit) + window.getEquipmentBonus(entity,'maxHP');
   const hpDelta = entity.maxHP - oldMaxHP;
   // Сохраняем полученные ранения; снятие дебаффа не оживляет погибшее существо.
   if (hpDelta !== 0 && entity.hp > 0) {
     entity.hp = Math.max(0, entity.hp + hpDelta);
   }
   const oldMaxWP = entity.maxWP;
-  entity.maxWP = entity.baseWP + entity.wpPerLevel * (entity.level + window.getEffectiveStat(entity, 'cha'));
+  entity.maxWP = entity.baseWP + entity.wpPerLevel * (entity.level + window.getEffectiveStat(entity, 'cha')) + window.getEquipmentBonus(entity,'maxWP');
   const wpDelta = entity.maxWP - oldMaxWP;
   // Сохраняем потраченный WP; долг ресурса допустим и не означает смерть.
   if (wpDelta !== 0) entity.wp += wpDelta;
@@ -355,6 +355,7 @@ window.wearArmor = function(entity) {
   for (const source of entity.armorSources ?? []) {
     if (!source.indestructible) source.durability = Math.max(0, source.durability - 1);
   }
+  if ((entity.armorSources ?? []).some(source => source.modifiers)) window.recalculateStateStats(entity);
 };
 
 // Зачарование действует только на пращевые камни, не на бросок булыжника.
@@ -482,7 +483,8 @@ window.getEffectiveStat = function(entity, statName) {
     ? elementalBlockAmount(entity, statName) : 0;
   const temporaryEvasion = statName === 'eva'
     ? entity.evaBonuses.filter(bonus => bonus.turnsLeft > 0).reduce((sum, bonus) => sum + bonus.amount, 0) : 0;
-  const total = base + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
+  const equipmentBonus = ['maxHP','maxWP','maxAP','maxMP','mp'].includes(statName) ? 0 : window.getEquipmentBonus(entity,statName);
+  const total = base + equipmentBonus + elementalProtection + temporaryEvasion + effects.reduce((sum, effect) => sum + (valueAt(effect.modifiers)
     // Данные состояний сохраняют прежний формат вложенных модификаторов защиты.
     ?? (protectionStats.includes(statName) ? effect.modifiers?.resistances?.[statName] : undefined)
     // ini уже включает initiativeBonus состояний после recalculateStateStats.

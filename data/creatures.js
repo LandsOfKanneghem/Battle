@@ -118,21 +118,7 @@ window.captureInitialStats = function(creature) {
       creature.isSummon = true;
       creature.ownerId = null; // Владелец будет назначен механикой призыва.
     }
-    if (template.spellPages) {
-      // Одна копия способности на владельца; страницы и flat-массив делят её счётчики.
-      const definitions = window.equipmentSpellDefinitions(template, Equipment, [...SPELL_DEFINITIONS, ...MONK_SPELLS]);
-      const resolved = new Map();
-      creature.spellPages = template.spellPages.map(page => page.map(id => {
-        if (id === null) return null;
-        if (!resolved.has(id)) {
-          // Если каталог локальный, способности берём только из файла этого существа.
-          const spell = id === 'weapon-attack' ? Equipment.rightHand?.attack : definitions.find(spell => spell.id === id);
-          resolved.set(id, spell ? { ...spell, cooldown: 0, usesThisTurn: 0, usesTotal: 0 } : null);
-        }
-        return resolved.get(id);
-      }));
-      creature.availableSpells = creature.spellPages.flat().filter(Boolean);
-    }
+    window.rebuildEquipmentSpells(creature);
     // Врождённые состояния имеют отдельные экземпляры и источник — само существо.
     for (const entry of template.innateStates ?? []) {
       const id = typeof entry === 'string' ? entry : entry.id;
@@ -146,6 +132,7 @@ window.captureInitialStats = function(creature) {
         blocks: [...(overrides.blocks ?? templateState.blocks)] });
     }
     creature.svg.setAttribute('aria-label', creature.name);
+    window.recalculateStateStats?.(creature);
     window.captureInitialStats(creature);
     return creature;
   };

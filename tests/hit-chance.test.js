@@ -7,6 +7,7 @@ function setup() {
   const ctx = { gameState: {}, Math: Object.create(Math) };
   ctx.window = ctx;
   vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../data/equipment.js'), 'utf8'), ctx);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../combat.js'), 'utf8'), ctx);
   const entity = (luc = 0) => ({ eva: 0, attributes: { att: 0, luc }, states: [],
     appliedEffects: [], elementalShields: [], evaBonuses: [] });

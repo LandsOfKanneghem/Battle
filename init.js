@@ -106,6 +106,7 @@
     state.turnSlots.clear();
     state.turnOrder.replaceChildren();
     state.spellSlots.clear();
+    window.resetSharedBackpack();
     state.cells = [];
     state.terrain.clear();
     state.mapType = map.mapType;

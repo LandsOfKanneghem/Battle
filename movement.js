@@ -152,6 +152,7 @@ window.beginTurn = function() {
     if (!window.gameState.entities.includes(entity) || window.gameState.turnVersion !== version) return;
   }
   // Начало личного хода обновляет только заклинания этого участника.
+  if(entity._weaponSpellState && !entity.availableSpells.includes(entity._weaponSpellState)) { entity._weaponSpellState.usesThisTurn=0;entity._weaponSpellState.cooldown=Math.max(0,entity._weaponSpellState.cooldown-1); }
   for (const spell of entity.availableSpells) {
     spell.usesThisTurn = 0;
     spell.cooldown = Math.max(0, spell.cooldown - 1);

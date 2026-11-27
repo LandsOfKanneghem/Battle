@@ -1,14 +1,5 @@
 // Полурослик: союзный герой с собственным стрелковым оружием.
-const HALFLING_SLING_SHOT = {
-  id: 'sling-shot', name: 'Выстрел из пращи', abilityType: 'weapon-strike', isShot: true,
-  damageBase: 2, damagePerStr: 1, damageType: 'physical', baseAccuracy: 80, baseCritChance: 10,
-  stackable: false,
-  apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
-  range: 6, minRange: 1, modifiable: true, noLOS: false, isAOE: false, aoeSize: 1,
-  target: 'any', projectileType: 'sling-stone',
-  iconPath: 'assets/homm2/spell-sling-shot.png',
-  svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-sling-shot.png" width="64" height="64"/></svg>'
-};
+const HALFLING_SLING_SHOT = window.EQUIPMENT_ITEMS['halfling-weapon'].attack;
 
 window.CREATURE_TEMPLATES.halfling = {
   name: 'Полурослик', type: 'halfling', partyOrder: 5,
@@ -22,8 +13,8 @@ window.CREATURE_TEMPLATES.halfling = {
     boots: null,
     gloves: null,
     belt: null,
-    chest: { id: 'lightweight-chest-protector', name: 'Легкий нагрудник', iconPath: 'assets/equipment/light-chest.png', ac: 1, maxDurability: 6 },
-    rightHand: { id: 'halfling-weapon', iconPath: 'assets/equipment/sling.png', name: 'Праща', hands: 1, attack: HALFLING_SLING_SHOT },
+    chest: window.EQUIPMENT_ITEMS['lightweight-chest-protector'],
+    rightHand: window.EQUIPMENT_ITEMS['halfling-weapon'],
     leftHand: null,
     other1: null,
     other2: null,

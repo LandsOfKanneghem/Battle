@@ -1,14 +1,5 @@
 // Лучник: союзный герой с собственным стрелковым оружием.
-const ARCHER_BOW_SHOT = {
-  id: 'bow-shot', name: 'Выстрел из лука', abilityType: 'weapon-strike', isShot: true,
-  damageBase: 2, damagePerStr: 1, damageType: 'physical', baseAccuracy: 80, baseCritChance: 10,
-  stackable: false,
-  apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
-  range: 6, minRange: 1, modifiable: true, noLOS: false, isAOE: false, aoeSize: 1,
-  target: 'any',
-  iconPath: 'assets/homm2/spell-bow-shot.png',
-  svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-bow-shot.png" width="64" height="64"/></svg>'
-};
+const ARCHER_BOW_SHOT = window.EQUIPMENT_ITEMS['archer-weapon'].attack;
 
 window.CREATURE_TEMPLATES.archer = {
   name: 'Лучник', type: 'archer', partyOrder: 4,
@@ -22,8 +13,8 @@ window.CREATURE_TEMPLATES.archer = {
     boots: null,
     gloves: null,
     belt: null,
-    chest: { id: 'lightweight-chest-protector', name: 'Легкий нагрудник', iconPath: 'assets/equipment/light-chest.png', ac: 1, maxDurability: 6 },
-    rightHand: { id: 'archer-weapon', iconPath: 'assets/equipment/bow.png', name: 'Лук', hands: 2, attack: ARCHER_BOW_SHOT },
+    chest: window.EQUIPMENT_ITEMS['lightweight-chest-protector'],
+    rightHand: window.EQUIPMENT_ITEMS['archer-weapon'],
     leftHand: null,
     other1: null,
     other2: null,

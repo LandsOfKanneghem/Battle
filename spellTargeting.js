@@ -4,6 +4,7 @@
 window.canPrepareSpell = function(spell) {
   const caster = window.gameState.activeEntity();
   return !!spell && !!caster && caster.hp > 0 && caster.availableSpells.includes(spell) && !window.gameState.isMoving && !window.gameState.isCasting && !window.gameState.isSkippingTurn && !window.isFrozen(caster) && !window.isJumpBlocked(spell, caster)
+    && (!spell.requiresWeapon || !!caster.Equipment?.rightHand?.attack)
     && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
     && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
     && spell.cooldown === 0;

@@ -689,6 +689,10 @@ window.castSpell = function(targetCell, deps) {
   const handler = spellAnimationHandlers[spell.id];
   if (handler) {
     handler(ctx);
+  } else if (spell.equipmentAnimation) {
+    if (spell.equipmentAnimation === 'melee') {
+      deps.playBiteAnimation(targetCell);setTimeout(finishCast,500);
+    } else deps.playProjectileAnimation(fromCell,targetCell,spell.equipmentAnimation,()=>setTimeout(finishCast,0),spell);
   } else if (spell.isSummon) {
     // До реализации анимации призыва завершаем оплаченный каст без снаряда.
     setTimeout(finishCast, 0);

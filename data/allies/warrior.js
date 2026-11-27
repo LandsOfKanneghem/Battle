@@ -1,14 +1,5 @@
 // Текущее оружие воина; приёмы берут его параметры из этого определения.
-const WARRIOR_SWORD_STRIKE = {
-  id: 'sword-strike', name: 'Удар мечом', abilityType: 'weapon-strike', isShot: false,
-  damageBase: 2, damagePerStr: 1, damageType: 'physical', baseAccuracy: 95, baseCritChance: 5,
-  stackable: false,
-  apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
-  range: 1, minRange: 1, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
-  target: 'any',
-  iconPath: 'assets/homm2/spell-sword-strike.png',
-  svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-sword-strike.png" width="64" height="64"/></svg>'
-};
+const WARRIOR_SWORD_STRIKE = window.EQUIPMENT_ITEMS['warrior-weapon'].attack;
 
 // Воин: союзный герой с собственным оружейным умением.
 window.CREATURE_TEMPLATES.warrior = {
@@ -23,9 +14,9 @@ window.CREATURE_TEMPLATES.warrior = {
     boots: null,
     gloves: null,
     belt: null,
-    chest: { id: 'body-armor', name: 'Кольчуга', iconPath: 'assets/equipment/chainmail.png', ac: 4, maxDurability: 10 },
-    rightHand: { id: 'warrior-weapon', iconPath: 'assets/equipment/sword.png', name: 'Меч', hands: 1, attack: WARRIOR_SWORD_STRIKE },
-    leftHand: { id: 'shield', name: 'Щит', iconPath: 'assets/equipment/shield.png', ac: 1, maxDurability: 5 },
+    chest: window.EQUIPMENT_ITEMS['body-armor'],
+    rightHand: window.EQUIPMENT_ITEMS['warrior-weapon'],
+    leftHand: window.EQUIPMENT_ITEMS['shield'],
     other1: null,
     other2: null,
   },

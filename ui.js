@@ -3,7 +3,7 @@
 
 // init.js создаёт стартовых существ раньше combat.js; теперь расчёт доступен,
 // а первый ход и боевые эффекты ещё не начались. Призывы делают снимок в фабрике.
-for (const creature of window.gameState.entities) window.captureInitialStats(creature);
+for (const creature of window.gameState.entities) { window.recalculateStateStats(creature); window.captureInitialStats(creature); }
 
 // Текущие тултипы и ключ кэша панели эффектов принадлежат UI.
 window.SUMMON_TIME_ICON = `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#1a1e24" stroke="#a9b1bf" stroke-width="2"/><path d="M20 8 V20 L27 24" fill="none" stroke="#ffdc36" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="2" fill="#ffdc36"/></svg>`;

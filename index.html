@@ -103,7 +103,11 @@
     <aside class="equipment-column" aria-label="Экипировка">
       <div class="equipment-spacer" aria-hidden="true"></div>
       <section id="equipment-panel" aria-label="Экипировка персонажа"><h2>Экипировка</h2><div id="equipment-slots"></div></section>
-      <div class="equipment-placeholder" aria-hidden="true"></div>
+      <section id="backpack-panel" aria-label="Общий рюкзак">
+        <h2>Общий рюкзак</h2><p class="backpack-hint">Выберите вещь, затем слот.</p>
+        <div id="backpack-slots"></div>
+        <nav class="backpack-pages" aria-label="Страницы рюкзака"><button id="backpack-prev" type="button" aria-label="Предыдущая страница рюкзака">←</button><span id="backpack-page"></span><button id="backpack-next" type="button" aria-label="Следующая страница рюкзака">→</button></nav>
+      </section>
     </aside>
   </main>
   <dialog id="hotkeys-dialog" aria-labelledby="hotkeys-title">
@@ -145,6 +149,15 @@
   <script src="data/states.js"></script>
   <script src="data/spellData.js"></script>
   <script src="data/equipment.js"></script>
+  <script src="data/equipment/headgear.js"></script>
+  <script src="data/equipment/boots.js"></script>
+  <script src="data/equipment/gloves.js"></script>
+  <script src="data/equipment/belts.js"></script>
+  <script src="data/equipment/chest-armor.js"></script>
+  <script src="data/equipment/shields.js"></script>
+  <script src="data/equipment/melee-weapons.js"></script>
+  <script src="data/equipment/ranged-weapons.js"></script>
+  <script src="data/equipment/accessories.js"></script>
   <script src="data/creatures.js"></script>
   <script src="data/allies/wizard.js"></script>
   <script src="data/allies/monk.js"></script>

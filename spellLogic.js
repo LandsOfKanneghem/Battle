@@ -249,6 +249,12 @@ window.applySpellEffect = function(spell, target, caster, deps, sparkTargets = n
       });
       window.refreshTorchLighting?.();
     }
+  } else if (spell.isEnchantStones) {
+    if (directTarget && isAlly(directTarget) === isAlly(caster)) applySpellOnEntity(directTarget, {
+      id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: false,
+      duration, casterId: caster.id, casterName: caster.name, description: spell.effectDescription,
+      isEnchantStones: true, stoneDamageBonus: spell.stoneDamageBonus, stoneRangeBonus: spell.stoneRangeBonus
+    });
   } else if (spell.isMpBuff) {
     if (directTarget && isAlly(directTarget)) applySpellOnEntity(directTarget, {
       id: spell.id, sourceId: spell.id, name: spell.name, icon: spell.svg, stackable: spell.stackable,
@@ -446,6 +452,10 @@ const spellAnimationHandlers = {
   },
   'sling-shot': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'sling-stone', () => ctx.setTimeout(ctx.finishCast, 0));
+  },
+  'enchant-stones': ctx => {
+    ctx.deps.playSkyShotAnimation(ctx.targetCell, ctx.spell);
+    ctx.setTimeout(ctx.finishCast, 500);
   },
   'bow-shot': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'arrow', () => ctx.setTimeout(ctx.finishCast, 0));

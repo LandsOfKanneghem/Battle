@@ -101,8 +101,8 @@
     }
     return next;
   }
-  function hurt(spell, target) {
-    const damage = window.damageBreakdown(spell, target);
+  function hurt(spell, target, attacker = null) {
+    const damage = window.damageBreakdown(spell, target, attacker);
     window.consumeES(target, damage.absorbed);
     target.hp = Math.max(0, target.hp - damage.hpDamage);
     if (spell.abilityType === 'weapon-strike' && !window.isFrozen(target)) window.wearArmor(target);
@@ -124,7 +124,7 @@
       if (spell.isTonguePull) target.position = window.getTonguePullDestination(actor, target, occupants(hit));
       const debuffed = active(actor, spell.abilityType === 'spell' ? 'exhaustion' : 'weakness');
       const amount = Math.floor(window.getSpellDamage(spell, actor, charge?.path.length ?? 0) * (debuffed ? 0.8 : 1));
-      const damage = hurt({ ...spell, damage: amount }, target);
+      const damage = hurt({ ...spell, damage: amount }, target, actor);
       if (damage > 0 && spell.abilityType === 'weapon-strike' && !spell.isShot && active(target, 'sharp-shell')) {
         hurt({ damage: 3, damageType: 'physical' }, actor);
       }

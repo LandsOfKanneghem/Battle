@@ -123,3 +123,26 @@ test('spells, reflection and immunity do not spend armor durability', () => {
   ctx.applyDamage({ damage: 10, damageType: 'physical', abilityType: 'weapon-strike' }, target);
   assert.equal(target.armorSources[0].durability, 10);
 });
+
+test('enchanted sling separates physical armor and earth resistance and wears armor once', () => {
+  const { ctx, target } = setup();
+  const caster = ctx.createCreature('halfling', {x:1,y:1});
+  target.baseES = 0; target.earth = 1;
+  target.armorSources = [{ac:3, durability:5, maxDurability:5}]; target.ac = 0;
+  const spell = {...caster.availableSpells[0], damage:10};
+  ctx.applySpellOnEntity(caster, {id:'enchant-stones',name:'Зачаровать камни',casterId:caster.id,
+    duration:3,isEnchantStones:true,stoneDamageBonus:2,stoneRangeBonus:0});
+  assert.equal(ctx.spellDamage(spell,target,caster), 6);
+  const hp = target.hp; ctx.applyDamage(spell,target,caster);
+  assert.equal(target.hp, hp-6); assert.equal(target.armorSources[0].durability,4);
+  target.physical = 100; target.earth = 0;
+  assert.equal(ctx.spellDamage(spell,target,caster),2,'physical resistance cannot block earth');
+  target.physical = 2; target.earth = 100;
+  assert.equal(ctx.spellDamage(spell,target,caster),5,'earth resistance cannot block physical');
+  target.earth = 0; target.baseES = 1;
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.damageBreakdown(spell,target,caster))), {absorbed:1,hpDamage:6});
+  assert.equal(ctx.spellDamage({...spell,projectileType:undefined,id:'boulder-throw'},target,caster),5);
+  assert.equal(ctx.spellDamage({...spell,projectileType:undefined,id:'bow-shot'},target,caster),5);
+  caster.appliedEffects[0].suppressed = true;
+  assert.equal(ctx.spellDamage(spell,target,caster),5);
+});

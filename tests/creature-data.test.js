@@ -392,3 +392,27 @@ test('each Druid summon has its own once-per-battle counter and matching summon 
   spells[1].usesTotal = 1;
   assert.equal(spells[0].usesTotal, 0); assert.equal(spells[2].usesTotal, 0);
 });
+
+test('Enchant Stones is an unassigned earth spell with a timed sling-only buff', () => {
+  const ctx = setup();
+  vm.runInContext(fs.readFileSync(path.join(root,'combat.js'),'utf8'),ctx);
+  vm.runInContext(fs.readFileSync(path.join(root,'spellTargeting.js'),'utf8'),ctx);
+  const spell = vm.runInContext('SPELL_DEFINITIONS.find(s=>s.id==="enchant-stones")',ctx);
+  for (const [key,value] of Object.entries({magicSchool:'earth',abilityType:'spell',apCost:2,
+    maxCooldown:3,maxUsesPerTurn:1,durationBase:3,durationPerInt:0.05,minRange:0,range:4,
+    modifiable:false,noLOS:false,target:'ally',aoeSize:1,stoneDamageBonus:2,stoneRangeBonus:0})) assert.equal(spell[key],value,key);
+  for (const t of Object.values(ctx.CREATURE_TEMPLATES)) assert(!t.spellPages.flat().includes(spell.id));
+  const caster=ctx.createCreature('wizard',{x:1,y:1}),halfling=ctx.createCreature('halfling',{x:2,y:1});
+  caster.attributes.int=20; assert.equal(ctx.getSpellDuration(spell,caster),4);
+  const shot=halfling.availableSpells[0], initialRange=ctx.effectiveSpellRange(shot,halfling);
+  ctx.applySpellOnEntity(halfling,{id:spell.id,name:spell.name,casterId:caster.id,duration:3,
+    isEnchantStones:true,stoneDamageBonus:2,stoneRangeBonus:2});
+  assert.equal(ctx.effectiveSpellRange(shot,halfling),initialRange+2);
+  ctx.applySpellOnEntity(halfling,{id:spell.id,name:spell.name,casterId:caster.id,duration:3,
+    isEnchantStones:true,stoneDamageBonus:2,stoneRangeBonus:2});
+  assert.equal(halfling.appliedEffects.length,1);
+  ctx.gameState.entities=[caster,halfling]; ctx.gameState.activeEntity=()=>caster;
+  for(let i=0;i<3;i++)ctx.tickCasterEffects(caster.id);
+  assert.equal(ctx.effectiveSpellRange(shot,halfling),initialRange);
+  assert.equal(ctx.getStoneEnchantment(shot,halfling).damage,0);
+});

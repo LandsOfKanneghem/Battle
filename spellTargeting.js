@@ -59,7 +59,7 @@ window.effectiveSpellRange = function(spell, caster = window.gameState.activeEnt
   // RANGE и бонус следующего выстрела меняют только модифицируемую верхнюю границу.
   const skyBonus = spell.isShot && window.hasSkyShotBuff(caster) ? 2 : 0;
   return spell.modifiable
-    ? Math.max(spell.minRange ?? 0, spell.range + window.getEffectiveStat(caster, 'ra') + skyBonus)
+    ? Math.max(spell.minRange ?? 0, spell.range + window.getEffectiveStat(caster, 'ra') + skyBonus + window.getStoneEnchantment(spell, caster).range)
     : spell.range;
 };
 
@@ -191,7 +191,7 @@ window.showEffectPreview = function(area, spell, center = area[0]) {
       badge.className = 'effect-preview damage';
       // Отскок — половина уже уменьшенного урона, как и в applySpellEffect.
       const previewSpell = spell.isSparks && entity !== primary ? { ...dmgSpell, damage: Math.floor(dmgSpell.damage / 2) } : dmgSpell;
-      const damage = window.spellDamage(previewSpell, entity);
+      const damage = window.spellDamage(previewSpell, entity, caster);
       if (window.altHeld) {
         const hitChance = spell.isShot || spell.abilityType === 'weapon-strike' ? window.getHitChance(spell, caster, entity) : 100;
         const critChance = window.getCritChance(spell, caster, entity);

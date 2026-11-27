@@ -357,26 +357,44 @@ window.wearArmor = function(entity) {
   }
 };
 
-window.damageBreakdown = function(spell, entity) {
+// Зачарование действует только на пращевые камни, не на бросок булыжника.
+window.getStoneEnchantment = function(spell, caster) {
+  const result = { damage: 0, range: 0 };
+  if (spell?.projectileType !== 'sling-stone') return result;
+  for (const effect of caster?.appliedEffects ?? []) {
+    if (!effect.isEnchantStones || effect.duration <= 0 || effect.suppressed) continue;
+    result.damage += effect.stoneDamageBonus ?? 0;
+    result.range += effect.stoneRangeBonus ?? 0;
+  }
+  return result;
+};
+
+window.damageBreakdown = function(spell, entity, attacker = null) {
   // Здесь damage уже вычислен вызывающим кодом: INT и штрафы повторно не применяем.
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) {
     return { absorbed: 0, hpDamage: 0 }; // Иммунитет сохраняет и HP, и ES.
   }
-  // Физический резист защищает от любого физического урона; AC добавляется
-  // только к физическим атакам оружием, включая выстрелы и броски.
-  const armor = spell.damageType === 'physical' && spell.abilityType === 'weapon-strike'
-    ? getEffectiveStat(entity, 'ac') : 0;
-  const resistance = getEffectiveStat(entity, spell.damageType) + armor;
-  const afterResistance = Math.max(0, spell.damage - resistance);
-  const absorbed = isMagicalDamage(spell.damageType)
-    ? Math.min(getCurrentES(entity), afterResistance) : 0;
-  return { absorbed, hpDamage: afterResistance - absorbed };
+  const bonus = window.getStoneEnchantment(spell, attacker).damage;
+  const parts = [spell];
+  if (bonus > 0) parts.push({ damage: bonus, damageType: 'earth' });
+  let remainingES = getCurrentES(entity), absorbed = 0, hpDamage = 0;
+  for (const part of parts) {
+    const armor = part.damageType === 'physical' && part.abilityType === 'weapon-strike'
+      ? getEffectiveStat(entity, 'ac') : 0;
+    const resistance = getEffectiveStat(entity, part.damageType) + armor;
+    const afterResistance = Math.max(0, part.damage - resistance);
+    const blocked = isMagicalDamage(part.damageType) ? Math.min(remainingES, afterResistance) : 0;
+    remainingES -= blocked;
+    absorbed += blocked;
+    hpDamage += afterResistance - blocked;
+  }
+  return { absorbed, hpDamage };
 };
 
-window.spellDamage = function(spell, entity) {
+window.spellDamage = function(spell, entity, attacker = null) {
   // Превью не расходует ES и не бросает уклонение; показывает HP-урон при попадании.
-  return damageBreakdown(spell, entity).hpDamage;
+  return damageBreakdown(spell, entity, attacker).hpDamage;
 };
 
 window.applyDamage = function(spell, entity, attacker = null) {
@@ -386,7 +404,7 @@ window.applyDamage = function(spell, entity, attacker = null) {
   const reflectsMelee = entity.hp > 0 && attacker && attacker !== entity && attacker.hp > 0
     && spell.abilityType === 'weapon-strike' && !spell.isShot
     && hasActiveState(entity, 'sharp-shell');
-  const { absorbed, hpDamage } = damageBreakdown(spell, entity);
+  const { absorbed, hpDamage } = damageBreakdown(spell, entity, attacker);
   const critChance = window.getCritChance(spell, attacker, entity);
   const critical = critChance > 0 && Math.random() * 100 < critChance;
   consumeES(entity, absorbed);

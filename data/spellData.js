@@ -22,6 +22,16 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
+  id: 'enchant-stones', name: 'Зачаровать камни', abilityType: 'spell', magicSchool: 'earth',
+  description: 'Зачаровывает метательные камни в руках цели, давая им дополнительный урон землей и увеличивая дальность метания.',
+  durationBase: 3, durationPerInt: 0.05, stackable: false,
+  apCost: 2, maxUsesPerTurn: 1, maxCooldown: 3,
+  range: 4, minRange: 0, modifiable: false, noLOS: false, isAOE: false, aoeSize: 1,
+  target: 'ally', isEnchantStones: true, stoneDamageBonus: 2, stoneRangeBonus: 0,
+  effectDescription: '+2 урона землей и +0 дальности метательным снарядам',
+  iconPath: 'assets/homm2/spell-enchant-stones.png',
+  svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-enchant-stones.png" width="64" height="64"/></svg>'
+}, {
   id: 'torch', name: 'Факел', abilityType: 'spell', magicSchool: 'fire',
   description: 'Освещает территорию вокруг заклинателя.',
   durationBase: 3, durationPerInt: 0, stackable: false,

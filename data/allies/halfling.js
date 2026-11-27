@@ -5,7 +5,7 @@ const HALFLING_SLING_SHOT = {
   stackable: false,
   apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
   range: 6, minRange: 1, modifiable: true, noLOS: false, isAOE: false, aoeSize: 1,
-  target: 'any',
+  target: 'any', projectileType: 'sling-stone',
   iconPath: 'assets/homm2/spell-sling-shot.png',
   svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-sling-shot.png" width="64" height="64"/></svg>'
 };

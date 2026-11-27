@@ -154,6 +154,8 @@ window.showSpellTooltip = function(icon, spell) {
       : critChance > baseCritChance ? '#4ade80' : '#ff4d4d';
     addLine('Крит шанс', `${critChance}%`, color);
   }
+  const stoneBonus = window.getStoneEnchantment(spell, caster).damage;
+  if (!window.shiftHeld && stoneBonus > 0) addLine('Дополнительный урон', `${stoneBonus} земля`, '#4ade80');
   if (spell.isHealHarm) addLine('Лечение', spell.healAmount);
   if (spell.isSummon) {
     addLine('Призыв', window.CREATURE_TEMPLATES[spell.summonType ?? 'lake-spirit'].name);

@@ -152,7 +152,7 @@
         segments.push({ text: `${value}${part.kind === 'crit' ? ' [крит]' : part.kind === 'modifier' ? ' [модификаторы]' : ''}`,
           damageType: part.damageType ?? 'other', numbers: true });
       });
-      segments.push({ numbers: true, text: `${terms.length > 1 ? ` = ${amount}` : ''}${absorbed ? ` (${absorbed} урона поглощено ES)` : ''}.` });
+      segments.push({ numbers: true, text: `${terms.length > 1 ? ` = ${amount}` : ''}${absorbed > 0 ? ` [-${absorbed} ES]` : ''}.` });
       write({ text: segments.map(segment => segment.text).join(''), segments }, 'damage');
     },
     markDisappearance(entity) { disappearing.add(entity); },

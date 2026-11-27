@@ -62,7 +62,7 @@ test('damage includes zero and ES; expired summons disappear while killed ones d
   log.removed(wolf);
   log.markDisappearance(wizard);
   log.removed(wizard);
-  assert.deepEqual(lines(), ['Волк получил урон: 0 (4 урона поглощено ES).', 'Волк погибает.', 'Волшебник исчезает.']);
+  assert.deepEqual(lines(), ['Волк получил урон: 0 [-4 ES].', 'Волк погибает.', 'Волшебник исчезает.']);
 });
 
 test('turn opening lists bonuses before automatic effects, but flushes before a death', () => {
@@ -149,4 +149,13 @@ test('damage formula shows protection, vulnerability and omits the redundant sin
   assert.equal(lines().at(-1),'Волк получил урон: (2 + 1).');
   log.damage(wolf,2,0,false,[{amount:2,rawDamage:2,resistance:0,damageType:'earth',kind:'base'}]);
   assert.equal(lines().at(-1),'Волк получил урон: 2.');
+});
+
+
+test('ES suffix is displayed only for a positive actual absorption', () => {
+  const {log,wolf,lines}=setup();
+  log.damage(wolf,2,0);
+  assert.equal(lines().at(-1),'Волк получил урон: 2.');
+  log.damage(wolf,0,2);
+  assert.equal(lines().at(-1),'Волк получил урон: 0 [-2 ES].');
 });

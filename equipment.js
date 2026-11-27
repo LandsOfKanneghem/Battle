@@ -1,12 +1,13 @@
 // Экипировка персонажа и общий рюкзак. Предметы перемещаются без копирования прочности.
 (() => {
-  const panel=document.getElementById('equipment-panel'), slots=document.getElementById('equipment-slots');
+  const slots=document.getElementById('equipment-slots');
+  const dialog=document.getElementById('backpack-dialog');
   const order=['gloves','head','boots','rightHand','chest','leftHand','belt','other1','other2'];
   const allowed={head:'шлем, шляпа',boots:'ботинки, сапоги',gloves:'перчатки',belt:'пояс',chest:'нагрудная броня, кольчуга, мантия',rightHand:'одноручное оружие, двуручное оружие',leftHand:'щит, двуручное оружие',other1:'кольцо, амулет, плащ',other2:'кольцо, амулет, плащ'};
   const outlines={head:'head',boots:'boots',gloves:'gloves',belt:'belt',chest:'chest',rightHand:'sword',leftHand:'shield',other1:'ring',other2:'ring'};
   let shown=null, tooltip=null;
   const bagSlots=document.getElementById('backpack-slots');
-  const pageSize=9;
+  const backpackSize=100;
   const modifierNames={maxHP:'Макс. ОЗ',maxWP:'Макс. WP',mp:'ОП',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума'};
   const hide=()=>{tooltip?.remove();tooltip=null;};
   function show(anchor,item,slot,entity){
@@ -26,7 +27,7 @@
       if(window.isArmorBroken(item))line('Состояние','Сломано');
     }
     for(const [key,value] of Object.entries(item?.modifiers??{})) { const effective=item.ac!==undefined&&window.isArmorBroken(item)?Math.floor(value*.25):value;line(modifierNames[key]??key,`${effective>=0?'+':''}${effective}`); }
-    document.body.append(tooltip);
+    (anchor.closest('dialog[open]')??document.body).append(tooltip);
     const r=anchor.getBoundingClientRect();tooltip.style.left=`${Math.max(8,Math.min(r.left,innerWidth-tooltip.offsetWidth-8))}px`;tooltip.style.top=`${Math.max(8,Math.min(r.bottom+8,innerHeight-tooltip.offsetHeight-8))}px`;
   }
   window.renderEquipment=function(entity){
@@ -59,18 +60,12 @@
   function renderBackpack(entity){
     if(!gameState.backpack)window.resetSharedBackpack();
     const bag=gameState.backpack;
-    const pages=Math.max(1,Math.ceil(bag.length/pageSize));
-    gameState.backpackPage=Math.min(gameState.backpackPage??0,pages-1);
-    const page=gameState.backpackPage;
-    document.getElementById('backpack-page').textContent=`${page+1} / ${pages}`;
-    document.getElementById('backpack-prev').disabled=page===0;
-    document.getElementById('backpack-next').disabled=page===pages-1;
     for(const cell of bagSlots.children)cell.setAttribute('aria-pressed',String(gameState.selectedBackpackIndex===Number(cell.dataset.index)));
-    const key=JSON.stringify([entity?.id,bag,page,window.canManageEquipment(entity)]);
+    const key=JSON.stringify([entity?.id,bag,window.canManageEquipment(entity)]);
     if(bagSlots.dataset.key===key)return;
     bagSlots.dataset.key=key;bagSlots.replaceChildren();
-    for(let offset=0;offset<pageSize;offset++){
-      const index=page*pageSize+offset,item=bag[index];
+    for(let index=0;index<backpackSize;index++){
+      const item=bag[index];
       const cell=document.createElement('button');cell.type='button';cell.className='equipment-slot backpack-slot';cell.dataset.index=index;
       cell.setAttribute('aria-label',item?.name??'Свободная ячейка');cell.setAttribute('aria-pressed',String(gameState.selectedBackpackIndex===index));
       if(item){
@@ -86,16 +81,9 @@
       bagSlots.append(cell);
     }
   }
-  for(const [id,delta] of [['backpack-prev',-1],['backpack-next',1]])document.getElementById(id).addEventListener('click',()=>{hide();gameState.backpackPage+=delta;renderBackpack(shown);});
-  const resize=()=>{
-    const stats=document.querySelector('.stats'),header=document.querySelector('.hero-masthead');
-    document.querySelector('.equipment-column').style.height=`${document.querySelector('.panel').getBoundingClientRect().height}px`;
-    panel.style.height=`${stats.getBoundingClientRect().height}px`;
-    document.querySelector('.equipment-spacer').style.height=`${header.getBoundingClientRect().height}px`;
-  };
-  new ResizeObserver(resize).observe(document.querySelector('.stats'));
-  new ResizeObserver(resize).observe(document.querySelector('.hero-masthead'));
-  resize();
+  document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);dialog.showModal();});
+  document.getElementById('close-backpack').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('close',hide);
   const entity=gameState.entities.find(e=>e.id===(gameState.selectedEntityId??gameState.hoveredEntityId??gameState.activeEntityId));
   window.renderEquipment(entity);
 })();

@@ -41,7 +41,7 @@ window.getEquipmentBonus = function(entity, stat) {
 };
 window.resetSharedBackpack = function() {
   window.gameState.backpack=window.STARTER_BACKPACK_IDS.map(id=>window.createEquipmentItem(window.EQUIPMENT_ITEMS[id]));
-  window.gameState.backpackPage=0;window.gameState.selectedBackpackIndex=null;
+  window.gameState.selectedBackpackIndex=null;
 };
 window.rebuildEquipmentSpells = function(entity) {
   const template=window.CREATURE_TEMPLATES[entity.type];

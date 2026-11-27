@@ -101,15 +101,14 @@
       </div>
     </aside>
     <aside class="equipment-column" aria-label="Экипировка">
-      <div class="equipment-spacer" aria-hidden="true"></div>
-      <section id="equipment-panel" aria-label="Экипировка персонажа"><h2>Экипировка</h2><div id="equipment-slots"></div></section>
-      <section id="backpack-panel" aria-label="Общий рюкзак">
-        <h2>Общий рюкзак</h2><p class="backpack-hint">Выберите вещь, затем слот.</p>
-        <div id="backpack-slots"></div>
-        <nav class="backpack-pages" aria-label="Страницы рюкзака"><button id="backpack-prev" type="button" aria-label="Предыдущая страница рюкзака">←</button><span id="backpack-page"></span><button id="backpack-next" type="button" aria-label="Следующая страница рюкзака">→</button></nav>
-      </section>
+      <section id="equipment-panel" aria-label="Экипировка персонажа"><div id="equipment-slots"></div></section>
+      <button id="open-backpack" type="button" aria-haspopup="dialog" aria-controls="backpack-dialog">Рюкзак</button>
     </aside>
   </main>
+  <dialog id="backpack-dialog" aria-label="Общий рюкзак">
+    <button id="close-backpack" type="button" aria-label="Закрыть рюкзак">×</button>
+    <div id="backpack-slots"></div>
+  </dialog>
   <dialog id="hotkeys-dialog" aria-labelledby="hotkeys-title">
     <button id="close-hotkeys" type="button" aria-label="Закрыть">×</button>
     <h2 id="hotkeys-title">Горячие клавиши</h2>
@@ -292,6 +291,7 @@
     });
     document.getElementById('close-hotkeys').addEventListener('click', () => hotkeysDialog.close());
     document.addEventListener('keydown', event => {
+      if (document.getElementById('backpack-dialog').open) return;
       if (hotkeysDialog.open || gameHelpDialog.open) {
         if (event.key === 'Escape') { event.preventDefault(); (gameHelpDialog.open ? gameHelpDialog : hotkeysDialog).close(); }
         return;

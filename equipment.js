@@ -13,10 +13,7 @@
     if(type==='all')return true;
     if(!item)return false;
     if(type==='melee'||type==='ranged')return !!item.attack && !!item.attack.isShot===(type==='ranged');
-    if(['rings','charms','cloaks'].includes(type)){
-      if(!item.allowedSlots?.some(slot=>slot==='other1'||slot==='other2'))return false;
-      return type==='rings'?item.itemType==='Кольцо':type==='cloaks'?item.itemType==='Плащ':!['Кольцо','Плащ'].includes(item.itemType);
-    }
+    if(type==='other')return item.allowedSlots?.some(slot=>slot==='other1'||slot==='other2');
     return item.allowedSlots?.includes(type);
   };
   const modifierNames={maxHP:'Макс. ОЗ',maxWP:'Макс. WP',mp:'ОП',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума'};

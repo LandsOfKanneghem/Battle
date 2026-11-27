@@ -17,18 +17,26 @@ window.CREATURE_TEMPLATES.archer = {
   baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
-  armorSources: [
-    { id: 'lightweight-chest-protector', name: 'Легкий нагрудник', ac: 1, maxDurability: 6 },
-  ],
+  Equipment: {
+    head: null,
+    boots: null,
+    gloves: null,
+    belt: null,
+    chest: { id: 'lightweight-chest-protector', name: 'Легкий нагрудник', ac: 1, maxDurability: 6 },
+    rightHand: { id: 'archer-weapon', name: 'Лук', hands: 2, attack: ARCHER_BOW_SHOT },
+    leftHand: null,
+    other1: null,
+    other2: null,
+  },
   attributes: { vit: 2, str: 2, att: 2, int: 0, wis: 1, cha: 0, luc: 1 },
   appearance: {
     sprite: 'assets/map-editor/mobs/archer.png', portrait: 'assets/homm2/portrait-archer.png',
     displaySize: { width: 72, height: 86 }, padding: { top: 4, right: 4, bottom: 4, left: 4 },
     svg: '<image href="assets/map-editor/mobs/archer.png" width="40" height="40"/>'
   },
-  spells: [ARCHER_BOW_SHOT],
+  spells: [],
   spellPages: [
-    ['bow-shot', null, null, null, null,
+    ['weapon-attack', null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null]

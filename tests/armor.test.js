@@ -52,7 +52,7 @@ test('every current creature weapon attack receives AC mitigation, including ran
   const names = new Set();
   for (const [type, template] of Object.entries(ctx.CREATURE_TEMPLATES)) {
     const caster = ctx.createCreature(type, { x: 1, y: 1 });
-    for (const attack of template.spells ?? []) {
+    for (const attack of caster.availableSpells ?? []) {
       if (attack.abilityType !== 'weapon-strike' || attack.damageType !== 'physical') continue;
       const damage = ctx.getSpellDamage(attack, caster);
       assert.equal(ctx.spellDamage({ ...attack, damage }, target), Math.max(0, damage - 5), `${type}: ${attack.name}`);
@@ -79,6 +79,7 @@ test('armor sources are independent per creature and reset to full durability at
 
 test('all sources lose durability on blocked weapon hits and break independently after that hit', () => {
   const { ctx } = setup();
+  ctx.CREATURE_TEMPLATES.wizard.Equipment = null;
   ctx.CREATURE_TEMPLATES.wizard.armorSources = [
     { id: 'body', ac: 3, maxDurability: 10 }, { id: 'shield', ac: 1, maxDurability: 5 }
   ];
@@ -102,6 +103,7 @@ test('all sources lose durability on blocked weapon hits and break independently
 
 test('broken sources keep floor(25% AC), indestructible sources never wear', () => {
   const { ctx } = setup();
+  ctx.CREATURE_TEMPLATES.wizard.Equipment = null;
   ctx.CREATURE_TEMPLATES.wizard.armorSources = [
     { id: 'body', ac: 7, maxDurability: 1 },
     { id: 'shield', ac: 4, maxDurability: 1, indestructible: true }

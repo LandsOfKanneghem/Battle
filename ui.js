@@ -478,6 +478,7 @@ window.updatePanel = function() {
     }
     return current > initial ? '#166534' : current < initial ? '#ff4d4d' : undefined;
   };
+  window.renderEquipment?.(displayed);
   document.getElementById('character-name').textContent = displayed ? `${displayed.name} ${displayed.level} ур.` : '—';
   // Максимумы сравниваем со стартовыми; текущие AP/MP сохраняют подсветку бонуса хода.
   for (const [stat, label, bonus] of [['hp', 'HP'], ['wp', 'WP'], ['ap', 'AP', 'bonusAP'], ['mp', 'MP', 'bonusMP']]) {

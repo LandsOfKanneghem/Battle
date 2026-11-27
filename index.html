@@ -100,6 +100,11 @@
         <section><h2>Состояния</h2><div id="state-effects" class="effect-grid"></div></section>
       </div>
     </aside>
+    <aside class="equipment-column" aria-label="Экипировка">
+      <div class="equipment-spacer" aria-hidden="true"></div>
+      <section id="equipment-panel" aria-label="Экипировка персонажа"><h2>Экипировка</h2><div id="equipment-slots"></div></section>
+      <div class="equipment-placeholder" aria-hidden="true"></div>
+    </aside>
   </main>
   <dialog id="hotkeys-dialog" aria-labelledby="hotkeys-title">
     <button id="close-hotkeys" type="button" aria-label="Закрыть">×</button>
@@ -139,6 +144,7 @@
   </svg>
   <script src="data/states.js"></script>
   <script src="data/spellData.js"></script>
+  <script src="data/equipment.js"></script>
   <script src="data/creatures.js"></script>
   <script src="data/allies/wizard.js"></script>
   <script src="data/allies/monk.js"></script>
@@ -543,5 +549,6 @@
       document.documentElement.style.setProperty('--panel-height', `${Math.ceil(entry.target.getBoundingClientRect().height)}px`);
     }).observe(document.querySelector('.panel'));
   </script>
+  <script src="equipment.js"></script>
 </body>
 </html>

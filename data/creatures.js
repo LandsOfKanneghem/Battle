@@ -68,8 +68,9 @@ window.captureInitialStats = function(creature) {
     const level = template.level ?? 1;
     const maxHP = template.baseHP + template.hpPerLevel * (level + attributes.vit);
     const maxWP = template.baseWP + template.wpPerLevel * (level + attributes.cha);
+    const Equipment = window.createEquipment(template.Equipment);
     // Каждый источник получает отдельную полную прочность на новый бой.
-    const armorSources = (template.armorSources ?? ((template.baseAC ?? 0) > 0
+    const armorSources = template.Equipment ? Object.values(Equipment).filter(item => item?.ac !== undefined) : (template.armorSources ?? ((template.baseAC ?? 0) > 0
       ? [{ id: 'armor', name: 'Броня', ac: template.baseAC, maxDurability: 10 }] : []))
       .map(source => {
         const maxDurability = Math.max(0, Math.floor(source.maxDurability ?? 10));
@@ -77,7 +78,7 @@ window.captureInitialStats = function(creature) {
           maxDurability, durability: maxDurability };
       });
     const creature = {
-      id, name: template.name, type: template.type,
+      id, name: template.name, type: template.type, Equipment,
       level, baseHP: template.baseHP, hpPerLevel: template.hpPerLevel, hp: maxHP, maxHP,
       baseWP: template.baseWP, wpPerLevel: template.wpPerLevel, wp: maxWP, maxWP,
       baseAP: template.baseAP, ap: template.baseAP + wisBonus, maxAP: template.baseAP + wisBonus,
@@ -119,13 +120,13 @@ window.captureInitialStats = function(creature) {
     }
     if (template.spellPages) {
       // Одна копия способности на владельца; страницы и flat-массив делят её счётчики.
-      const definitions = template.spells ?? [...SPELL_DEFINITIONS, ...MONK_SPELLS];
+      const definitions = window.equipmentSpellDefinitions(template, Equipment, [...SPELL_DEFINITIONS, ...MONK_SPELLS]);
       const resolved = new Map();
       creature.spellPages = template.spellPages.map(page => page.map(id => {
         if (id === null) return null;
         if (!resolved.has(id)) {
           // Если каталог локальный, способности берём только из файла этого существа.
-          const spell = definitions.find(spell => spell.id === id);
+          const spell = id === 'weapon-attack' ? Equipment.rightHand?.attack : definitions.find(spell => spell.id === id);
           resolved.set(id, spell ? { ...spell, cooldown: 0, usesThisTurn: 0, usesTotal: 0 } : null);
         }
         return resolved.get(id);

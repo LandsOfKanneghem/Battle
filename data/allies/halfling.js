@@ -17,18 +17,26 @@ window.CREATURE_TEMPLATES.halfling = {
   baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
-  armorSources: [
-    { id: 'lightweight-chest-protector', name: 'Легкий нагрудник', ac: 1, maxDurability: 6 },
-  ],
+  Equipment: {
+    head: null,
+    boots: null,
+    gloves: null,
+    belt: null,
+    chest: { id: 'lightweight-chest-protector', name: 'Легкий нагрудник', ac: 1, maxDurability: 6 },
+    rightHand: { id: 'halfling-weapon', name: 'Праща', hands: 1, attack: HALFLING_SLING_SHOT },
+    leftHand: null,
+    other1: null,
+    other2: null,
+  },
   attributes: { vit: 2, str: 2, att: 2, int: 0, wis: 1, cha: 0, luc: 1 },
   appearance: {
     sprite: 'assets/map-editor/mobs/halfling.png', portrait: 'assets/homm2/portrait-halfling.png',
     displaySize: { width: 72, height: 86 }, padding: { top: 4, right: 4, bottom: 4, left: 4 },
     svg: '<image href="assets/map-editor/mobs/halfling.png" width="40" height="40"/>'
   },
-  spells: [HALFLING_SLING_SHOT],
+  spells: [],
   spellPages: [
-    ['sling-shot', null, null, null, null,
+    ['weapon-attack', null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null,
       null, null, null, null, null]

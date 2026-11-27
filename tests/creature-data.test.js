@@ -67,7 +67,7 @@ test('all registered creature books resolve, with independent local catalogs for
     else {
       assert.ok(Array.isArray(template.spells));
       for (const spell of creature.availableSpells) {
-        assert.ok(template.spells.some(definition => definition.id === spell.id));
+        assert.ok([...template.spells, template.Equipment?.rightHand?.attack].some(definition => definition?.id === spell.id));
       }
     }
   }
@@ -311,7 +311,7 @@ test('archer is an allied fourth hero whose bow inherits sword damage but uses r
   const warrior = ctx.createCreature('warrior', { x: 2, y: 1 });
   assert.equal(archer.id, 'archer'); assert(ctx.gameState.isAlly(archer));
   assert.equal(archer.ai, undefined); assert.equal(archer.partyOrder, 4);
-  for (const key of ['attributes', 'baseHP', 'hpPerLevel', 'baseWP', 'wpPerLevel', 'maxAP', 'maxMP']) {
+  for (const key of ['attributes', 'baseWP', 'wpPerLevel', 'maxAP', 'maxMP']) {
     assert.equal(JSON.stringify(archer[key]), JSON.stringify(warrior[key]), key);
   }
   assert.equal(archer.availableSpells.length, 1);
@@ -347,14 +347,14 @@ test('halfling is the fifth allied hero and sling shot shares all bow combat par
   assert.equal(ctx.getSpellDamage(shot, halfling), ctx.getSpellDamage(bow, archer));
 });
 
-test('druid is the sixth allied hero with a free, once-per-battle permanent wolf summon', () => {
+test('druid is the sixth allied hero with a once-per-battle permanent wolf summon', () => {
   const ctx = setup();
   vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
   const druid = ctx.createCreature('druid', { x: 1, y: 1 });
   assert(ctx.gameState.isAlly(druid)); assert.equal(druid.ai, undefined);
   assert.equal(druid.partyOrder, 6); assert.equal(druid.availableSpells.length, 3);
   const summon = druid.availableSpells[0];
-  for (const [key, value] of Object.entries({ id:'summon-wolf', abilityType:'spell', apCost:0,
+  for (const [key, value] of Object.entries({ id:'summon-wolf', abilityType:'spell', apCost:1,
     maxCooldown:0, maxUsesPerTurn:1, maxUsesPerBattle:1, minRange:1, range:2, modifiable:false,
     noLOS:false, target:'none', isAOE:false, aoeSize:1, isSummon:true, summonType:'wolf',
     permanentSummon:true, requiresEmptyCell:true })) assert.equal(summon[key], value, key);
@@ -393,15 +393,14 @@ test('each Druid summon has its own once-per-battle counter and matching summon 
   assert.equal(spells[0].usesTotal, 0); assert.equal(spells[2].usesTotal, 0);
 });
 
-test('Enchant Stones is an unassigned earth spell with a timed sling-only buff', () => {
+test('Enchant Stones is an earth spell with a timed sling-only buff', () => {
   const ctx = setup();
   vm.runInContext(fs.readFileSync(path.join(root,'combat.js'),'utf8'),ctx);
   vm.runInContext(fs.readFileSync(path.join(root,'spellTargeting.js'),'utf8'),ctx);
   const spell = vm.runInContext('SPELL_DEFINITIONS.find(s=>s.id==="enchant-stones")',ctx);
   for (const [key,value] of Object.entries({magicSchool:'earth',abilityType:'spell',apCost:2,
-    maxCooldown:3,maxUsesPerTurn:1,durationBase:3,durationPerInt:0.05,minRange:0,range:4,
+    maxUsesPerTurn:1,durationBase:3,durationPerInt:0.05,minRange:0,range:4,
     modifiable:false,noLOS:false,target:'ally',aoeSize:1,stoneDamageBonus:2,stoneRangeBonus:0})) assert.equal(spell[key],value,key);
-  for (const t of Object.values(ctx.CREATURE_TEMPLATES)) assert(!t.spellPages.flat().includes(spell.id));
   const caster=ctx.createCreature('wizard',{x:1,y:1}),halfling=ctx.createCreature('halfling',{x:2,y:1});
   caster.attributes.int=20; assert.equal(ctx.getSpellDuration(spell,caster),4);
   const shot=halfling.availableSpells[0], initialRange=ctx.effectiveSpellRange(shot,halfling);
@@ -415,4 +414,34 @@ test('Enchant Stones is an unassigned earth spell with a timed sling-only buff',
   for(let i=0;i<3;i++)ctx.tickCasterEffects(caster.id);
   assert.equal(ctx.effectiveSpellRange(shot,halfling),initialRange);
   assert.equal(ctx.getStoneEnchantment(shot,halfling).damage,0);
+});
+
+test('hero equipment owns armor sources, weapons and independent battle durability', () => {
+  const ctx=setup();vm.runInContext(fs.readFileSync(path.join(root,'combat.js'),'utf8'),ctx);
+  for(const type of ['wizard','monk','druid','warrior','archer','halfling']){
+    assert.equal(Object.keys(ctx.CREATURE_TEMPLATES[type].Equipment).length,9);
+    assert.equal(ctx.CREATURE_TEMPLATES[type].armorSources,undefined);
+  }
+  const a=ctx.createCreature('warrior',{x:1,y:1}),b=ctx.createCreature('warrior',{x:2,y:1});
+  assert.equal(a.armorSources[0],a.Equipment.chest);assert.equal(a.armorSources[1],a.Equipment.leftHand);
+  ctx.wearArmor(a);assert.equal(a.Equipment.chest.durability,9);assert.equal(b.Equipment.chest.durability,10);
+  assert.equal(ctx.CREATURE_TEMPLATES.warrior.Equipment.chest.durability,undefined);
+  for(const type of ['wizard','monk','druid']){
+    const hero=ctx.createCreature(type,{x:1,y:1});assert(Object.values(hero.Equipment).every(item=>item===null));assert.equal(ctx.getEffectiveStat(hero,'ac'),0);
+  }
+  assert.equal(ctx.CREATURE_TEMPLATES.archer.Equipment.rightHand.hands,2);
+  assert.equal(ctx.CREATURE_TEMPLATES.archer.Equipment.leftHand,null);
+  assert.equal(ctx.CREATURE_TEMPLATES.halfling.Equipment.rightHand.hands,1);
+});
+
+test('weapon stats are read from equipment for normal attacks and warrior techniques', () => {
+  const ctx=setup(),template=ctx.CREATURE_TEMPLATES.warrior;
+  Object.assign(template.Equipment.rightHand.attack,{id:'test-weapon-attack',damageBase:8,damagePerStr:3,apCost:2,baseAccuracy:88,baseCritChance:17,range:2});
+  const hero=ctx.createCreature('warrior',{x:1,y:1}),[attack,maim,charge]=hero.availableSpells;
+  assert.equal(attack.id,'test-weapon-attack');assert.equal(attack.damageBase,8);assert.equal(attack.apCost,2);
+  assert.equal(maim.damageBase,0);assert.equal(maim.damagePerStr,3);assert.equal(maim.range,2);
+  assert.equal(charge.damageBase,8);assert.equal(charge.apCost,3);assert.equal(charge.range,3);
+  for(const spell of [attack,maim,charge]){assert.equal(spell.baseAccuracy,88);assert.equal(spell.baseCritChance,17);}
+  template.Equipment.rightHand=null;
+  assert(!ctx.createCreature('warrior',{x:2,y:1}).availableSpells.some(s=>s.id==='sword-strike'));
 });

@@ -42,6 +42,17 @@ window.CREATURE_TEMPLATES.druid = {
   baseCRI: 0, baseEVA: 0, baseSFC: 0, baseBLO: 0, baseINI: 0,
   baseAC: 0, basePhysical: 0, baseFire: 0, baseWater: 0, baseAir: 0,
   baseEarth: 0, baseMind: 0, basePoison: 0,
+  Equipment: {
+    head: null,
+    boots: null,
+    gloves: null,
+    belt: null,
+    chest: null,
+    rightHand: null,
+    leftHand: null,
+    other1: null,
+    other2: null,
+  },
   attributes: { vit: 2, str: 0, att: 0, int: 2, wis: 2, cha: 1, luc: 1 },
   appearance: {
     sprite: 'assets/map-editor/mobs/druid.png', portrait: 'assets/homm2/portrait-druid.png',

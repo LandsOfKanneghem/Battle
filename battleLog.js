@@ -27,6 +27,9 @@
     'liquid-membrane', 'sky-shot', 'power-hour', 'sprint',
     'fire-shield', 'water-shield', 'earth-shield', 'air-shield', 'stone-skin'
   ]);
+  const damageColors = { fire: '#dc6500', water: '#173d99', air: '#367c8c', earth: '#80502d',
+    poison: '#19812b', physical: '#666666', light: '#a17c00', dark: '#8436ad' };
+  const plainText = value => typeof value === 'string' ? value : value.text;
   const appendLine = (text, kind = 'event') => {
     const list = document.getElementById('battle-log-entries');
     if (!list) return;
@@ -34,7 +37,16 @@
     const follow = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 24;
     const line = document.createElement('p');
     line.className = `battle-log-${kind}`;
-    line.textContent = text;
+    line.textContent = plainText(text);
+    if (text.segments && typeof line.append === 'function') {
+      line.replaceChildren();
+      for (const segment of text.segments) {
+        const span = document.createElement('span');
+        span.textContent = segment.text;
+        if (segment.damageType !== undefined) span.style.color = damageColors[segment.damageType] ?? '#8b1c1c';
+        line.append(span);
+      }
+    }
     list.appendChild(line);
     if (follow) scroll.scrollTop = scroll.scrollHeight;
   };
@@ -52,7 +64,7 @@
   window.battleLog = {
     getText() {
       const entries = Array.from(document.getElementById('battle-log-entries')?.children ?? [], line => line.textContent);
-      return [...entries, ...(turnStartEntries ?? []).map(([text]) => text)].join('\n');
+      return [...entries, ...(turnStartEntries ?? []).map(([text]) => plainText(text))].join('\n');
     },
     async copy() {
       const text = window.battleLog.getText();
@@ -114,8 +126,20 @@
       write(`${source ? `${source} ${refreshed ? 'обновляет' : 'накладывает'} ${kind}` : `${entity.name}: ${kind}`} «${effect.name}»${source ? ` — цель: ${entity.name}` : ''}.`,
         beneficialEffects.has(effect.stateId ?? effect.id) ? 'benefit' : 'event');
     },
-    damage(entity, amount, absorbed = 0, critical = false) {
-      write(`${critical ? 'Критический удар! ' : ''}${entity.name} -${amount} ОЗ${absorbed ? ` (${absorbed} урона поглощено ES)` : ''}.`, 'damage');
+    damage(entity, amount, absorbed = 0, critical = false, parts = null) {
+      const components = parts ?? [{ amount, damageType: 'other', kind: 'base' }];
+      const base = components.find(part => part.kind === 'base') ?? components[0];
+      const terms = [base];
+      if (critical) terms.push({ amount: 0, damageType: base.damageType, kind: 'crit' });
+      terms.push(...components.filter(part => part.kind === 'modifier'));
+      const segments = [{ text: `${critical ? 'Критический удар!\n' : ''}${entity.name} получил урон: ` }];
+      terms.forEach((part, index) => {
+        if (index) segments.push({ text: ' + ' });
+        segments.push({ text: `${part.amount}${part.kind === 'crit' ? ' [крит]' : part.kind === 'modifier' ? ' [модификаторы]' : ''}`,
+          damageType: part.damageType ?? 'other' });
+      });
+      segments.push({ text: ` = ${amount}${absorbed ? ` (${absorbed} урона поглощено ES)` : ''}.` });
+      write({ text: segments.map(segment => segment.text).join(''), segments }, 'damage');
     },
     markDisappearance(entity) { disappearing.add(entity); },
     removed(entity) {

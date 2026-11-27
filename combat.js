@@ -369,15 +369,18 @@ window.getStoneEnchantment = function(spell, caster) {
   return result;
 };
 
-window.damageBreakdown = function(spell, entity, attacker = null) {
+window.damageBreakdown = function(spell, entity, attacker = null, detailed = false) {
   // Здесь damage уже вычислен вызывающим кодом: INT и штрафы повторно не применяем.
   if (isFrozen(entity)) return { absorbed: 0, hpDamage: 0 };
   if (spell.damageType === 'water' && entity.states.some(state => state.id === 'water-entity' && !state.suppressed)) {
     return { absorbed: 0, hpDamage: 0 }; // Иммунитет сохраняет и HP, и ES.
   }
-  const bonus = window.getStoneEnchantment(spell, attacker).damage;
-  const parts = [spell];
-  if (bonus > 0) parts.push({ damage: bonus, damageType: 'earth' });
+  const enchantment = window.getStoneEnchantment(spell, attacker);
+  const hasModifier = spell.projectileType === 'sling-stone' && (attacker?.appliedEffects ?? [])
+    .some(effect => effect.isEnchantStones && effect.duration > 0 && !effect.suppressed);
+  const parts = [{ ...spell, kind: 'base' }];
+  if (hasModifier) parts.push({ damage: enchantment.damage, damageType: 'earth', kind: 'modifier' });
+  const contributions = [];
   let remainingES = getCurrentES(entity), absorbed = 0, hpDamage = 0;
   for (const part of parts) {
     const armor = part.damageType === 'physical' && part.abilityType === 'weapon-strike'
@@ -388,8 +391,9 @@ window.damageBreakdown = function(spell, entity, attacker = null) {
     remainingES -= blocked;
     absorbed += blocked;
     hpDamage += afterResistance - blocked;
+    contributions.push({ amount: afterResistance - blocked, damageType: part.damageType, kind: part.kind });
   }
-  return { absorbed, hpDamage };
+  return detailed ? { absorbed, hpDamage, parts: contributions } : { absorbed, hpDamage };
 };
 
 window.spellDamage = function(spell, entity, attacker = null) {
@@ -404,14 +408,14 @@ window.applyDamage = function(spell, entity, attacker = null) {
   const reflectsMelee = entity.hp > 0 && attacker && attacker !== entity && attacker.hp > 0
     && spell.abilityType === 'weapon-strike' && !spell.isShot
     && hasActiveState(entity, 'sharp-shell');
-  const { absorbed, hpDamage } = damageBreakdown(spell, entity, attacker);
+  const { absorbed, hpDamage, parts } = damageBreakdown(spell, entity, attacker, true);
   const critChance = window.getCritChance(spell, attacker, entity);
   const critical = critChance > 0 && Math.random() * 100 < critChance;
   consumeES(entity, absorbed);
   entity.hp = Math.max(0, entity.hp - hpDamage);
   // Этот удар использует защиту до износа. Ломается только источник, его запись остаётся.
   if (wearsArmor) window.wearArmor(entity);
-  window.battleLog?.damage(entity, hpDamage, absorbed, critical);
+  window.battleLog?.damage(entity, hpDamage, absorbed, critical, parts ?? [{ amount: hpDamage, damageType: spell.damageType, kind: 'base' }]);
   // Показываем и поглощение ES, и нулевой урон после сопротивления; иммунитеты выше.
   const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
   window.playDamageAnimation?.(cell, absorbed + hpDamage);

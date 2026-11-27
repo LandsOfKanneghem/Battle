@@ -24,11 +24,11 @@ function setup() {
 test('copy text includes all entries and queued turn events in order without changing the log', () => {
   const { log, wizard, wolf, lines } = setup();
   log.beginRound(1); log.beginTurn(wizard); log.damage(wolf, 4);
-  assert.equal(log.getText(), 'Ход 1\nХодит: Волшебник\nВолк -4 ОЗ.');
+  assert.equal(log.getText(), 'Ход 1\nХодит: Волшебник\nВолк получил урон: 4 = 4.');
   assert.equal(lines().length, 2, 'taking a copy does not flush queued events');
   log.finishTurnStart();
   const text = log.getText();
-  assert.equal(text, 'Ход 1\nХодит: Волшебник\nВолк -4 ОЗ.');
+  assert.equal(text, 'Ход 1\nХодит: Волшебник\nВолк получил урон: 4 = 4.');
   log.reset(); assert.equal(log.getText(), '');
 });
 
@@ -62,7 +62,7 @@ test('damage includes zero and ES; expired summons disappear while killed ones d
   log.removed(wolf);
   log.markDisappearance(wizard);
   log.removed(wizard);
-  assert.deepEqual(lines(), ['Волк -0 ОЗ (4 урона поглощено ES).', 'Волк погибает.', 'Волшебник исчезает.']);
+  assert.deepEqual(lines(), ['Волк получил урон: 0 = 0 (4 урона поглощено ES).', 'Волк погибает.', 'Волшебник исчезает.']);
 });
 
 test('turn opening lists bonuses before automatic effects, but flushes before a death', () => {
@@ -77,7 +77,7 @@ test('turn opening lists bonuses before automatic effects, but flushes before a 
   log.beginTurn(wizard);
   log.damage(wizard, 2);
   log.removed(wizard);
-  assert.deepEqual(lines().slice(-2), ['Волшебник -2 ОЗ.', 'Волшебник погибает.']);
+  assert.deepEqual(lines().slice(-2), ['Волшебник получил урон: 2 = 2.', 'Волшебник погибает.']);
 });
 
 test('scroll follows new entries only when the reader is near the bottom', () => {
@@ -111,7 +111,7 @@ test('hidden obstacle message does not identify the concealed creature', () => {
 test('critical damage uses the requested prefix and damage color', () => {
   const { log, wolf, lines, entries } = setup();
   log.damage(wolf, 4, 0, true);
-  assert.deepEqual(lines(), ['Критический удар! Волк -4 ОЗ.']);
+  assert.deepEqual(lines(), ['Критический удар!\nВолк получил урон: 4 + 0 [крит] = 4.']);
   assert.equal(entries.children[0].className, 'battle-log-damage');
 });
 
@@ -128,4 +128,14 @@ test('casts with no target omit target text, including AI destination objects', 
     'Волшебник применяет «Огненный выстрел» — цель: Волк.',
     'Волшебник применяет «Телепорт».'
   ]);
+});
+
+test('damage terms retain zero critical and modifier contributions when queued or copied', () => {
+  const {log,wizard,wolf,lines}=setup();
+  log.beginTurn(wizard);
+  log.damage(wolf,4,0,true,[{amount:4,damageType:'physical',kind:'base'},
+    {amount:0,damageType:'earth',kind:'modifier'}]);
+  const expected='Критический удар!\nВолк получил урон: 4 + 0 [крит] + 0 [модификаторы] = 4.';
+  assert(log.getText().endsWith(expected));
+  log.finishTurnStart(); assert.equal(lines().at(-1),expected);
 });

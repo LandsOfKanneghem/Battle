@@ -50,7 +50,7 @@ body {
 .battle-log-round:first-child { border-top: 0; padding-top: 0; }
 .battle-log-turn { font-weight: 700; }
 .battle-log-benefit { color: #166534; }
-.battle-log-damage { color: #c71919; }
+.battle-log-damage { color: #222; white-space: pre-line; }
 .battle-log-death { color: #9d1111; font-weight: 700; }
 .arena {
   --queue-width: 60px;

@@ -300,3 +300,28 @@ test('accuracy belongs to every weapon attack and shot, never to a creature', ()
     for (const spell of entity.availableSpells.filter(Boolean)) check(spell);
   }
 });
+
+
+test('archer is an allied fourth hero whose bow inherits sword damage but uses ranged accuracy and critical chance', () => {
+  const ctx = setup();
+  vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
+  const archer = ctx.createCreature('archer', { x: 1, y: 1 });
+  const warrior = ctx.createCreature('warrior', { x: 2, y: 1 });
+  assert.equal(archer.id, 'archer'); assert(ctx.gameState.isAlly(archer));
+  assert.equal(archer.ai, undefined); assert.equal(archer.partyOrder, 4);
+  for (const key of ['attributes', 'baseHP', 'hpPerLevel', 'baseWP', 'wpPerLevel', 'maxAP', 'maxMP']) {
+    assert.equal(JSON.stringify(archer[key]), JSON.stringify(warrior[key]), key);
+  }
+  assert.equal(archer.availableSpells.length, 1);
+  const shot = archer.availableSpells[0], sword = warrior.availableSpells[0];
+  for (const key of ['damageBase', 'damagePerStr', 'damageType', 'apCost', 'maxCooldown', 'maxUsesPerTurn', 'noLOS', 'target']) {
+    assert.equal(shot[key], sword[key], key);
+  }
+  for (const [key, value] of Object.entries({id:'bow-shot', abilityType:'weapon-strike', isShot:true,
+    minRange:1, range:6, modifiable:true, baseAccuracy:80, baseCritChance:10})) assert.equal(shot[key], value, key);
+  assert.equal(ctx.getSpellDamage(shot, archer), ctx.getSpellDamage(sword, warrior));
+  const enemy = ctx.createCreature('wolf', { x: 7, y: 1 });
+  enemy.attributes.luc = 0; enemy.baseEVA = 0;
+  assert.equal(ctx.getHitChance(shot, archer, enemy), 82);
+  assert.equal(ctx.getCritChance(shot, archer, enemy), 12);
+});

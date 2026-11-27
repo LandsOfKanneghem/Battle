@@ -89,6 +89,8 @@ window.playProjectileAnimation = function(fromCell, toCell, type = 'fire', onArr
     ? WIZARD_SPELLS.find(spell => spell.id === 'sparks').svg
     : type === 'water'
     ? spell?.svg ?? ''
+    : type === 'arrow'
+    ? '<svg viewBox="0 0 40 40"><path d="M3 20H31" stroke="#a96b32" stroke-width="3"/><path d="M29 14L39 20L29 26Z" fill="#e1e5e7"/><path d="M2 14L11 18V22L2 26L5 20Z" fill="#ece0bc"/></svg>'
     : type === 'ice'
     ? WIZARD_SPELLS.find(spell => spell.id === 'ice-arrow').svg
     : `<svg viewBox="0 0 40 40"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`;
@@ -99,6 +101,7 @@ window.playProjectileAnimation = function(fromCell, toCell, type = 'fire', onArr
   // Анимация в экранных координатах: прямая между центрами, без шагов сетки.
   const dx = to.left + to.width / 2 - (from.left + from.width / 2);
   const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  if (type === 'arrow') projectile.querySelector('svg').style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
   const flight = projectile.animate([
     { transform: 'translate(0, 0)' },
     { transform: `translate(${dx}px, ${dy}px)` }

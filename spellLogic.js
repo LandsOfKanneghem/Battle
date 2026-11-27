@@ -442,6 +442,9 @@ const spellAnimationHandlers = {
   'fire-shot': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'fire', () => ctx.setTimeout(ctx.finishCast, 0));
   },
+  'bow-shot': ctx => {
+    ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'arrow', () => ctx.setTimeout(ctx.finishCast, 0));
+  },
   'water-shot': ctx => {
     ctx.deps.playProjectileAnimation(ctx.fromCell, ctx.targetCell, 'water', () => ctx.setTimeout(ctx.finishCast, 0), ctx.spell);
   },

@@ -620,7 +620,9 @@ window.castSpell = function(targetCell, deps) {
   if (spell.isWeaknessVigor && !entities.some(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target))) return false;
   // Отдельный бросок до оплаты: при SFC = 0 последовательность бросков выстрелов не меняется.
   const sfc = getEffectiveStat(caster, 'sfc');
-  const failed = hiddenObstacle || (spell.abilityType === 'spell' && sfc > 0 && Math.random() * 100 < sfc);
+  const missingChargeTarget = spell.isCharge && !entities.some(entity => entity.hp > 0
+    && keyOf(entity.position) === keyOf(target));
+  const failed = missingChargeTarget || hiddenObstacle || (spell.abilityType === 'spell' && sfc > 0 && Math.random() * 100 < sfc);
   const primaryTarget = spell.isSparks ? entities.find(entity => entity.hp > 0 && keyOf(entity.position) === keyOf(target)) : null;
   // Этот же снимок целей используется для анимации и последующего урона.
   const sparkTargets = spell.isSparks ? findSparkTargets(primaryTarget, spell.sparkRadius, spell.sparkCount, entities) : null;

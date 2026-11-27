@@ -76,13 +76,12 @@ window.inSpellReach = function(target, spell) {
     && (distance === 0 || spell.noLOS === true || (spell.isShot && window.hasSkyShotBuff(caster)) || window.checkLOS(caster.position, target));
 };
 
-// Рывок направлен на существо; промежуточные клетки проверяются отдельно от LOS.
+// Рывок показывает всю доступную прямую; промежуточные клетки проверяются отдельно от LOS.
 // entities позволяет превью и ИИ работать без знания о невидимых противниках.
 window.getChargeRoute = function(caster, target, entities = window.gameState.entities) {
   const state = window.gameState;
   const dx = target.x - caster.position.x, dy = target.y - caster.position.y;
-  if ((!dx && !dy) || (dx && dy) || !entities.some(unit => unit.hp > 0
-    && state.keyOf(unit.position) === state.keyOf(target))) return null;
+  if ((!dx && !dy) || (dx && dy)) return null;
   const sx = Math.sign(dx), sy = Math.sign(dy), path = [];
   for (let step = 1; step < Math.abs(dx) + Math.abs(dy); step++) {
     const point = { x: caster.position.x + sx * step, y: caster.position.y + sy * step };

@@ -9,7 +9,7 @@
   const consumableSlots=document.getElementById('consumable-slots');
   const closeContext=()=>{contextMenu?.remove();contextMenu=null;};
   const bagSlots=document.getElementById('backpack-slots');
-  const backpackSize=100;
+  const backpackSize=80;
   let backpackPage=0;
   const filter=document.getElementById('backpack-filter');
   const matchesFilter=(item,type)=>{
@@ -152,6 +152,11 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeContext();if(dialog.open&&!document.querySelector('dialog:modal')){dialog.close();event.preventDefault();event.stopPropagation();}}},true);
   filter.addEventListener('change',()=>{backpackPage=0;hide();gameState.selectedBackpackIndex=null;renderEquipment(shown);});
   for(const [id,delta] of [['backpack-prev',-1],['backpack-next',1]])document.getElementById(id).addEventListener('click',()=>{hide();backpackPage+=delta;renderBackpack(shown);});
+  const toolbar=document.querySelector('.battle-toolbar');
+  const positionBackpack=()=>dialog.style.setProperty('--backpack-top',`${Math.max(72,toolbar.getBoundingClientRect().bottom+16)}px`);
+  new ResizeObserver(positionBackpack).observe(toolbar);
+  window.addEventListener('resize',positionBackpack);
+  positionBackpack();
   document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);if(!dialog.open)dialog.show();});
   document.getElementById('close-backpack').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',hide);

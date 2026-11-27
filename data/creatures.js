@@ -1,4 +1,4 @@
-// Реестр и фабрика существ. Шаблоны подключаются из data/creatures/*.js. Счётчики типов приватны; изменяемые данные не разделяются.
+// Реестр и фабрика существ. Шаблоны подключаются из data/creatures/*.js и data/allies/*.js. Счётчики типов приватны; изменяемые данные не разделяются.
 window.BASE_SPELL_CASTS = 10;
 window.BASE_HIT_COUNT = 10;
 window.DEFAULT_CREATURE_SOURCE_SIZE = Object.freeze({ width: 72, height: 86 });

@@ -20,8 +20,10 @@ function setup() {
 }
 
 test('every creature template file is connected to the game', () => {
-  for (const file of fs.readdirSync(path.join(root, 'data/creatures')).filter(file => file.endsWith('.js'))) {
-    assert.ok(dataScripts.includes(`data/creatures/${file}`), `${file} must be loaded by index.html`);
+  for (const directory of ['data/creatures', 'data/allies']) {
+    for (const file of fs.readdirSync(path.join(root, directory)).filter(file => file.endsWith('.js'))) {
+      assert.ok(dataScripts.includes(`${directory}/${file}`), `${directory}/${file} must be loaded by index.html`);
+    }
   }
 });
 

@@ -8,6 +8,17 @@
   let shown=null, tooltip=null;
   const bagSlots=document.getElementById('backpack-slots');
   const backpackSize=100;
+  const filter=document.getElementById('backpack-filter');
+  const matchesFilter=(item,type)=>{
+    if(type==='all')return true;
+    if(!item)return false;
+    if(type==='melee'||type==='ranged')return !!item.attack && !!item.attack.isShot===(type==='ranged');
+    if(['rings','charms','cloaks'].includes(type)){
+      if(!item.allowedSlots?.some(slot=>slot==='other1'||slot==='other2'))return false;
+      return type==='rings'?item.itemType==='Кольцо':type==='cloaks'?item.itemType==='Плащ':!['Кольцо','Плащ'].includes(item.itemType);
+    }
+    return item.allowedSlots?.includes(type);
+  };
   const modifierNames={maxHP:'Макс. ОЗ',maxWP:'Макс. WP',mp:'ОП',vit:'VIT',str:'STR',att:'ATT',int:'INT',wis:'WIS',cha:'CHA',luc:'LUC',eva:'Уклонение (%)',physical:'Физическая защита',fire:'Защита от огня',water:'Защита от воды',earth:'Защита от земли',air:'Защита от воздуха',poison:'Защита от яда',mind:'Защита разума'};
   const hide=()=>{tooltip?.remove();tooltip=null;};
   function show(anchor,item,slot,entity){
@@ -61,11 +72,12 @@
     if(!gameState.backpack)window.resetSharedBackpack();
     const bag=gameState.backpack;
     for(const cell of bagSlots.children)cell.setAttribute('aria-pressed',String(gameState.selectedBackpackIndex===Number(cell.dataset.index)));
-    const key=JSON.stringify([entity?.id,bag,window.canManageEquipment(entity)]);
+    const key=JSON.stringify([entity?.id,bag,filter.value,window.canManageEquipment(entity)]);
     if(bagSlots.dataset.key===key)return;
     bagSlots.dataset.key=key;bagSlots.replaceChildren();
-    for(let index=0;index<backpackSize;index++){
-      const item=bag[index];
+    const entries=bag.map((item,index)=>({item,index})).filter(entry=>matchesFilter(entry.item,filter.value));
+    for(let position=0;position<backpackSize;position++){
+      const {item,index}=entries[position]??{item:null,index:-1};
       const cell=document.createElement('button');cell.type='button';cell.className='equipment-slot backpack-slot';cell.dataset.index=index;
       cell.setAttribute('aria-label',item?.name??'Свободная ячейка');cell.setAttribute('aria-pressed',String(gameState.selectedBackpackIndex===index));
       if(item){
@@ -81,6 +93,7 @@
       bagSlots.append(cell);
     }
   }
+  filter.addEventListener('change',()=>{hide();gameState.selectedBackpackIndex=null;renderEquipment(shown);});
   document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);dialog.showModal();});
   document.getElementById('close-backpack').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',hide);

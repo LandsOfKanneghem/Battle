@@ -106,6 +106,15 @@
     </aside>
   </main>
   <dialog id="backpack-dialog" aria-label="Общий рюкзак">
+    <select id="backpack-filter" aria-label="Тип предметов">
+      <option value="all">Все предметы</option>
+      <option value="head">Головные уборы</option><option value="boots">Обувь</option>
+      <option value="gloves">Перчатки</option><option value="belt">Пояса</option>
+      <option value="chest">Нагрудная броня и мантии</option>
+      <option value="melee">Ближнее оружие</option><option value="ranged">Дальнобойное оружие</option>
+      <option value="leftHand">Щиты</option><option value="rings">Кольца</option>
+      <option value="charms">Амулеты, обереги и броши</option><option value="cloaks">Плащи</option>
+    </select>
     <button id="close-backpack" type="button" aria-label="Закрыть рюкзак">×</button>
     <div id="backpack-slots"></div>
   </dialog>

@@ -195,7 +195,7 @@ window.showSpellTooltip = function(icon, spell) {
       addLine('Длительность', durationText, durationColor);
     } else if (spell.bleedDuration !== undefined) addLine('Длительность', spellTurnLabel(spell.bleedDuration));
   }
-  addLine('КД', spellTurnLabel(spell.maxCooldown));
+  addLine('КД', spell.maxCooldown === 0 ? 'отсутствует' : spellTurnLabel(spell.maxCooldown));
   if (spell.maxUsesPerBattle !== undefined) {
     addLine('Раз за бой', spell.maxUsesPerBattle);
   } else if (spell.maxUsesPerTurn > 1) {

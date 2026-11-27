@@ -65,7 +65,7 @@
     renderConsumables(entity);
     renderBackpack(entity);
     const equipment=entity?.Equipment??{};
-    const key=JSON.stringify([entity?.id,equipment,gameState.selectedBackpackIndex,window.canManageEquipment(entity)]);
+    const key=JSON.stringify([entity?.id,equipment,dialog.open,gameState.selectedBackpackIndex,window.canManageEquipment(entity)]);
     if(slots.dataset.key===key)return;
     slots.dataset.key=key;hide();slots.replaceChildren();
     for(const slot of order){
@@ -81,9 +81,10 @@
         image.className='equipment-outline';image.alt='';image.draggable=false;art.append(image);
       }
       const selected=gameState.backpack?.[gameState.selectedBackpackIndex];
-      cell.classList.toggle('equipment-compatible',!!selected?.allowedSlots?.includes(slot)&&window.canManageEquipment(entity));
+      cell.setAttribute('aria-disabled',String(!dialog.open||!window.canManageEquipment(entity)));
+      cell.classList.toggle('equipment-compatible',dialog.open&&!!selected?.allowedSlots?.includes(slot)&&window.canManageEquipment(entity));
       cell.append(art);
-      cell.addEventListener('click',()=>{ if(window.changeEquipment(shown,gameState.selectedBackpackIndex??null,slot))hide(); });
+      cell.addEventListener('click',()=>{ if(dialog.open&&window.changeEquipment(shown,gameState.selectedBackpackIndex??null,slot))hide(); });
       cell.addEventListener('mouseenter',()=>show(cell,item,slot,shown));cell.addEventListener('focus',()=>show(cell,item,slot,shown));
       cell.addEventListener('mouseleave',hide);cell.addEventListener('blur',hide);slots.append(cell);
     }
@@ -125,7 +126,7 @@
   }
   function renderConsumables(entity){
     const capacity=window.getConsumableSlotCount(entity),items=entity?.consumables??[];
-    const key=JSON.stringify([entity?.id,capacity,items,entity?.ap,gameState.activeEntityId,gameState.selectedBackpackIndex,window.canManageEquipment(entity)]);
+    const key=JSON.stringify([entity?.id,capacity,items,entity?.ap,gameState.activeEntityId,dialog.open,gameState.selectedBackpackIndex,window.canManageEquipment(entity)]);
     if(consumableSlots.dataset.key===key)return;
     consumableSlots.dataset.key=key;consumableSlots.replaceChildren();
     for(let slot=0;slot<6;slot++){
@@ -134,8 +135,8 @@
       cell.setAttribute('aria-label',locked?'Недоступный слот расходника':item?.name??'Свободный слот расходника');
       cell.setAttribute('aria-disabled',String(locked));
       if(item){const image=document.createElement('img');image.src=item.iconPath;image.alt='';cell.append(image);}
-      cell.classList.toggle('equipment-compatible',!locked&&!!gameState.backpack?.[gameState.selectedBackpackIndex]?.consumable);
-      cell.addEventListener('click',()=>{if(!locked)window.changeConsumable(shown,gameState.selectedBackpackIndex??null,slot);});
+      cell.classList.toggle('equipment-compatible',dialog.open&&!locked&&!!gameState.backpack?.[gameState.selectedBackpackIndex]?.consumable);
+      cell.addEventListener('click',()=>{if(dialog.open&&!locked)window.changeConsumable(shown,gameState.selectedBackpackIndex??null,slot);});
       cell.addEventListener('mouseenter',()=>{if(!locked)show(cell,item,'consumables',shown);});cell.addEventListener('mouseleave',hide);
       cell.addEventListener('contextmenu',event=>{
         event.preventDefault();closeContext();hide();if(locked||!item)return;
@@ -165,9 +166,9 @@
   const observer=new ResizeObserver(positionBackpack);observer.observe(toolbar);observer.observe(battlefield);
   window.addEventListener('resize',positionBackpack);
   window.addEventListener('scroll',positionBackpack,{capture:true,passive:true});
-  document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);if(!dialog.open)dialog.show();positionBackpack();});
+  document.getElementById('open-backpack').addEventListener('click',()=>{hide();renderBackpack(shown);if(!dialog.open)dialog.show();window.renderEquipment(shown);positionBackpack();});
   document.getElementById('close-backpack').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('close',hide);
+  dialog.addEventListener('close',()=>{hide();closeContext();gameState.selectedBackpackIndex=null;window.renderEquipment(shown);});
   const entity=gameState.entities.find(e=>e.id===(gameState.selectedEntityId??gameState.hoveredEntityId??gameState.activeEntityId));
   window.renderEquipment(entity);
 })();

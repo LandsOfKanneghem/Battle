@@ -146,3 +146,14 @@ test('enchanted sling separates physical armor and earth resistance and wears ar
   caster.appliedEffects[0].suppressed = true;
   assert.equal(ctx.spellDamage(spell,target,caster),5);
 });
+
+test('log contributions cap resistance at damage but retain negative resistance', () => {
+  const {ctx,target}=setup();
+  target.baseES=0;target.earth=100;
+  let result=ctx.damageBreakdown({damage:2,damageType:'earth'},target,null,true);
+  assert.equal(result.parts[0].rawDamage,2);assert.equal(result.parts[0].resistance,2);
+  assert.equal(result.hpDamage,0);
+  target.earth=-1;
+  result=ctx.damageBreakdown({damage:2,damageType:'earth'},target,null,true);
+  assert.equal(result.parts[0].resistance,-1);assert.equal(result.hpDamage,3);
+});

@@ -42,7 +42,15 @@
       line.replaceChildren();
       for (const segment of text.segments) {
         const span = document.createElement('span');
-        span.textContent = segment.text;
+        if (segment.numbers) {
+          for (const fragment of segment.text.split(/(\d+(?:[.,]\d+)?)/)) {
+            if (/^\d/.test(fragment)) {
+              const number = document.createElement('strong');
+              number.textContent = fragment;
+              span.append(number);
+            } else span.append(fragment);
+          }
+        } else span.textContent = segment.text;
         if (segment.damageType !== undefined) span.style.color = damageColors[segment.damageType] ?? '#8b1c1c';
         line.append(span);
       }
@@ -135,10 +143,16 @@
       const segments = [{ text: `${critical ? 'Критический удар!\n' : ''}${entity.name} получил урон: ` }];
       terms.forEach((part, index) => {
         if (index) segments.push({ text: ' + ' });
-        segments.push({ text: `${part.amount}${part.kind === 'crit' ? ' [крит]' : part.kind === 'modifier' ? ' [модификаторы]' : ''}`,
-          damageType: part.damageType ?? 'other' });
+        let value = String(part.rawDamage ?? part.amount);
+        const resistance = part.resistance ?? 0;
+        if (resistance > 0) value += ` - ${resistance}`;
+        else if (resistance < 0) value += ` + ${-resistance}`;
+        if (part.absorbed > 0) value += ` - ${part.absorbed} [ES]`;
+        if (resistance !== 0 || part.absorbed > 0) value = `(${value})`;
+        segments.push({ text: `${value}${part.kind === 'crit' ? ' [крит]' : part.kind === 'modifier' ? ' [модификаторы]' : ''}`,
+          damageType: part.damageType ?? 'other', numbers: true });
       });
-      segments.push({ text: ` = ${amount}${absorbed ? ` (${absorbed} урона поглощено ES)` : ''}.` });
+      segments.push({ numbers: true, text: `${terms.length > 1 ? ` = ${amount}` : ''}${absorbed ? ` (${absorbed} урона поглощено ES)` : ''}.` });
       write({ text: segments.map(segment => segment.text).join(''), segments }, 'damage');
     },
     markDisappearance(entity) { disappearing.add(entity); },

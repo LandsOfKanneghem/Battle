@@ -391,7 +391,9 @@ window.damageBreakdown = function(spell, entity, attacker = null, detailed = fal
     remainingES -= blocked;
     absorbed += blocked;
     hpDamage += afterResistance - blocked;
-    contributions.push({ amount: afterResistance - blocked, damageType: part.damageType, kind: part.kind });
+    contributions.push({ amount: afterResistance - blocked, rawDamage: part.damage,
+      resistance: Math.min(part.damage, resistance), absorbed: blocked,
+      damageType: part.damageType, kind: part.kind });
   }
   return detailed ? { absorbed, hpDamage, parts: contributions } : { absorbed, hpDamage };
 };

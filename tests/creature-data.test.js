@@ -350,7 +350,7 @@ test('druid is the sixth allied hero with a free, once-per-battle permanent wolf
   vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
   const druid = ctx.createCreature('druid', { x: 1, y: 1 });
   assert(ctx.gameState.isAlly(druid)); assert.equal(druid.ai, undefined);
-  assert.equal(druid.partyOrder, 6); assert.equal(druid.availableSpells.length, 1);
+  assert.equal(druid.partyOrder, 6); assert.equal(druid.availableSpells.length, 3);
   const summon = druid.availableSpells[0];
   for (const [key, value] of Object.entries({ id:'summon-wolf', abilityType:'spell', apCost:0,
     maxCooldown:0, maxUsesPerTurn:1, maxUsesPerBattle:1, minRange:1, range:2, modifiable:false,
@@ -366,4 +366,27 @@ test('druid is the sixth allied hero with a free, once-per-battle permanent wolf
   for (let i = 0; i < 12; i++) ctx.tickCasterEffects(druid.id);
   assert(permanent.hp > 0); assert.equal(permanent.summonDuration, null);
   assert.equal(timed.hp, 0); assert.equal(timed.summonDuration, 0);
+});
+
+
+test('bear has independent copies of black wolf stats and abilities', () => {
+  const ctx = setup();
+  const bear = ctx.CREATURE_TEMPLATES.bear, wolf = ctx.CREATURE_TEMPLATES['black-wolf'];
+  for (const key of Object.keys(wolf).filter(key => !['name', 'type', 'ai', 'appearance'].includes(key))) {
+    assert.equal(JSON.stringify(bear[key]), JSON.stringify(wolf[key]), key);
+  }
+  assert.notEqual(bear.spells[0], wolf.spells[0]);
+  bear.spells[0].damageBase++;
+  assert.equal(wolf.spells[0].damageBase, 4);
+});
+
+test('each Druid summon has its own once-per-battle counter and matching summon type', () => {
+  const ctx = setup(), druid = ctx.createCreature('druid', { x: 1, y: 1 });
+  const spells = druid.availableSpells;
+  assert.deepEqual(Array.from(spells, s => s.summonType), ['wolf', 'black-wolf', 'bear']);
+  const keys = ['abilityType', 'apCost', 'maxCooldown', 'maxUsesPerTurn', 'maxUsesPerBattle', 'range',
+    'minRange', 'modifiable', 'noLOS', 'target', 'isAOE', 'aoeSize', 'isSummon', 'requiresEmptyCell', 'permanentSummon'];
+  for (const spell of spells) for (const key of keys) assert.equal(spell[key], spells[0][key], key);
+  spells[1].usesTotal = 1;
+  assert.equal(spells[0].usesTotal, 0); assert.equal(spells[2].usesTotal, 0);
 });

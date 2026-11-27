@@ -2,6 +2,7 @@
 Object.assign(window.EQUIPMENT_ITEMS, {
   "iron-dagger": {
     "id": "iron-dagger",
+    "weaponType": "dagger",
     "name": "Простой кинжал",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -20,6 +21,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "worn-shortsword": {
     "id": "worn-shortsword",
+    "weaponType": "sword",
     "name": "Потёртый короткий меч",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -38,6 +40,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "woodcutter-axe": {
     "id": "woodcutter-axe",
+    "weaponType": "axe",
     "name": "Малый топор",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -56,6 +59,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "warrior-weapon": {
     "id": "warrior-weapon",
+    "weaponType": "sword",
     "iconPath": "assets/equipment/sword.png",
     "name": "Меч",
     "hands": 1,
@@ -73,6 +77,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "toxic-dagger": {
     "id": "toxic-dagger",
+    "weaponType": "dagger",
     "name": "Ядовитый кинжал",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -92,6 +97,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "ember-sword": {
     "id": "ember-sword",
+    "weaponType": "sword",
     "name": "Тлеющий меч",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -111,6 +117,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "noon-blade": {
     "id": "noon-blade",
+    "weaponType": "sword",
     "name": "Клинок полудня",
     "allowedSlots": ["rightHand"],
     "iconPath": "assets/equipment/noon-blade.png",

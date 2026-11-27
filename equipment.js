@@ -29,7 +29,8 @@
     if(!item)line('Слот для',allowed[slot]);
     else if(item.attack){
       const a=item.attack;
-      line('Оружие',item.hands===2?'Двуручное':'Одноручное');line('ОД',a.apCost);
+      const types={dagger:'Кинжал',sword:item.hands===2?'Двуручный меч':'Одноручный меч',axe:item.hands===2?'Двуручный топор':'Одноручный топор',bow:'Лук',sling:'Праща'};
+      line('Оружие',types[item.weaponType]??item.weaponType??(item.hands===2?'Двуручное':'Одноручное'));line('ОД',a.apCost);
       line('Урон',`${a.damageBase} + ${a.damagePerStr??0} × STR (физический)`);
       line('Точность',`${a.baseAccuracy}%`);line('Крит шанс',`${a.baseCritChance}%`);
       line('Дальность',`${a.minRange===a.range||a.minRange===undefined?a.range:`${a.minRange}–${a.range}`}${a.modifiable?' [изменяемая]':' [неизменяемая]'}`);

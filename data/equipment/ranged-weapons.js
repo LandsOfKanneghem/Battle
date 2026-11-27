@@ -2,6 +2,7 @@
 Object.assign(window.EQUIPMENT_ITEMS, {
   "simple-sling": {
     "id": "simple-sling",
+    "weaponType": "sling",
     "name": "Простая праща",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -21,6 +22,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "shortbow": {
     "id": "shortbow",
+    "weaponType": "bow",
     "name": "Короткий лук",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -39,6 +41,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "archer-weapon": {
     "id": "archer-weapon",
+    "weaponType": "bow",
     "iconPath": "assets/equipment/bow.png",
     "name": "Лук",
     "hands": 2,
@@ -56,6 +59,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "halfling-weapon": {
     "id": "halfling-weapon",
+    "weaponType": "sling",
     "iconPath": "assets/equipment/sling.png",
     "name": "Праща",
     "hands": 1,
@@ -74,6 +78,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "frost-bow": {
     "id": "frost-bow",
+    "weaponType": "bow",
     "name": "Морозный лук",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -93,6 +98,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "earth-sling": {
     "id": "earth-sling",
+    "weaponType": "sling",
     "name": "Праща земли",
     "allowedSlots": ["rightHand"],
     "itemType": "Оружие",
@@ -113,6 +119,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "moon-hunter-bow": {
     "id": "moon-hunter-bow",
+    "weaponType": "bow",
     "name": "Лук лунного охотника",
     "allowedSlots": ["rightHand"],
     "iconPath": "assets/equipment/moon-hunter-bow.png",

@@ -265,7 +265,7 @@
       window.playTonguePullAnimation(state().cells[caster.position.y * state().SIZE + caster.position.x], cell);
       setTimeout(finish, 500);
     } else if (spell.isShot) {
-      const type = spell.id === 'bow-shot' ? 'arrow' : spell.id === 'boulder-throw' ? 'rock' : spell.damageType === 'water' ? 'water' : 'fire';
+      const type = spell.id === 'sling-shot' ? 'sling-stone' : spell.id === 'bow-shot' ? 'arrow' : spell.id === 'boulder-throw' ? 'rock' : spell.damageType === 'water' ? 'water' : 'fire';
       window.playProjectileAnimation(state().cells[caster.position.y * state().SIZE + caster.position.x], cell,
         type, () => setTimeout(finish, 0), spell);
       // Для камня используем SVG самой способности.

@@ -325,3 +325,22 @@ test('archer is an allied fourth hero whose bow inherits sword damage but uses r
   assert.equal(ctx.getHitChance(shot, archer, enemy), 82);
   assert.equal(ctx.getCritChance(shot, archer, enemy), 12);
 });
+
+test('halfling is the fifth allied hero and sling shot shares all bow combat parameters', () => {
+  const ctx = setup();
+  vm.runInContext(fs.readFileSync(path.join(root, 'combat.js'), 'utf8'), ctx);
+  const halfling = ctx.createCreature('halfling', { x: 1, y: 1 });
+  const archer = ctx.createCreature('archer', { x: 2, y: 1 });
+  assert.equal(halfling.id, 'halfling'); assert(ctx.gameState.isAlly(halfling));
+  assert.equal(halfling.ai, undefined); assert.equal(halfling.partyOrder, 5);
+  for (const key of ['attributes', 'baseHP', 'hpPerLevel', 'baseWP', 'wpPerLevel', 'maxAP', 'maxMP', 'armorSources']) {
+    assert.equal(JSON.stringify(halfling[key]), JSON.stringify(archer[key]), key);
+  }
+  assert.equal(halfling.availableSpells.length, 1);
+  const shot = halfling.availableSpells[0], bow = archer.availableSpells[0];
+  assert.equal(shot.id, 'sling-shot'); assert.equal(shot.name, 'Выстрел из пращи');
+  for (const key of ['abilityType', 'isShot', 'damageBase', 'damagePerStr', 'damageType', 'apCost',
+    'maxCooldown', 'maxUsesPerTurn', 'range', 'minRange', 'modifiable', 'noLOS', 'isAOE', 'aoeSize',
+    'target', 'baseAccuracy', 'baseCritChance']) assert.equal(shot[key], bow[key], key);
+  assert.equal(ctx.getSpellDamage(shot, halfling), ctx.getSpellDamage(bow, archer));
+});

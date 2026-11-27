@@ -5,7 +5,7 @@
 // Сторона задаётся картой; призывы сохраняют прежнюю принадлежность союзникам.
 // При отдельной загрузке боевого модуля устанавливаем ту же проверку.
 window.gameState.isAlly ??= entity => entity.isSummon === true || entity.team === 'ally'
-  || (entity.team === undefined && ['wizard', 'monk', 'warrior', 'archer'].includes(entity.type));
+  || (entity.team === undefined && ['wizard', 'monk', 'warrior', 'archer', 'halfling'].includes(entity.type));
 
 // Состояния: наложение, подавление, пересчёт характеристик и сроки источника.
 window.hasActiveState = function(entity, id) {

@@ -89,6 +89,8 @@ window.playProjectileAnimation = function(fromCell, toCell, type = 'fire', onArr
     ? WIZARD_SPELLS.find(spell => spell.id === 'sparks').svg
     : type === 'water'
     ? spell?.svg ?? ''
+    : type === 'sling-stone'
+    ? '<svg viewBox="0 0 40 40"><path d="M14 14L23 11L29 17L27 26L18 29L11 23Z" fill="#736c60" stroke="#302e2a" stroke-width="2"/><path d="M15 15L23 13L25 17L18 21L13 20Z" fill="#c9c3af"/></svg>'
     : type === 'arrow'
     ? '<svg viewBox="0 0 40 40"><path d="M3 20H31" stroke="#a96b32" stroke-width="3"/><path d="M29 14L39 20L29 26Z" fill="#e1e5e7"/><path d="M2 14L11 18V22L2 26L5 20Z" fill="#ece0bc"/></svg>'
     : type === 'ice'

@@ -59,7 +59,7 @@ window.captureInitialStats = function(creature) {
     const next = (typeCounters.get(template.type) ?? 0) + 1;
     typeCounters.set(template.type, next);
     // Редактор допускает несколько магов/монахов: каждому нужен отдельный ID.
-    const id = next === 1 && ['wizard', 'monk', 'warrior', 'archer'].includes(template.type)
+    const id = next === 1 && ['wizard', 'monk', 'warrior', 'archer', 'halfling'].includes(template.type)
       ? template.type : `${template.type}-${next}`;
     const attributes = window.createAttributes(template.attributes);
     // При создании учитываем только гарантированную часть; шанс бросается в начале хода.

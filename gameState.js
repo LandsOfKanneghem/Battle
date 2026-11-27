@@ -80,5 +80,5 @@ window.gameState = {
     return gameState.entities.find(entity => entity.id === gameState.activeEntityId);
   },
   isAlly: entity => entity.isSummon === true || entity.team === 'ally'
-    || (entity.team === undefined && ['wizard', 'monk', 'warrior', 'archer'].includes(entity.type)),
+    || (entity.team === undefined && ['wizard', 'monk', 'warrior', 'archer', 'halfling'].includes(entity.type)),
 };

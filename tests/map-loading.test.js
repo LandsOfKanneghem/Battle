@@ -10,7 +10,7 @@ function setup() {
   const ctx = { document: { getElementById: () => ({}), createElement: () => ({}) }, setTimeout() {} };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const file of ['gameState.js', 'mapObjects.js', 'mapEquipment.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
+  for (const file of ['gameState.js', 'mapObjects.js', 'mapEquipment.js', 'heroProgression.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
   }
   ctx.CREATURE_TEMPLATES = { wizard: { type: 'wizard' }, wolf: { type: 'wolf' } };
@@ -28,6 +28,34 @@ function fixture(mapType = 'surface') {
   if (mapType === 'underground') map.wallStyles = Array.from({ length: 12 }, () => Array(12).fill(null));
   return map;
 }
+
+test('v10 validates hero progression before changing combat and leaves legacy attributes unspecified', () => {
+  const ctx = setup(), data = { ...fixture(), version: 10 };
+  const progression = ctx.HeroProgression.create(2);
+  ctx.HeroProgression.allocate(progression, 'int', 2, 1);
+  data.mobs = [{ type: 'wizard', team: 'ally', x: 2, y: 3, progression }];
+  const mob = ctx.validateBattleMap(data).mobs[0];
+  assert.equal(mob.progression.level, 2);
+  assert.equal(ctx.HeroProgression.attributes(mob.progression).int, 2);
+  mob.progression.allocations.int.two = 0;
+  assert.equal(data.mobs[0].progression.allocations.int.two, 1);
+  const entities = ctx.gameState.entities;
+  for (const change of [
+    m => { m.progression.level = 0; },
+    m => { m.progression.level = 31; },
+    m => { m.progression.allocations.int.two = 3; },
+    m => { m.progression.allocations.ac = { two: 1, one: 0 }; },
+    m => { m.type = 'wolf'; m.team = 'ally'; }
+  ]) {
+    const invalid = plain(data);
+    change(invalid.mobs[0]);
+    assert.throws(() => ctx.validateBattleMap(invalid));
+    assert.equal(ctx.gameState.entities, entities);
+  }
+  delete data.mobs[0].progression;
+  data.version = 9;
+  assert.equal(ctx.validateBattleMap(data).mobs[0].progression, undefined);
+});
 
 test('v9 hero loadouts are validated and copied before replacing combat; old heroes retain defaults', () => {
   const ctx = setup();

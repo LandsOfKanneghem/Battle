@@ -61,11 +61,12 @@ window.captureInitialStats = function(creature) {
     // Редактор допускает несколько магов/монахов: каждому нужен отдельный ID.
     const id = next === 1 && ['wizard', 'monk', 'warrior', 'archer', 'halfling', 'druid'].includes(template.type)
       ? template.type : `${template.type}-${next}`;
-    const attributes = window.createAttributes(template.attributes);
+    const attributes = window.createAttributes(loadout.progression
+      ? window.HeroProgression.attributes(loadout.progression) : template.attributes);
     // При создании учитываем только гарантированную часть; шанс бросается в начале хода.
     const wisBonus = Math.floor(attributes.wis / 20);
     const strBonus = Math.floor(attributes.str / 20);
-    const level = template.level ?? 1;
+    const level = loadout.progression?.level ?? template.level ?? 1;
     const maxHP = template.baseHP + template.hpPerLevel * (level + attributes.vit);
     const maxWP = template.baseWP + template.wpPerLevel * (level + attributes.cha);
     const equipmentDefinition = loadout.equipment === undefined ? template.Equipment

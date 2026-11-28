@@ -52,6 +52,49 @@ test('map loadouts replace defaults before calculating stats, attacks and initia
   assert(mage.spellPages.every(page => page.length === 20));
 });
 
+test('map hero progression replaces class attributes before derived stats, equipment and initial limits', () => {
+  const ctx = setup();
+  for (const file of ['mapEquipment.js', 'heroProgression.js', 'combat.js']) {
+    vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx);
+  }
+  const progression = ctx.HeroProgression.create(30);
+  for (let i = 0; i < 30; i++) {
+    for (const stat of ['vit', 'str', 'int']) ctx.HeroProgression.allocate(progression, stat, 2, 1);
+    for (const stat of ['wis', 'cha']) ctx.HeroProgression.allocate(progression, stat, 1, 1);
+  }
+  const allocation = { progression, equipment: { other1: 'sun-amulet', other2: 'wind-ring' } };
+  for (const type of ctx.MapEquipment.HEROES) {
+    const template = ctx.CREATURE_TEMPLATES[type];
+    const baseAttributes = JSON.stringify(template.attributes);
+    const hero = ctx.createCreature(type, { x: 1, y: 1 }, allocation);
+    assert.equal(hero.level, 30);
+    assert.equal(hero.attributes.vit, 60); assert.equal(hero.attributes.str, 60);
+    assert.equal(hero.attributes.int, 60); assert.equal(hero.attributes.wis, 30);
+    assert.equal(hero.attributes.cha, 30); assert.equal(hero.attributes.att, 0);
+    assert.equal(hero.attributes.luc, 0);
+    assert.equal(hero.hp, template.baseHP + template.hpPerLevel * 90);
+    assert.equal(hero.wp, template.baseWP + template.wpPerLevel * 60);
+    assert.equal(hero.maxAP, 8); assert.equal(hero.ap, 8);
+    assert.equal(hero.maxMP, 8); assert.equal(hero.mp, 8);
+    assert.equal(hero.maxSpellCasts, ctx.BASE_SPELL_CASTS + 30);
+    assert.equal(hero.maxHitCount, ctx.BASE_HIT_COUNT + 60);
+    assert.equal(hero.initialStats.str, 60);
+    assert.equal(hero.initialStats.maxHP, hero.maxHP);
+    assert.equal(JSON.stringify(template.attributes), baseAttributes);
+    hero.attributes.vit = 99;
+    assert.equal(ctx.HeroProgression.attributes(progression).vit, 60);
+    const legacy = ctx.createCreature(type, { x: 2, y: 1 });
+    assert.equal(JSON.stringify(legacy.attributes), baseAttributes);
+    const zero = ctx.createCreature(type, { x: 3, y: 1 }, { progression: ctx.HeroProgression.create() });
+    assert(Object.values(zero.attributes).every(value => value === 0));
+    assert.equal(zero.hp, template.baseHP + template.hpPerLevel);
+    assert.equal(zero.wp, template.baseWP + template.wpPerLevel);
+  }
+  const wolf = ctx.createCreature('wolf', { x: 4, y: 1 });
+  assert.equal(JSON.stringify(wolf.attributes), JSON.stringify(ctx.createAttributes(ctx.CREATURE_TEMPLATES.wolf.attributes)));
+  assert.equal(wolf.level, ctx.CREATURE_TEMPLATES.wolf.level);
+});
+
 test('every creature template file is connected to the game', () => {
   for (const directory of ['data/creatures', 'data/allies']) {
     for (const file of fs.readdirSync(path.join(root, directory)).filter(file => file.endsWith('.js'))) {

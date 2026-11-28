@@ -10,6 +10,7 @@ function setup() {
   ctx.window = ctx; vm.createContext(ctx);
   const scripts = [...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/src="(data\/[^\"]+\.js)"/g)].map(match => match[1]);
   for (const file of [...scripts, 'combat.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
+  require('./fixtures/trained-heroes.cjs')(ctx);
   const target = ctx.createCreature('wizard', { x: 5, y: 5 });
   target.ac = 3; target.physical = 2; target.baseES = 10;
   ctx.gameState.entities.push(target);

@@ -8,7 +8,7 @@
 
   window.validateBattleMap = function(data) {
     const state = window.gameState;
-    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(data.version)) {
+    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(data.version)) {
       throw new Error('Неподдерживаемый формат или версия карты.');
     }
     if (data.width !== state.SIZE || data.height !== state.HEIGHT) throw new Error('Размер карты должен быть 12×12.');

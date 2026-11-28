@@ -72,6 +72,8 @@ window.captureInitialStats = function(creature) {
     const equipmentDefinition = loadout.equipment === undefined ? template.Equipment
       : Object.fromEntries(Object.entries(loadout.equipment).map(([slot, id]) => [slot, id === null ? null : window.EQUIPMENT_ITEMS[id]]));
     const Equipment = window.createEquipment(equipmentDefinition);
+    const skills = [...(loadout.skills ?? [])];
+    for (const slot of Object.keys(Equipment)) if (!window.HeroSkillRules.canEquip({ type: templateId, skills }, Equipment[slot])) Equipment[slot] = null;
     const consumables = (loadout.consumables ?? Array(6).fill(null))
       .map(id => id === null ? null : window.createEquipmentItem(window.EQUIPMENT_ITEMS[id]));
     // Каждый источник получает отдельную полную прочность на новый бой.
@@ -83,7 +85,7 @@ window.captureInitialStats = function(creature) {
           maxDurability, durability: maxDurability };
       });
     const creature = {
-      id, name: template.name, type: template.type, Equipment, consumables, skills: [...(loadout.skills ?? [])],
+      id, name: template.name, type: template.type, Equipment, consumables, skills,
       level, baseHP: template.baseHP, hpPerLevel: template.hpPerLevel, hp: maxHP, maxHP,
       baseWP: template.baseWP, wpPerLevel: template.wpPerLevel, wp: maxWP, maxWP,
       baseAP: template.baseAP, ap: template.baseAP + wisBonus, maxAP: template.baseAP + wisBonus,

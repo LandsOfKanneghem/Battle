@@ -12,6 +12,8 @@ window.canPrepareSpell = function(spell) {
   const caster = window.gameState.activeEntity();
   return !!spell && !!caster && caster.hp > 0 && window.isCasterSpell(caster,spell) && !window.gameState.isMoving && !window.gameState.isCasting && !window.gameState.isSkippingTurn && !window.isFrozen(caster) && !window.isJumpBlocked(spell, caster)
     && (!spell.requiresWeapon || !!caster.Equipment?.rightHand?.attack)
+    && window.HeroSkillRules.canUseSpell(caster, spell)
+    && (!(spell.fromEquipment || spell.requiresWeapon) || window.HeroSkillRules.canEquip(caster, caster.Equipment?.rightHand))
     && caster.ap >= spell.apCost && spell.usesThisTurn < spell.maxUsesPerTurn
     && (spell.maxUsesPerBattle === undefined || spell.usesTotal < spell.maxUsesPerBattle)
     && spell.cooldown === 0;

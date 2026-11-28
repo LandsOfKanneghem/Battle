@@ -1,4 +1,4 @@
-// Shared editor/Battle skill catalog from «Навыки.txt». Skills have no combat effects yet.
+// Shared editor/Battle skill catalog and prerequisites.
 ((root) => {
   'use strict';
   const node = typeof module !== 'undefined' && module.exports;
@@ -11,7 +11,7 @@
       ['fire-magic', 'Магия огня'], ['water-magic', 'Магия воды'], ['earth-magic', 'Магия земли'],
       ['air-magic', 'Магия воздуха'], ['light-magic', 'Магия света'], ['dark-magic', 'Магия тьмы'],
       ['order-magic', 'Магия порядка'], ['chaos-magic', 'Магия хаоса'], ['nature-magic', 'Магия природы'],
-      ['warfare', 'Военное дело']
+      ['warfare', 'Военное дело'], ['body-magic', 'Магия тела']
     ] },
     { name: 'Оружие ближнего боя', branches: [
       ['axe', 'Топор'], ['sword', 'Меч'], ['spear', 'Копье'], ['blunt', 'Дробящее'], ['dagger', 'Кинжал']
@@ -41,9 +41,12 @@
     catalog.push(...skills);
     return Object.freeze({ id, name, skills: Object.freeze(skills) });
   })) }));
-  const quickHands = Object.freeze({ id: 'quick-hands', name: 'Быстрые руки', minLevel: 4, prerequisite: null });
-  const hardened = Object.freeze({ id: 'battle-hardened', name: 'Закаленный в бою', minLevel: 8, prerequisite: null });
-  const veteran = Object.freeze({ id: 'veteran', name: 'Ветеран', minLevel: 16, prerequisite: hardened.id });
+  const quickHands = Object.freeze({ id: 'quick-hands', name: 'Быстрые руки', minLevel: 4, prerequisite: null,
+    description: 'Использование расходников с пояса стоит на 1 ОД меньше, минимум 0 ОД.' });
+  const hardened = Object.freeze({ id: 'battle-hardened', name: 'Закаленный в бою', minLevel: 8, prerequisite: null,
+    description: 'Дополнительное повышение: один атрибут на +2 и два других на +1.' });
+  const veteran = Object.freeze({ id: 'veteran', name: 'Ветеран', minLevel: 16, prerequisite: hardened.id,
+    description: 'Дополнительное повышение: два разных атрибута на +2 и три других на +1. Складывается с «Закаленным в бою».' });
   catalog.push(quickHands, hardened, veteran);
   GROUPS.push(Object.freeze({ name: 'Особые навыки', branches: Object.freeze([
     Object.freeze({ id: 'quick-hands', name: '', skills: Object.freeze([quickHands]) }),

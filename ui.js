@@ -96,7 +96,7 @@ window.showSpellTooltip = function(icon, spell) {
   tooltip.setAttribute('role', 'tooltip');
   const title = document.createElement('strong');
   title.className = 'spell-title';
-  title.textContent = spell.name;
+  title.textContent = window.HeroSkillRules.spellName(spell);
   tooltip.appendChild(title);
   if (spell.description) {
     const description = document.createElement('p');
@@ -120,6 +120,9 @@ window.showSpellTooltip = function(icon, spell) {
   const typeName = spell.abilityType === 'weapon-strike' ? 'Атака оружием'
     : spell.abilityType === 'ability' ? 'Способность' : 'Заклинание';
   addLine('Тип', `${typeName}${spell.isShot ? ' [Выстрел]' : ''}`);
+  const skillRequirement = window.HeroSkillRules.spellRequirement(spell);
+  if (skillRequirement && window.HeroSkillRules.isHero(caster)) addLine('Требуется', skillRequirement.name,
+    window.HeroSkillRules.canUseSpell(caster, spell) ? undefined : '#ff4d4d');
   addLine('ОД', spell.apCost);
   const elements = { fire: 'огонь', water: 'вода', earth: 'земля', air: 'воздух', light: 'свет', dark: 'тьма', physical: 'физический' };
   if (spell.damageBase !== undefined) {
@@ -299,7 +302,7 @@ window.renderSpellPanel = function(resetPage = true) {
     slot.innerHTML = spell.svg;
     updateCooldownBadge(slot, spell);
     updateUsesBadge(slot, spell);
-    slot.setAttribute('aria-label', spell.name);
+    slot.setAttribute('aria-label', window.HeroSkillRules.spellName(spell));
     slot.addEventListener('mouseenter', () => showSpellTooltip(slot, spell));
     slot.addEventListener('mouseleave', hideSpellTooltip);
     slot.addEventListener('focus', () => showSpellTooltip(slot, spell));

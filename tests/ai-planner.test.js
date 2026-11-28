@@ -19,6 +19,7 @@ function setup({ mp = 3, ap = 7, start = { x: 5, y: 3 }, mage = { x: 4, y: 6 }, 
   for (const file of ['gameState.js', ...data, 'combat.js', 'spellTargeting.js', 'spellLogic.js', 'aiPlanner.js', 'ai.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
   }
+  require('./fixtures/trained-heroes.cjs')(ctx);
   const state = ctx.gameState;
   for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) state.terrain.set(`${x},${y}`, 'grass');
   state.cells = Array.from({ length: 144 }, element);

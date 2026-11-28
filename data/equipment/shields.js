@@ -2,6 +2,7 @@
 Object.assign(window.EQUIPMENT_ITEMS, {
   "wood-buckler": {
     "id": "wood-buckler",
+    "equipmentType": "shield",
     "name": "Деревянный баклер",
     "allowedSlots": ["leftHand"],
     "itemType": "Щит",
@@ -11,6 +12,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "wicker-shield": {
     "id": "wicker-shield",
+    "equipmentType": "shield",
     "name": "Плетёный щит",
     "allowedSlots": ["leftHand"],
     "itemType": "Щит",
@@ -20,6 +22,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "plank-shield": {
     "id": "plank-shield",
+    "equipmentType": "shield",
     "name": "Дощатый щит",
     "allowedSlots": ["leftHand"],
     "itemType": "Щит",
@@ -29,6 +32,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "hide-shield": {
     "id": "hide-shield",
+    "equipmentType": "shield",
     "name": "Обтянутый кожей щит",
     "allowedSlots": ["leftHand"],
     "itemType": "Щит",
@@ -38,6 +42,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "iron-rim-shield": {
     "id": "iron-rim-shield",
+    "equipmentType": "shield",
     "name": "Щит с железным ободом",
     "allowedSlots": ["leftHand"],
     "itemType": "Щит",
@@ -47,6 +52,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "shield": {
     "id": "shield",
+    "equipmentType": "shield",
     "name": "Щит",
     "iconPath": "assets/equipment/shield.png",
     "ac": 1,
@@ -55,6 +61,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "lion-shield": {
     "id": "lion-shield",
+    "equipmentType": "shield",
     "name": "Львиный щит",
     "allowedSlots": ["leftHand"],
     "iconPath": "assets/equipment/lion-shield.png",

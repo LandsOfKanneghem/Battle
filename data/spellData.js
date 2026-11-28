@@ -11,7 +11,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
   { damageType: 'air', name: 'Воздуха', color: '#72aebc', edge: '#d3ffff',
     symbol: '<path d="M12 18 H24 Q30 18 27 14 Q25 11 23 14 M11 23 H28 Q33 23 29 27 M15 28 H21" fill="none" stroke="#e3ffff" stroke-width="2" stroke-linecap="round"/>' }
 ].map(element => ({
-  id: `${element.damageType}-shield`, name: `Защита от ${element.name}`, abilityType: 'spell', magicSchool: element.damageType,
+  id: `${element.damageType}-shield`, name: `Защита от ${element.name}`, abilityType: 'spell', level: 1, magicSchool: element.damageType,
   description: `Союзная цель блокирует часть урона от ${{ fire: 'огня', water: 'воды', earth: 'земли', air: 'воздуха' }[element.damageType]}.`,
   damageType: element.damageType,
   durationBase: 3, durationPerInt: 0.05, stackable: false,
@@ -22,7 +22,7 @@ const ELEMENTAL_SHIELD_SPELLS = [
 }));
 
 const SPELL_DEFINITIONS = [{
-  id: 'enchant-stones', name: 'Зачаровать камни', abilityType: 'spell', magicSchool: 'earth',
+  id: 'enchant-stones', name: 'Зачаровать камни', abilityType: 'spell', level: 1, magicSchool: 'earth',
   description: 'Зачаровывает метательные камни в руках цели, давая им дополнительный урон землей и увеличивая дальность метания.',
   durationBase: 3, durationPerInt: 0.05, stackable: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 3,
@@ -32,7 +32,7 @@ const SPELL_DEFINITIONS = [{
   iconPath: 'assets/homm2/spell-enchant-stones.png',
   svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-enchant-stones.png" width="64" height="64"/></svg>'
 }, {
-  id: 'torch', name: 'Факел', abilityType: 'spell', magicSchool: 'fire',
+  id: 'torch', name: 'Факел', abilityType: 'spell', level: 1, magicSchool: 'fire',
   description: 'Освещает территорию вокруг заклинателя.',
   durationBase: 3, durationPerInt: 0, stackable: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 5,
@@ -42,7 +42,7 @@ const SPELL_DEFINITIONS = [{
   iconPath: 'assets/homm2/spell-torch.png',
   svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-torch.png" width="64" height="64"/></svg>'
 }, {
-  id: 'power-hour', name: 'Час силы', abilityType: 'spell', magicSchool: 'light',
+  id: 'power-hour', name: 'Час силы', abilityType: 'spell', level: 1, magicSchool: 'light',
   description: 'Все союзные существа в области вокруг заклинателя временно получают основные параметры.',
   durationBase: 2, durationPerInt: 0.025, stackable: false,
   apCost: 4, maxUsesPerTurn: 1, maxCooldown: 5,
@@ -51,7 +51,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: '+3 ALL STATS',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="9" fill="#ffdc36" stroke="#fff9c4" stroke-width="2"/><path d="M20 2 V7 M20 33 V38 M2 20 H7 M33 20 H38 M7 7 L11 11 M29 29 L33 33 M7 33 L11 29 M29 11 L33 7" fill="none" stroke="#fff9c4" stroke-width="3" stroke-linecap="round"/><path d="M20 12 L17 21 H22 L20 28" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>`
 }, {
-  id: 'apply-old-age', name: 'Наложить Старость', abilityType: 'spell', magicSchool: 'dark',
+  id: 'apply-old-age', name: 'Наложить Старость', abilityType: 'spell', level: 1, magicSchool: 'dark',
   description: 'Накладывает Старость на вражескую цель.',
   stateId: 'old-age', durationBase: 2, durationPerInt: 0.025, stackable: false,
   apCost: 4, maxUsesPerTurn: 1, maxCooldown: 4,
@@ -60,7 +60,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Старость',
   svg: OLD_AGE.icon.replace('aria-hidden="true">', 'aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="3" fill="#101015"/>')
 }, {
-  id: 'water-walk', name: 'Хождение по воде', abilityType: 'spell', magicSchool: 'air',
+  id: 'water-walk', name: 'Хождение по воде', abilityType: 'spell', level: 1, magicSchool: 'air',
   description: 'Накладывает Левитацию на союзную цель.',
   stateId: 'levitation', durationBase: 1, durationPerInt: 0, stackable: false,
   apCost: 4, maxUsesPerTurn: 1, maxCooldown: 4,
@@ -69,7 +69,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Левитация',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24 Q10 18 20 20 Q30 22 36 18 M4 30 Q10 24 20 26 Q30 28 36 24" fill="none" stroke="#6fbaff" stroke-width="2"/><path d="M20 4 Q22 10 26 12 Q32 15 30 20 Q28 26 20 26 Q12 26 10 20 Q8 15 14 12 Q18 10 20 4 Z" fill="#d5edf6" stroke="#829ea9" stroke-width="2"/></svg>`
 }, {
-  id: 'teleport', name: 'Перемещение', abilityType: 'spell', magicSchool: 'air',
+  id: 'teleport', name: 'Перемещение', abilityType: 'spell', level: 1, magicSchool: 'air',
   description: 'Заклинатель телепортируется в указанную клетку.',
   stackable: false,
   apCost: 3, maxUsesPerTurn: 1, maxCooldown: 2,
@@ -77,7 +77,7 @@ const SPELL_DEFINITIONS = [{
   isTeleport: true, requiresEmptyCell: true, target: 'none',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="14" fill="none" stroke="#a7eced" stroke-width="2" stroke-dasharray="4 3"/><path d="M20 6 V14 M14 10 L20 16 L26 10" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><path d="M20 34 V26 M14 30 L20 24 L26 30" fill="none" stroke="#c3ffff" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="20" r="3" fill="#86e8ff"/></svg>`
 }, {
-  id: 'lake-spirit', name: 'Дух озера', abilityType: 'spell', magicSchool: 'water',
+  id: 'lake-spirit', name: 'Дух озера', abilityType: 'spell', level: 1, magicSchool: 'water',
   description: 'Призывает левитирующий шар воды. Дух озера наносит слабый урон водой на небольшой дистанции. Исчезает, получив 1 атаку.',
   durationBase: 2, durationPerInt: 0, stackable: false,
   apCost: 3, maxUsesPerTurn: 1, maxCooldown: 4,
@@ -85,7 +85,7 @@ const SPELL_DEFINITIONS = [{
   isSummon: true, requiresEmptyCell: true, target: 'none',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="22" r="12" fill="#2a7fff" stroke="#a0d4ff" stroke-width="2"/><ellipse cx="15" cy="17" rx="3" ry="2" fill="#d0f4ff" opacity=".7"/><path d="M8 14 Q14 8 22 10" fill="none" stroke="#a0d4ff" stroke-width="1.5" opacity=".6"/><path d="M20 6 V2 M14 4 L20 2 L26 4" fill="none" stroke="#c3ffff" stroke-width="2" stroke-linecap="round"/></svg>`
 }, {
-  id: 'fire-shot', name: 'Огненный выстрел', abilityType: 'spell', magicSchool: 'fire', isShot: true,
+  id: 'fire-shot', name: 'Огненный выстрел', abilityType: 'spell', level: 1, magicSchool: 'fire', isShot: true,
   description: 'Наносит урон огнем по одиночной цели.',
   damageBase: 2, damagePerInt: 1, damageType: 'fire', baseAccuracy: 80, baseCritChance: 10,
   stackable: false,
@@ -94,7 +94,7 @@ const SPELL_DEFINITIONS = [{
   target: 'any',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2 Q24 14 32 17 Q40 29 28 36 Q10 43 6 29 Q3 20 13 12 L12 24 Q22 19 20 2" fill="#f65a25"/><path d="M22 17 Q35 34 21 35 Q11 34 15 25 L19 28 Z" fill="#ffdc36"/></svg>`
 }, {
-  id: 'fire-cube', name: 'Огненный куб', abilityType: 'spell', magicSchool: 'fire',
+  id: 'fire-cube', name: 'Огненный куб', abilityType: 'spell', level: 1, magicSchool: 'fire',
   damageBase: 8, damagePerInt: 2, damageType: 'fire',
   durationBase: 2, durationPerInt: 0, stackable: false,
   apCost: 4, maxUsesPerTurn: 1, maxCooldown: 2,
@@ -102,7 +102,7 @@ const SPELL_DEFINITIONS = [{
   appliesBurning: true, target: 'any',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 24 Q0 14 8 3 L12 12 L20 1 L25 12 L34 4 Q42 19 35 31" fill="#f65a25"/><path d="M8 17 L20 10 L33 17 L33 31 L20 38 L8 31 Z" fill="#ff9d28" stroke="#ffdc36" stroke-width="2"/><path d="M8 17 L20 24 L33 17 M20 24 V38" fill="none" stroke="#ffe995" stroke-width="2"/></svg>`
 }, {
-  id: 'armageddon', name: 'Армагеддон', abilityType: 'spell', magicSchool: 'fire',
+  id: 'armageddon', name: 'Армагеддон', abilityType: 'spell', level: 1, magicSchool: 'fire',
   damageBase: 5, damageType: 'fire',
   stackable: false,
   apCost: 6, maxUsesPerTurn: 1, maxCooldown: 8,
@@ -110,7 +110,7 @@ const SPELL_DEFINITIONS = [{
   target: 'any', maxUsesPerBattle: 1, isGlobal: true,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 16 Q0 10 8 8 Q10 1 17 6 Q24 0 28 7 Q37 5 38 12 Q40 18 32 18 H10 Z" fill="#f65a25"/><path d="M11 14 L14 8 L18 13 L23 6 L26 14" fill="#ffc04c"/><g stroke-linecap="round"><path d="M5 22 L10 29 M16 21 L22 30 M28 22 L34 31 M9 32 L13 38 M24 33 L28 38" stroke="#ff6425" stroke-width="4"/><path d="M9 27 L11 30 M21 28 L23 31 M33 29 L35 32 M12 36 L13 38 M27 36 L28 38" stroke="#ffdd75" stroke-width="2"/></g></svg>`
 }, {
-  id: 'haste', name: 'Ускорение', abilityType: 'spell', magicSchool: 'air',
+  id: 'haste', name: 'Ускорение', abilityType: 'spell', level: 1, magicSchool: 'air',
   description: 'Накладывает на союзную цель Скорость.',
   stateId: 'speed', durationBase: 2, durationPerInt: 0.025, stackable: false,
   apCost: 3, maxUsesPerTurn: 1, maxCooldown: 3,
@@ -119,7 +119,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Скорость',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 12 H26 Q36 12 33 6 Q30 2 27 6 M4 20 H32 Q40 20 36 27 Q32 31 29 26 M6 29 H20 Q28 29 23 35" fill="none" stroke="#a7eced" stroke-width="3" stroke-linecap="round"/></svg>`
 }, {
-  id: 'slow', name: 'Замедление', abilityType: 'spell', magicSchool: 'earth',
+  id: 'slow', name: 'Замедление', abilityType: 'spell', level: 1, magicSchool: 'earth',
   description: 'Накладывает на вражескую цель Медлительность.',
   stateId: 'slowness', durationBase: 2, durationPerInt: 0.025, stackable: false,
   apCost: 3, maxUsesPerTurn: 1, maxCooldown: 3,
@@ -128,7 +128,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Медлительность',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 24 Q0 17 12 17 Q17 9 25 17 Q39 15 37 25 Q40 35 21 35 Q4 38 3 24" fill="#78522f" stroke="#bc8c50"/><ellipse cx="20" cy="24" rx="10" ry="4" fill="none" stroke="#c49e68"/><circle cx="29" cy="11" r="3" fill="#916337"/></svg>`
 }, {
-  id: 'deep-freeze', name: 'Глубокая заморозка', abilityType: 'spell', magicSchool: 'water',
+  id: 'deep-freeze', name: 'Глубокая заморозка', abilityType: 'spell', level: 1, magicSchool: 'water',
   stateId: 'freeze', durationBase: 2, durationPerInt: 0, stackable: false,
   apCost: 4, maxUsesPerTurn: 1, maxCooldown: 4,
   range: 5, minRange: 1, modifiable: true, isAOE: false, aoeSize: 1,
@@ -136,7 +136,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Заморозка',
   svg: FREEZE.icon
 }, ...ELEMENTAL_SHIELD_SPELLS, {
-  id: 'liquid-membrane', name: 'Жидкая мембрана', abilityType: 'spell', magicSchool: 'water',
+  id: 'liquid-membrane', name: 'Жидкая мембрана', abilityType: 'spell', level: 1, magicSchool: 'water',
   description: 'Дает союзной цели бонусное уклонение и энергощит.',
   durationBase: 2, durationPerInt: 0.05, stackable: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 2,
@@ -144,7 +144,7 @@ const SPELL_DEFINITIONS = [{
   isMembrane: true, target: 'ally', esAmount: 4, effectValuePerLvl: 0.25, evaAmount: 10,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><radialGradient id="membrane-glow"><stop offset="0" stop-color="#e8ffff" stop-opacity=".25"/><stop offset=".75" stop-color="#70d4eb" stop-opacity=".5"/><stop offset="1" stop-color="#d3b4ff" stop-opacity=".8"/></radialGradient></defs><circle cx="20" cy="20" r="17" fill="url(#membrane-glow)" stroke="#a7f4ed" stroke-width="2"/><path d="M9 16 Q10 8 18 7 M24 33 Q32 31 33 24" fill="none" stroke="#ffdfae" stroke-width="2" stroke-linecap="round"/></svg>`
 }, {
-  id: 'rain', name: 'Дождь', abilityType: 'spell', magicSchool: 'water',
+  id: 'rain', name: 'Дождь', abilityType: 'spell', level: 1, magicSchool: 'water',
   description: 'Накладывает на все цели в области действия Влагу.',
   stateId: 'wet', durationBase: 3, durationPerInt: 0, stackable: false,
   apCost: 3, maxUsesPerTurn: 1, maxCooldown: 3,
@@ -153,7 +153,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Влага',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 22 Q1 21 4 14 Q6 9 12 11 Q13 2 22 5 Q29 4 31 12 Q39 11 37 19 Q36 23 30 22 Z" fill="#427fb6" stroke="#a0d4ff" stroke-width="2"/><path d="M11 27 L8 33 M21 27 L18 36 M31 27 L28 33" fill="none" stroke="#58b5ff" stroke-width="3" stroke-linecap="round"/></svg>`
 }, {
-  id: 'wind-rose', name: 'Роза ветров', abilityType: 'spell', magicSchool: 'air',
+  id: 'wind-rose', name: 'Роза ветров', abilityType: 'spell', level: 1, magicSchool: 'air',
   description: 'Отталкивает существ, стоящих на соседних клетках от целевой клетки, на расстояние 1 клетки, если это возможно.',
   stackable: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 3,
@@ -162,7 +162,7 @@ const SPELL_DEFINITIONS = [{
   isWindRose: true, target: 'any',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="13" fill="none" stroke="#70aebc" stroke-width="2"/><path d="M20 2 L24 16 L38 20 L24 24 L20 38 L16 24 L2 20 L16 16 Z" fill="#b8f3f5" stroke="#498998"/><path d="M20 8 V32 M8 20 H32" stroke="#fff" stroke-width="2"/><circle cx="20" cy="20" r="3" fill="#447d99"/></svg>`
 }, {
-  id: 'dead-weight', name: 'Мёртвый груз', abilityType: 'spell', magicSchool: 'earth',
+  id: 'dead-weight', name: 'Мёртвый груз', abilityType: 'spell', level: 1, magicSchool: 'earth',
   description: 'Накладывает на одиночную цель Тяжесть.',
   stateId: 'heavy', durationBase: 2, durationPerInt: 0, stackable: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 3,
@@ -171,7 +171,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Тяжесть',
   svg: HEAVY.icon
 }, {
-  id: 'burning-hands', name: 'Опаляющие руки', abilityType: 'spell', magicSchool: 'fire',
+  id: 'burning-hands', name: 'Опаляющие руки', abilityType: 'spell', level: 1, magicSchool: 'fire',
   description: 'Наносит урон огнем в конусном АОЕ на близкой дистанции. Снимает Влагу, Охлаждение и Заморозку.',
   damageBase: 4, damagePerInt: 1.5, damageType: 'fire',
   stackable: false,
@@ -180,7 +180,7 @@ const SPELL_DEFINITIONS = [{
   isCone: true, target: 'any',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 23 Q1 14 10 3 L14 13 L20 1 L25 13 L33 5 Q42 25 30 34 H11 Z" fill="#fa642b"/><path d="M12 34 L9 23 Q9 19 12 21 L16 25 V13 Q16 10 19 12 V22 V10 Q21 7 23 11 V23 V14 Q26 11 27 15 V25 L30 21 Q34 20 32 26 L28 35 Z" fill="#ffd18b" stroke="#a95429"/><path d="M16 38 H28" stroke="#ffe4ac" stroke-width="2"/></svg>`
 }, {
-  id: 'ice-arrow', name: 'Ледяная стрела', abilityType: 'spell', magicSchool: 'water', isShot: true,
+  id: 'ice-arrow', name: 'Ледяная стрела', abilityType: 'spell', level: 1, magicSchool: 'water', isShot: true,
   description: 'Наносит водой по одиночной цели и накладывает на нее Охлаждение.',
   damageBase: 2, damagePerInt: 1, damageType: 'water', baseAccuracy: 80, baseCritChance: 10,
   stateId: 'chill', durationBase: 2, durationPerInt: 0, stackable: false,
@@ -190,7 +190,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Охлаждение',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 34 L29 12" stroke="#bcefff" stroke-width="4"/><path d="M19 11 L36 4 L29 21 L27 13 Z" fill="#80dcff" stroke="#e3faff" stroke-width="2"/><path d="M4 26 L12 28 L14 36 M7 22 L15 24 L18 33" fill="none" stroke="#5aaad6" stroke-width="3"/><path d="M28 4 V14 M23 9 H33" stroke="#f0fdff" stroke-width="1.5"/></svg>`
 }, {
-  id: 'stone-skin', name: 'Каменная кожа', abilityType: 'spell', magicSchool: 'earth',
+  id: 'stone-skin', name: 'Каменная кожа', abilityType: 'spell', level: 1, magicSchool: 'earth',
   description: 'Союзная цель блокирует часть физического урона.',
   damageType: 'physical',
   durationBase: 3, durationPerInt: 0.05, stackable: false,
@@ -199,7 +199,7 @@ const SPELL_DEFINITIONS = [{
   isElementalShield: true, target: 'ally', shieldAmount: 2, effectValuePerLvl: 0.2,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 5 L20 2 L32 7 L35 21 L29 33 L20 38 L8 32 L4 18 Z" fill="#858e98" stroke="#cdd4db" stroke-width="2"/><path d="M20 3 L17 13 L23 20 L17 28 L20 37 M17 13 L5 17 M23 20 L34 16 M17 28 L9 32 M23 20 L29 32" fill="none" stroke="#434e5a" stroke-width="2"/><path d="M10 8 L14 7 M27 9 L29 12" stroke="#e3e7eb" stroke-width="2" stroke-linecap="round"/></svg>`
 }, {
-  id: 'sparks', name: 'Искры', abilityType: 'spell', magicSchool: 'air', isShot: true,
+  id: 'sparks', name: 'Искры', abilityType: 'spell', level: 1, magicSchool: 'air', isShot: true,
   description: 'Наносит урон воздухом по одиночной цели, от нее отскакивает 2 искры в ближайшие цели на расстоянии 3 клеток, наносящие половину урона (несколько искр в одну цель отлететь не могут).',
   damageBase: 2, damagePerInt: 1, damageType: 'air', baseAccuracy: 80, baseCritChance: 10,
   stackable: false,
@@ -208,7 +208,7 @@ const SPELL_DEFINITIONS = [{
   isSparks: true, target: 'any', sparkRadius: 3, sparkCount: 2,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M23 2 L9 22 H19 L15 38 L33 15 H23 Z" fill="#ffe36b" stroke="#fff5be" stroke-width="1.5"/><path d="M7 5 L3 12 L9 11 M34 28 L38 23 M32 35 L37 37 M8 30 L3 34" fill="none" stroke="#83eaff" stroke-width="2.5" stroke-linecap="round"/></svg>`
 }, {
-  id: 'sky-shot', name: 'Выстрел в небо', abilityType: 'spell', magicSchool: 'air',
+  id: 'sky-shot', name: 'Выстрел в небо', abilityType: 'spell', level: 1, magicSchool: 'air',
   description: 'Следующая дальнобойная атака цели или заклинание с типом Выстрел не требует LOS, а дальность применения увеличивается (если дальность атаки или заклинания модифицируема).',
   durationBase: 1, durationPerInt: 0, stackable: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 2,
@@ -217,7 +217,7 @@ const SPELL_DEFINITIONS = [{
   effectDescription: 'Следующая дальнобойная атака цели или заклинание с типом Выстрел не требует LOS, а ее дальность увеличивается на 2 клетки.',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 29 Q0 27 4 23 Q7 20 11 22 Q12 16 18 18 Q24 16 27 22 Q35 20 36 27 Q35 31 29 30 Z" fill="#729cbf" stroke="#c4e7ff"/><path d="M20 35 V6 M11 15 L20 5 L29 15" fill="none" stroke="#ffe7a0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 3 V11 M28 7 H36" stroke="#d5f8ff" stroke-width="2"/></svg>`
 }, {
-  id: 'reckless', name: 'Сорвиголова', abilityType: 'spell', magicSchool: 'fire',
+  id: 'reckless', name: 'Сорвиголова', abilityType: 'spell', level: 1, magicSchool: 'fire',
   description: 'Накладывает на союзную цель состояние Адреналин.',
   stateId: 'adrenaline', durationBase: 2, durationPerInt: 0.025, stackable: false,
   apCost: 1, maxUsesPerTurn: 1, maxCooldown: 4,
@@ -236,7 +236,7 @@ const WIZARD_SPELLS = [
 // Все поля заклинания — примитивы, включая SVG-разметку, поэтому
 // копии куба и ускорения имеют независимые cooldown и usesThisTurn.
 const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cube') }, {
-  id: 'heal-harm', name: 'Исцелить/ранить', abilityType: 'spell', magicSchool: 'body',
+  id: 'heal-harm', name: 'Исцелить/ранить', abilityType: 'spell', level: 1, magicSchool: 'body',
   description: 'Исцеляет хп дружественной цели и снимает 1 стак кровотечения, либо наносит физический урон и накладывает 1 стак кровотечения.',
   damageBase: 4, damageType: 'physical',
   stateId: 'bleeding', stackable: false,
@@ -246,7 +246,7 @@ const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cub
   effectDescription: 'Исцеляет 4 HP и снимает 1 стак кровотечения [союзник] / Наносит 4 физ. урона и накладывает 1 стак кровотечения [враг]',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M15 3 H20 V37 H15 V25 H3 V15 H15 Z" fill="#74ef9e"/><path d="M20 3 H25 V15 H37 V25 H25 V37 H20 Z" fill="#ed5d70"/><path d="M20 3 V37" stroke="#fff1d2" stroke-width="1.5"/></svg>`
 }, {
-  id: 'light-flash', name: 'Вспышка света', abilityType: 'spell', magicSchool: 'light',
+  id: 'light-flash', name: 'Вспышка света', abilityType: 'spell', level: 1, magicSchool: 'light',
   damageBase: 2, damagePerInt: 1, damageType: 'light',
   stackable: false,
   apCost: 3, maxUsesPerTurn: 2, maxCooldown: 0,
@@ -254,7 +254,7 @@ const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cub
   target: 'enemy', canCastOnAnyCell: true,
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 1 L24 13 L35 5 L28 17 L39 20 L28 24 L35 35 L24 28 L20 39 L16 28 L5 35 L12 24 L1 20 L12 16 L5 5 L16 12 Z" fill="#ffdb62"/><path d="M20 9 L23 17 L31 20 L23 23 L20 31 L17 23 L9 20 L17 17 Z" fill="#fffbe2"/></svg>`
 }, { ...WIZARD_SPELLS.find(spell => spell.id === 'haste') }, {
-  id: 'weakness-vigor', name: 'Наложить слабость / бодрость', abilityType: 'spell', magicSchool: 'body',
+  id: 'weakness-vigor', name: 'Наложить слабость / бодрость', abilityType: 'spell', level: 1, magicSchool: 'body',
   description: 'Накладывает Слабость на вражескую цель либо Бодрость на союзную цель.',
   durationBase: 2, durationPerInt: 0, stackable: false,
   apCost: 3, maxUsesPerTurn: 1, maxCooldown: 2,
@@ -263,7 +263,7 @@ const MONK_SPELLS = [{ ...SPELL_DEFINITIONS.find(spell => spell.id === 'fire-cub
   effectDescription: 'Слабость [враг] / Бодрость [союз]',
   svg: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M11 5 V33 M4 25 L11 33 L18 25" fill="none" stroke="#ef777f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 35 V7 M22 15 L29 7 L36 15" fill="none" stroke="#82e9a5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
 }, {
-  id: 'sprint', name: 'Спринт', abilityType: 'spell', magicSchool: 'body',
+  id: 'sprint', name: 'Спринт', abilityType: 'spell', level: 1, magicSchool: 'body',
   description: 'Добавляет заклинателю несколько ОП на 1 ход.',
   durationBase: 1, durationPerInt: 0, stackable: false,
   apCost: 2, maxUsesPerTurn: 1, maxCooldown: 4,

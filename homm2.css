@@ -362,6 +362,7 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .backpack-slot img { display: block; width: var(--spell-image-size); height: var(--spell-image-size); image-rendering: pixelated; object-fit: contain; }
 .backpack-slot[aria-pressed="true"] { border-color: #ffff00; }
 .equipment-compatible { border-color: #6ee782; }
+.equipment-unavailable { filter: grayscale(1); opacity: .5; }
 
 #backpack-filter { position: absolute; top: 3px; left: 8px; height: 24px; max-width: calc(100% - 48px); width: 260px; padding: 0 6px; border: 1px solid #b99a5b; border-radius: 0; background: #3b332b; color: #ead7af; font: 13px Georgia,serif; }
 

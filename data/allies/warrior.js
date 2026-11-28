@@ -27,7 +27,7 @@ window.CREATURE_TEMPLATES.warrior = {
     svg: '<image href="assets/map-editor/mobs/warrior.png" width="40" height="40"/>'
   },
   spells: [{
-    id: 'maiming-strike', name: 'Калечащий удар', abilityType: 'weapon-strike', magicSchool: 'war', isShot: WARRIOR_SWORD_STRIKE.isShot,
+    id: 'maiming-strike', name: 'Калечащий удар', abilityType: 'weapon-strike', level: 1, magicSchool: 'war', isShot: WARRIOR_SWORD_STRIKE.isShot,
     description: 'Атака наносит урон оружием только от бонуса Силы, накладывает Увечье на вражескую цель.',
     damageBase: 0, damagePerStr: WARRIOR_SWORD_STRIKE.damagePerStr, damageType: WARRIOR_SWORD_STRIKE.damageType, baseAccuracy: WARRIOR_SWORD_STRIKE.baseAccuracy, baseCritChance: WARRIOR_SWORD_STRIKE.baseCritChance,
     stateId: 'maimed', durationBase: 2, durationPerInt: 0, stackable: false,
@@ -38,7 +38,7 @@ window.CREATURE_TEMPLATES.warrior = {
     iconPath: 'assets/homm2/spell-maiming-strike.png',
     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><image href="assets/homm2/spell-maiming-strike.png" width="64" height="64"/></svg>'
   }, {
-    id: 'charge', name: 'Рывок', abilityType: 'weapon-strike', magicSchool: 'war', isShot: false,
+    id: 'charge', name: 'Рывок', abilityType: 'weapon-strike', level: 1, magicSchool: 'war', isShot: false,
     description: 'Заклинатель перемещается по прямой линии на несколько клеток к выбранной цели и наносит бонусный урон от силы за каждую клетку движения.',
     damageBase: WARRIOR_SWORD_STRIKE.damageBase, damagePerStr: WARRIOR_SWORD_STRIKE.damagePerStr, damageType: WARRIOR_SWORD_STRIKE.damageType, baseAccuracy: WARRIOR_SWORD_STRIKE.baseAccuracy, baseCritChance: WARRIOR_SWORD_STRIKE.baseCritChance,
     stackable: false,

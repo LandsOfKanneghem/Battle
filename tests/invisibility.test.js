@@ -17,6 +17,7 @@ function setup() {
   for (const file of ['gameState.js', ...scripts, 'combat.js', 'spellTargeting.js', 'spellLogic.js', 'movement.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
   }
+  require('./fixtures/trained-heroes.cjs')(ctx);
   const state = ctx.gameState;
   state.cells = Array.from({ length: 144 }, element);
   for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) state.terrain.set(`${x},${y}`, 'grass');

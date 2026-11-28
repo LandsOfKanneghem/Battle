@@ -16,6 +16,7 @@ function setup() {
   for (const file of dataScripts) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, { filename: file });
   }
+  require('./fixtures/trained-heroes.cjs')(context);
   return context;
 }
 
@@ -103,7 +104,7 @@ test('hero skills persist independently without changing combat stats or spell b
   const progression = ctx.HeroProgression.create(8);
   const skills = ['water-magic-1', 'water-magic-2', 'water-magic-3', 'battle-hardened'];
   for (const type of ctx.MapEquipment.HEROES) {
-    const baseline = ctx.createCreature(type, { x: 1, y: 1 }, { progression });
+    const baseline = ctx.createCreature(type, { x: 1, y: 1 }, { progression, skills: [] });
     const skilled = ctx.createCreature(type, { x: 2, y: 1 }, { progression, skills });
     assert.equal(JSON.stringify(skilled.skills), JSON.stringify(skills));
     assert.notEqual(skilled.skills, skills);

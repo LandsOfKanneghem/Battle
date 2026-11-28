@@ -82,6 +82,7 @@ window.changeEquipment = function(entity, index, slot) {
   if(!window.canManageEquipment(entity)||!Object.hasOwn(window.EQUIPMENT_SLOTS,slot))return false;
   const bag=state.backpack, item=index===null?null:bag?.[index];
   if(index!==null&&(!item||!item.allowedSlots?.includes(slot)))return false;
+  if(item&&!window.HeroSkillRules.canEquip(entity,item))return false;
   if(index===null&&slot==='leftHand'&&entity.Equipment.rightHand?.hands===2)slot='rightHand';
   const old=entity.Equipment[slot];
   if(!item&&!old)return false;
@@ -120,19 +121,19 @@ window.changeConsumable = function(entity,index,slot){
   window.gameState.selectedBackpackIndex=null;window.updatePanel?.();return true;
 };
 window.canUseConsumable = (entity,slot) => window.canManageEquipment(entity)
-  && entity.id===window.gameState.activeEntityId && entity.ap>=(entity.consumables?.[slot]?.consumable?.apCost??2) && !window.isFrozen(entity)
+  && entity.id===window.gameState.activeEntityId && entity.ap>=window.HeroSkillRules.consumableCost(entity,entity.consumables?.[slot]) && !window.isFrozen(entity)
   && slot>=0 && slot<window.getConsumableSlotCount(entity) && !!entity.consumables?.[slot]?.consumable;
 window.useConsumable = function(entity,slot){
   if(!window.canUseConsumable(entity,slot))return false;
   const item=entity.consumables[slot];
   if(item.consumable.spell){
     window.cancelSpell?.();
-    const spell={...item.consumable.spell,consumableCast:true,cooldown:0,usesThisTurn:0,usesTotal:0};
+    const spell={...item.consumable.spell,apCost:window.HeroSkillRules.consumableCost(entity,item),consumableCast:true,cooldown:0,usesThisTurn:0,usesTotal:0};
     window.gameState.pendingConsumable={ownerId:entity.id,slot,item,spell};
     window.gameState.preparedSpellId=spell.id;
     window.highlightSpellRange?.();window.updatePanel?.();return true;
   }
-  entity.ap-=item.consumable.apCost??2;entity.consumables[slot]=null;
+  entity.ap-=window.HeroSkillRules.consumableCost(entity,item);entity.consumables[slot]=null;
   window.battleLog?.cast(entity,{name:item.name,target:'ally'},entity);
   if(item.consumable.heal)window.healEntity(entity,item.consumable.heal,entity);
   if(item.consumable.cleansePoison){

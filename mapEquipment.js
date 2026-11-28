@@ -1,6 +1,7 @@
 // Map loadouts contain only catalog IDs, never executable item data or combat durability.
 ((root) => {
   'use strict';
+  const SkillRules = typeof module !== 'undefined' && module.exports ? require('./data/heroSkillRules.js') : root.HeroSkillRules;
   const SLOTS = Object.freeze(['head', 'boots', 'gloves', 'belt', 'chest', 'rightHand', 'leftHand', 'other1', 'other2']);
   const HEROES = Object.freeze(['wizard', 'monk', 'warrior', 'archer', 'halfling', 'druid']);
   const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -23,6 +24,7 @@
       equipment[slot] = id;
     }
     if (items[equipment.rightHand]?.hands === 2 && equipment.leftHand !== null) invalid();
+    for (const slot of SLOTS) if (!SkillRules.canEquip(mob, items[equipment[slot]])) equipment[slot] = null;
     const saved = mob.consumables ?? Array(6).fill(null);
     if (!Array.isArray(saved) || saved.length !== 6) invalid();
     const count = capacity(equipment, items);

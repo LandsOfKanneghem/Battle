@@ -36,6 +36,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "short-chainmail": {
     "id": "short-chainmail",
+    "armorType": "medium",
     "name": "Короткая кольчуга",
     "allowedSlots": ["chest"],
     "itemType": "Нагрудная броня",
@@ -45,6 +46,7 @@ Object.assign(window.EQUIPMENT_ITEMS, {
   },
   "body-armor": {
     "id": "body-armor",
+    "armorType": "medium",
     "name": "Кольчуга",
     "iconPath": "assets/equipment/chainmail.png",
     "ac": 4,

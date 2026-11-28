@@ -10,7 +10,7 @@ function setup() {
   const ctx = { document: { getElementById: () => ({}), createElement: () => ({}) }, setTimeout() {} };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const file of ['gameState.js', 'mapObjects.js', 'mapEquipment.js', 'heroProgression.js', 'heroSkills.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
+  for (const file of ['gameState.js', 'mapObjects.js', 'data/heroSkillRules.js', 'mapEquipment.js', 'heroProgression.js', 'heroSkills.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
   }
   ctx.CREATURE_TEMPLATES = { wizard: { type: 'wizard' }, wolf: { type: 'wolf' } };

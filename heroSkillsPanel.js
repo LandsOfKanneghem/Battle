@@ -16,6 +16,7 @@
     list.replaceChildren(...skills.map(skill => {
       const row = document.createElement('li');
       row.textContent = skill.name;
+      row.title = skill.description ?? '';
       row.dataset.skill = skill.id;
       return row;
     }));

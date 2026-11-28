@@ -1,6 +1,6 @@
 // Друид: союзный герой с однократными бессрочными призывами существ.
 const DRUID_SUMMON_WOLF = {
-  id: 'summon-wolf', name: 'Призыв волка', abilityType: 'spell', isShot: false,
+  id: 'summon-wolf', name: 'Призыв волка', abilityType: 'spell', level: 1, magicSchool: 'nature', isShot: false,
   description: 'Призывает Волка.',
   stackable: false,
   apCost: 1, maxUsesPerTurn: 1, maxCooldown: 0,
@@ -12,7 +12,7 @@ const DRUID_SUMMON_WOLF = {
 };
 
 const DRUID_SUMMON_BLACK_WOLF = {
-  id: 'summon-black-wolf', name: 'Призыв Чёрного волка', abilityType: 'spell', isShot: false,
+  id: 'summon-black-wolf', name: 'Призыв Чёрного волка', abilityType: 'spell', level: 1, magicSchool: 'nature', isShot: false,
   description: 'Призывает Чёрного волка.',
   stackable: false,
   apCost: 1, maxUsesPerTurn: 1, maxCooldown: 0,
@@ -24,7 +24,7 @@ const DRUID_SUMMON_BLACK_WOLF = {
 };
 
 const DRUID_SUMMON_BEAR = {
-  id: 'summon-bear', name: 'Призыв Медведя', abilityType: 'spell', isShot: false,
+  id: 'summon-bear', name: 'Призыв Медведя', abilityType: 'spell', level: 1, magicSchool: 'nature', isShot: false,
   description: 'Призывает Медведя.',
   stackable: false,
   apCost: 1, maxUsesPerTurn: 1, maxCooldown: 0,

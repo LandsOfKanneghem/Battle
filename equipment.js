@@ -29,7 +29,7 @@
     if(!item)line('Слот для',allowed[slot]);
     else if(item.attack){
       const a=item.attack;
-      const types={dagger:'Кинжал',sword:item.hands===2?'Двуручный меч':'Одноручный меч',axe:item.hands===2?'Двуручный топор':'Одноручный топор',bow:'Лук',sling:'Праща'};
+      const types={dagger:'Кинжал',sword:item.hands===2?'Двуручный меч':'Одноручный меч',axe:item.hands===2?'Двуручный топор':'Одноручный топор',bow:'Лук',crossbow:'Арбалет',sling:'Праща',staff:'Посох',wand:'Жезл',orb:'Магическая сфера'};
       line('Оружие',types[item.weaponType]??item.weaponType??(item.hands===2?'Двуручное':'Одноручное'));line('ОД',a.apCost);
       line('Урон',`${a.damageBase} + ${a.damagePerStr??0} × STR (физический)`);
       line('Точность',`${a.baseAccuracy}%`);line('Крит шанс',`${a.baseCritChance}%`);
@@ -46,9 +46,11 @@
       if(use.cleansePoison)line('Эффект','Снимает яд');
       if(use.removeBleedingStacks)line('Эффект','Снимает 1 стак Кровотечения');
       if(use.spell){line('Урон','6 огонь');line('Дальность','1–5 [неизменяемая]');line('АОЕ','Квадрат 3×3');line('LOS','Требует');line('Эффект','Горение на 2 хода');}
-      line('Применение',`${use.apCost??2} ОД`);
+      line('Применение',`${window.HeroSkillRules.consumableCost(entity,item)} ОД`);
     }
     if(item?.consumableSlots!==undefined)line('Слоты расходников',item.consumableSlots);
+    const requiredSkill=window.HeroSkillRules.equipmentSkill(item);
+    if(requiredSkill)line('Требуется',window.HeroSkills.BY_ID[requiredSkill].name);
     for(const [key,value] of Object.entries(item?.modifiers??{})) {
       const effective=item.ac!==undefined&&window.isArmorBroken(item)?Math.floor(value*.25):value;
       const amount=`${effective>=0?'+':''}${effective}`;
@@ -66,7 +68,7 @@
     renderConsumables(entity);
     renderBackpack(entity);
     const equipment=entity?.Equipment??{};
-    const key=JSON.stringify([entity?.id,equipment,dialog.open,gameState.selectedBackpackIndex,window.canManageEquipment(entity)]);
+    const key=JSON.stringify([entity?.id,entity?.skills,equipment,dialog.open,gameState.selectedBackpackIndex,window.canManageEquipment(entity)]);
     if(slots.dataset.key===key)return;
     slots.dataset.key=key;hide();slots.replaceChildren();
     for(const slot of order){
@@ -83,7 +85,7 @@
       }
       const selected=gameState.backpack?.[gameState.selectedBackpackIndex];
       cell.setAttribute('aria-disabled',String(!dialog.open||!window.canManageEquipment(entity)));
-      cell.classList.toggle('equipment-compatible',dialog.open&&!!selected?.allowedSlots?.includes(slot)&&window.canManageEquipment(entity));
+      cell.classList.toggle('equipment-compatible',dialog.open&&!!selected?.allowedSlots?.includes(slot)&&window.canManageEquipment(entity)&&window.HeroSkillRules.canEquip(entity,selected));
       cell.append(art);
       cell.addEventListener('click',()=>{ if(dialog.open&&window.changeEquipment(shown,gameState.selectedBackpackIndex??null,slot))hide(); });
       cell.addEventListener('mouseenter',()=>show(cell,item,slot,shown));cell.addEventListener('focus',()=>show(cell,item,slot,shown));
@@ -100,7 +102,7 @@
     backpackPage=Math.max(0,Math.min(backpackPage,pages-1));
     document.getElementById('backpack-prev').disabled=backpackPage===0;
     document.getElementById('backpack-next').disabled=backpackPage===pages-1;
-    const key=JSON.stringify([entity?.id,bag,filter.value,backpackPage,window.canManageEquipment(entity)]);
+    const key=JSON.stringify([entity?.id,entity?.skills,bag,filter.value,backpackPage,window.canManageEquipment(entity)]);
     if(bagSlots.dataset.key===key)return;
     bagSlots.dataset.key=key;bagSlots.replaceChildren();
     for(let position=0;position<backpackSize;position++){
@@ -108,11 +110,14 @@
       const cell=document.createElement('button');cell.type='button';cell.className='equipment-slot backpack-slot';cell.dataset.index=index;
       cell.setAttribute('aria-label',item?.name??'Свободная ячейка');cell.setAttribute('aria-pressed',String(gameState.selectedBackpackIndex===index));
       if(item){
+        const eligible=window.HeroSkillRules.canEquip(entity,item);
+        cell.classList.toggle('equipment-unavailable',!eligible);cell.setAttribute('aria-disabled',String(!eligible));
         const image=document.createElement('img');image.src=item.iconPath;image.alt='';image.draggable=false;cell.append(image);
         cell.addEventListener('mouseenter',()=>show(cell,item,null,shown));cell.addEventListener('focus',()=>show(cell,item,null,shown));
         cell.addEventListener('mouseleave',hide);cell.addEventListener('blur',hide);
-        cell.addEventListener('click',()=>{gameState.selectedBackpackIndex=gameState.selectedBackpackIndex===index?null:index;renderEquipment(shown);});
+        cell.addEventListener('click',()=>{if(!eligible)return;gameState.selectedBackpackIndex=gameState.selectedBackpackIndex===index?null:index;renderEquipment(shown);});
         cell.addEventListener('dblclick',()=>{
+          if(!eligible)return;
           if(item.consumable){
             const count=window.getConsumableSlotCount(shown);if(!count)return;
             let slot=shown.consumables.findIndex((value,index)=>!value&&index<count);if(slot<0)slot=0;

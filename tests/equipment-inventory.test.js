@@ -3,6 +3,7 @@ function setup(){
  const root=path.join(__dirname,'..'),ctx={gameState:{entities:[],effectOrder:0,SIZE:12,cells:Array(144).fill({})},document:{createElementNS:()=>({style:{},setAttribute(){}})}};ctx.window=ctx;vm.createContext(ctx);
  const data=[...fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll(/src="(data\/[^\"]+\.js)"/g)].map(m=>m[1]);
  for(const file of [...data,'combat.js','spellTargeting.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),ctx);
+  require('./fixtures/trained-heroes.cjs')(ctx);
  ctx.resetSharedBackpack();const hero=ctx.createCreature('warrior',{x:1,y:1});ctx.gameState.entities=[hero];ctx.gameState.activeEntity=()=>hero;
  return {ctx,hero,bag:ctx.gameState.backpack,index:id=>ctx.gameState.backpack.findIndex(item=>item?.id===id)};
 }

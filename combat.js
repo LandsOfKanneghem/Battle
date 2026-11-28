@@ -424,7 +424,9 @@ window.applyDamage = function(spell, entity, attacker = null) {
   const cell = window.gameState.cells[entity.position.y * window.gameState.SIZE + entity.position.x];
   window.playDamageAnimation?.(cell, absorbed + hpDamage);
   if (critical) window.playCritAnimation?.(cell);
-  if (reflectsMelee && absorbed + hpDamage > 0) {
+  if (reflectsMelee && parts.some(part => part.rawDamage > 0)) {
+    // Контакт с панцирем уже произошёл: броня/сопротивление могут обнулить урон,
+    // но не отменяют отражение успешно попавшего ближнего удара.
     // Отдельный физический урон: без броска попадания, штрафов атак и ответного отражения.
     // Смертельный удар тоже задевает панцирь; удаление погибших выполнит вызывающий код.
     window.applyDamage({ damage: 3, damageType: 'physical' }, attacker, entity);

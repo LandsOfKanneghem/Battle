@@ -109,7 +109,7 @@ const OLD_AGE = {
 };
 const SHARP_SHELL = {
   id: 'sharp-shell', name: 'Острый панцирь', duration: 0, mpBonus: 0, initiativeBonus: 0,
-  description: 'При получении урона от оружия ближнего боя владелец отражает 3 единицы физического урона.',
+  description: 'При попадании оружием ближнего боя владелец отражает 3 единицы физического урона, даже если защита полностью поглотила урон удара.',
   casterName: '', suppressed: false, overrides: [], neutralizes: [], blocks: [],
   permanent: true, unremovable: true, innate: false,
   icon: `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 31 Q5 14 20 14 Q35 14 35 31 Z" fill="#9c562b" stroke="#3b261c" stroke-width="2"/><path d="M9 21 L8 10 L16 18 M17 16 L20 3 L24 17 M27 19 L33 9 L32 25" fill="#ffe4a4" stroke="#ad7633" stroke-width="1.5"/></svg>`

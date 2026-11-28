@@ -425,6 +425,26 @@ test('Charge moves only along cardinal lines and adds weapon STR damage per actu
   }
 });
 
+test('warrior melee techniques trigger Sharp Shell, even when armor absorbs all damage', () => {
+  for (const [id, range, armored] of [['maiming-strike', 1, false], ['charge', 1, false], ['charge', 3, false], ['charge', 3, true]]) {
+    const { ctx, state, deps } = setup();
+    const warrior = ctx.createCreature('warrior', { x: 5, y: 5 });
+    const turtle = ctx.createCreature('dragon-turtle', { x: 5 + range, y: 5 });
+    if (armored) turtle.armorSources[0].ac = 100;
+    state.entities = [warrior, turtle]; state.activeEntityId = warrior.id;
+    const spell = warrior.availableSpells.find(spell => spell.id === id);
+    state.preparedSpellId = spell.id;
+    const hp = warrior.hp, targetHP = turtle.hp;
+    assert(ctx.castSpell(state.cells[turtle.position.y * 12 + turtle.position.x], { ...deps(), playBiteAnimation() {} }));
+    assert.equal(warrior.hp, hp - 3, `${id}, distance ${range}, armor ${armored}`);
+    if (id === 'maiming-strike' || armored) assert.equal(turtle.hp, targetHP);
+    else assert(turtle.hp < targetHP);
+    if (id === 'maiming-strike') assert(ctx.hasActiveState(turtle, 'maimed'));
+    if (id === 'charge') assert.equal(warrior.position.x, turtle.position.x - 1);
+    assert.equal(turtle.armorSources[0].durability, 9);
+  }
+});
+
 test('Charge rejects diagonal, distant, obstructed and unwalkable routes before spending AP', () => {
   for (const kind of ['diagonal', 'distant', 'crate', 'water', 'void', 'creature']) {
     const { ctx, state, deps } = setup();

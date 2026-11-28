@@ -71,7 +71,7 @@ test('spells, abilities, ranged weapons and periodic damage do not reflect', () 
   }
 });
 
-test('misses, zero damage, full resistance and frozen targets cause no reflection', () => {
+test('misses, zero raw damage and frozen targets cause no reflection', () => {
   const { ctx, attacker, turtle, hit, deps, damage } = setup();
   const hp = attacker.hp;
   deps.playMissAnimation = () => {};
@@ -79,13 +79,22 @@ test('misses, zero damage, full resistance and frozen targets cause no reflectio
   assert.equal(damage.length, 0);
   assert.equal(turtle.armorSources[0].durability, 10, 'a missed weapon attack never wears armor');
   ctx.applyDamage({ ...hit, damage: 0 }, turtle, attacker);
-  turtle.physical = 4;
-  ctx.applyDamage(hit, turtle, attacker);
-  turtle.physical = 0;
   ctx.applyState(turtle, 'freeze', 2);
   ctx.applyDamage(hit, turtle, attacker);
   assert.equal(attacker.hp, hp);
   assert.equal(turtle.hp, turtle.maxHP);
+});
+
+test('armor and physical resistance can absorb a hit completely without cancelling shell contact', () => {
+  for (const resistance of [0, 10]) {
+    const { ctx, attacker, turtle, hit, damage } = setup();
+    turtle.physical = resistance;
+    const hp = attacker.hp;
+    ctx.applyDamage({ ...hit, damage: 2 }, turtle, attacker);
+    assert.equal(turtle.hp, turtle.maxHP);
+    assert.equal(attacker.hp, hp - 3);
+    assert.deepEqual(damage, [[turtle.id, 0, 0], [attacker.id, 3, 0]]);
+  }
 });
 
 test('reflected damage respects physical protection and freeze, and bypasses ES as physical damage', () => {

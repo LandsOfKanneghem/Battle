@@ -10,7 +10,7 @@ function setup() {
   const ctx = { document: { getElementById: () => ({}), createElement: () => ({}) }, setTimeout() {} };
   ctx.window = ctx;
   vm.createContext(ctx);
-  for (const file of ['gameState.js', 'mapObjects.js', 'mapEquipment.js', 'heroProgression.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
+  for (const file of ['gameState.js', 'mapObjects.js', 'mapEquipment.js', 'heroProgression.js', 'heroSkills.js', 'lighting.js', 'init.js', 'spellTargeting.js', 'movement.js', 'spellLogic.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
   }
   ctx.CREATURE_TEMPLATES = { wizard: { type: 'wizard' }, wolf: { type: 'wolf' } };
@@ -55,6 +55,33 @@ test('v10 validates hero progression before changing combat and leaves legacy at
   delete data.mobs[0].progression;
   data.version = 9;
   assert.equal(ctx.validateBattleMap(data).mobs[0].progression, undefined);
+});
+
+test('v11 skills load as independent arrays and invalid selections cannot replace combat', () => {
+  const ctx = setup(), data = { ...fixture(), version: 11 };
+  data.mobs = [{ type: 'wizard', team: 'ally', x: 2, y: 3,
+    progression: ctx.HeroProgression.create(8), skills: ['water-magic-1', 'water-magic-2', 'water-magic-3'] }];
+  const mob = ctx.validateBattleMap(data).mobs[0];
+  assert.deepEqual(plain(mob.skills), data.mobs[0].skills);
+  mob.skills.pop();
+  assert.equal(data.mobs[0].skills.length, 3);
+  const entities = ctx.gameState.entities;
+  for (const change of [
+    m => { m.skills.push('unknown-skill'); },
+    m => { m.skills.push('water-magic-1'); },
+    m => { m.skills = ['water-magic-3']; },
+    m => { m.skills.push('water-magic-4'); },
+    m => { m.skills = ['veteran']; },
+    m => { m.type = 'wolf'; },
+    m => { m.progression.level = 1; }
+  ]) {
+    const invalid = plain(data); change(invalid.mobs[0]);
+    assert.throws(() => ctx.validateBattleMap(invalid));
+    assert.equal(ctx.gameState.entities, entities);
+  }
+  delete data.mobs[0].skills;
+  data.version = 10;
+  assert.equal(ctx.validateBattleMap(data).mobs[0].skills, undefined);
 });
 
 test('v9 hero loadouts are validated and copied before replacing combat; old heroes retain defaults', () => {

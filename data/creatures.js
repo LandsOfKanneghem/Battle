@@ -83,7 +83,7 @@ window.captureInitialStats = function(creature) {
           maxDurability, durability: maxDurability };
       });
     const creature = {
-      id, name: template.name, type: template.type, Equipment, consumables,
+      id, name: template.name, type: template.type, Equipment, consumables, skills: [...(loadout.skills ?? [])],
       level, baseHP: template.baseHP, hpPerLevel: template.hpPerLevel, hp: maxHP, maxHP,
       baseWP: template.baseWP, wpPerLevel: template.wpPerLevel, wp: maxWP, maxWP,
       baseAP: template.baseAP, ap: template.baseAP + wisBonus, maxAP: template.baseAP + wisBonus,

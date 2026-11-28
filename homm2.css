@@ -375,4 +375,10 @@ button:focus-visible { outline: 2px solid #ffe8a0; outline-offset: 2px; }
 .backpack-navigation { position:absolute; top:3px; right:35px; display:flex; gap:3px; }
 .backpack-navigation button { width:24px; height:24px; padding:0; border:1px solid #b99a5b; background:#66503c; color:#ead7af; font-size:16px; }
 .backpack-navigation button:disabled { opacity:.35; }
+#hero-skills-panel { box-sizing: border-box; max-height: 240px; overflow-y: auto; border: 2px solid var(--panel-frame-color); padding: 8px; background: #ddc8a3; color: #462b18; }
+#hero-skills-panel[hidden] { display: none; }
+#hero-skills-panel h2 { margin: 0 0 8px; font-size: 16px; color: inherit; }
+#hero-skills-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+#hero-skills-list li { padding: 5px 0; border-top: 1px solid #b99c72; overflow-wrap: anywhere; }
+#hero-skills-empty { margin: 0; font-size: 13px; color: inherit; }
 #backpack-filter { max-width:calc(100% - 108px); }

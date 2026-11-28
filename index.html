@@ -104,6 +104,9 @@
       <section id="equipment-panel" aria-label="Экипировка персонажа"><div id="equipment-slots"></div></section>
       <div id="consumable-slots" aria-label="Расходники"></div>
       <button id="open-backpack" type="button" aria-haspopup="dialog" aria-controls="backpack-dialog">Рюкзак</button>
+      <section id="hero-skills-panel" aria-label="Навыки персонажа" hidden>
+        <h2>Навыки</h2><ul id="hero-skills-list"></ul><p id="hero-skills-empty">Навыки не выбраны</p>
+      </section>
     </aside>
   </main>
   <dialog id="backpack-dialog" aria-label="Общий рюкзак">
@@ -195,6 +198,7 @@
   <script src="mapObjects.js"></script>
   <script src="mapEquipment.js"></script>
   <script src="heroProgression.js"></script>
+  <script src="heroSkills.js"></script>
   <script src="mapLibrary.js"></script>
   <script src="torchInteractions.js"></script>
   <script src="lighting.js"></script>
@@ -574,6 +578,7 @@
       document.documentElement.style.setProperty('--panel-height', `${Math.ceil(entry.target.getBoundingClientRect().height)}px`);
     }).observe(document.querySelector('.panel'));
   </script>
+  <script src="heroSkillsPanel.js"></script>
   <script src="equipment.js"></script>
 </body>
 </html>

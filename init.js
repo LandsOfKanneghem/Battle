@@ -8,7 +8,7 @@
 
   window.validateBattleMap = function(data) {
     const state = window.gameState;
-    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(data.version)) {
+    if (data?.format !== 'kanneghem-map' || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(data.version)) {
       throw new Error('Неподдерживаемый формат или версия карты.');
     }
     if (data.width !== state.SIZE || data.height !== state.HEIGHT) throw new Error('Размер карты должен быть 12×12.');
@@ -60,7 +60,7 @@
         throw new Error('Неверная сторона существа.');
       return { type: mob.type, team, x: mob.x, y: mob.y,
         ...window.MapEquipment.read({ ...mob, team }, window.EQUIPMENT_ITEMS),
-        ...window.HeroProgression.read({ ...mob, team }) };
+        ...window.HeroProgression.read({ ...mob, team }), ...window.HeroSkills.read({ ...mob, team }) };
     });
     const normalizedObjects = window.MapObjects.readObjects(objects, { mapType, tiles: content.tiles }, normalizedMobs, data.version);
     const lighting = window.BattleLighting.read(content.lighting);

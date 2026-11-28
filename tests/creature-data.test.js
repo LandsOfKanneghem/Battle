@@ -95,6 +95,25 @@ test('map hero progression replaces class attributes before derived stats, equip
   assert.equal(wolf.level, ctx.CREATURE_TEMPLATES.wolf.level);
 });
 
+test('hero skills persist independently without changing combat stats or spell books', () => {
+  const ctx = setup();
+  for (const file of ['mapEquipment.js', 'heroProgression.js', 'heroSkills.js', 'combat.js']) {
+    vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx);
+  }
+  const progression = ctx.HeroProgression.create(8);
+  const skills = ['water-magic-1', 'water-magic-2', 'water-magic-3', 'battle-hardened'];
+  for (const type of ctx.MapEquipment.HEROES) {
+    const baseline = ctx.createCreature(type, { x: 1, y: 1 }, { progression });
+    const skilled = ctx.createCreature(type, { x: 2, y: 1 }, { progression, skills });
+    assert.equal(JSON.stringify(skilled.skills), JSON.stringify(skills));
+    assert.notEqual(skilled.skills, skills);
+    assert.notEqual(skilled.skills, baseline.skills);
+    for (const key of ['maxHP', 'maxWP', 'maxAP', 'maxMP', 'maxSpellCasts', 'maxHitCount']) assert.equal(skilled[key], baseline[key]);
+    assert.equal(JSON.stringify(skilled.initialStats), JSON.stringify(baseline.initialStats));
+    assert.equal(JSON.stringify(skilled.availableSpells), JSON.stringify(baseline.availableSpells));
+  }
+});
+
 test('every creature template file is connected to the game', () => {
   for (const directory of ['data/creatures', 'data/allies']) {
     for (const file of fs.readdirSync(path.join(root, directory)).filter(file => file.endsWith('.js'))) {

@@ -60,6 +60,7 @@
     const r=anchor.getBoundingClientRect();tooltip.style.left=`${Math.max(8,Math.min(r.left,innerWidth-tooltip.offsetWidth-8))}px`;tooltip.style.top=`${Math.max(8,Math.min(r.bottom+8,innerHeight-tooltip.offsetHeight-8))}px`;
   }
   window.renderEquipment=function(entity){
+    window.renderHeroSkills?.(entity);
     if(shown?.id!==entity?.id)closeContext();
     shown=entity;
     renderConsumables(entity);
